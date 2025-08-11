@@ -81,3 +81,18 @@ lib/
 # Conda environments
 conda-meta/
 envs/
+
+# Large media files
+*.mp4
+*.avi
+*.mov
+*.wmv
+*.flv
+*.mkv
+
+# Large PDFs and documents (keep only essential ones)
+*.pdf
+*.epub
+
+# BFG JAR file
+bfg.jar
