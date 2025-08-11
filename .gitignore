@@ -54,3 +54,7 @@ coverage/
 # Temporary folders
 tmp/
 temp/
+
+# Ignore large files and folders
+luma-rag/vector_store/index.faiss
+luma-rag-env/
