@@ -58,3 +58,26 @@ temp/
 # Ignore large files and folders
 luma-rag/vector_store/index.faiss
 luma-rag-env/
+
+# Python virtual environments and packages
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# PyTorch and ML libraries (very large files)
+*.lib
+*.dll
+*.pyd
+site-packages/
+Lib/
+lib/
+
+# Conda environments
+conda-meta/
+envs/
