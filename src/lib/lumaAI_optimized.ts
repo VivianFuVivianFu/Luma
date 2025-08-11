@@ -76,16 +76,9 @@ export class LumaAI {
   ];
   private exchangeCount = 0;
   private userGoal: string | null = null;
-  private topicHistory: string[] = [];
   private lastResponses: string[] = [];
   private conversationContext: Map<string, string> = new Map();
   private usedResponsePatterns: Set<string> = new Set();
-  private conversationPhases = {
-    exploration: 0,
-    deepening: 0,
-    actionPlanning: 0,
-    integration: 0
-  };
 
   async sendMessage(userMessage: string): Promise<string> {
     try {
@@ -393,7 +386,7 @@ You deserve immediate, professional support. I'm here with you, but you need spe
     let summary = `User has discussed: `;
     
     if (contexts.length > 0) {
-      summary += contexts.map(([key, value]) => {
+      summary += contexts.map(([key, _value]) => {
         if (key === 'career_mentioned') return 'career aspirations';
         if (key === 'positive_mood') return 'positive feelings';
         if (key === 'anxiety_mentioned') return 'anxiety concerns';
@@ -420,9 +413,7 @@ You deserve immediate, professional support. I'm here with you, but you need spe
 
   resetConversation(): void {
     this.clearHistory();
-    this.topicHistory = [];
     this.lastResponses = [];
-    this.conversationPhases = { exploration: 0, deepening: 0, actionPlanning: 0, integration: 0 };
     console.log('Conversation history reset');
   }
 

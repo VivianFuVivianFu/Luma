@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Mic, MicOff, Play, Pause, Volume2 } from 'lucide-react';
 
 interface VoiceChatProps {
@@ -53,7 +53,7 @@ export default function VoiceChat({ onClose }: VoiceChatProps) {
     }
   }, [isRecording]);
 
-  const sendVoiceMessage = useCallback(async (audioBlob: Blob) => {
+  const sendVoiceMessage = useCallback(async (_audioBlob: Blob) => {
     setIsLoading(true);
     setError(null);
     

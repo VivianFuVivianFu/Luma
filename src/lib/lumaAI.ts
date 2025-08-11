@@ -126,19 +126,12 @@ export class LumaAI {
   ];
   private exchangeCount = 0;
   private userGoal: string | null = null;
-  private topicHistory: string[] = [];
   private lastResponses: string[] = [];
   private conversationContext: Map<string, string> = new Map();
   private usedResponsePatterns: Set<string> = new Set();
   private lastQuestions: string[] = [];
   private repetitionCount = 0;
   private stuckInLoop = false;
-  private conversationPhases = {
-    exploration: 0,
-    deepening: 0,
-    actionPlanning: 0,
-    integration: 0
-  };
 
   async sendMessage(userMessage: string): Promise<string> {
     try {
@@ -353,14 +346,6 @@ OUTCOME-FOCUSED GUIDANCE:
     return "I'm sorry, I'm having some technical difficulties connecting to my response system right now. Could you try rephrasing what you'd like to talk about?";
   }
 
-  // Handle vague user responses
-  private handleVagueResponse(userMessage: string): string {
-    if (this.conversationContext.size === 0) {
-      return "I wonder what would feel most meaningful for us to explore together?";
-    } else {
-      return "What do you think is really on your heart right now?";
-    }
-  }
 
   private checkCrisisIndicators(userMessage: string): boolean {
     const message = userMessage.toLowerCase();
@@ -468,50 +453,8 @@ You deserve immediate, professional support. I'm here with you, but you need spe
     }
   }
 
-  // Generate contextual alternatives based on conversation history
-  private generateContextualAlternative(userMessage: string): string {
-    const lowerMessage = userMessage.toLowerCase();
-    
-    // Handle the specific "why you cannot carry conversation again" issue
-    if (lowerMessage.includes('why') && lowerMessage.includes('conversation')) {
-      if (this.conversationContext.has('career_mentioned')) {
-        return "You're right to call that out. Let me refocus - you mentioned being close to your career dream. That's huge! What's it like to be so close to something you've worked toward?";
-      } else {
-        return "You're absolutely right. Let me be more present with you. What would feel most helpful to explore right now?";
-      }
-    }
-    
-    // Handle uncertain responses with context
-    if (lowerMessage.includes("don't know") || lowerMessage === "不知道" || lowerMessage === "idk") {
-      if (this.conversationContext.has('career_mentioned')) {
-        return "I remember you mentioned being close to your career dream. Even when things feel uncertain, what small step toward that dream feels manageable today?";
-      }
-    }
-    
-    return this.getContextualDefault();
-  }
 
-  // Get varied uncertainty responses
-  private getVariedUncertaintyResponse(): string {
-    const responses = [
-      "That's completely okay. What do you think feels most present for you?",
-      "Not knowing can be wisdom. What's your intuition gently telling you?",
-      "Uncertainty opens possibilities. What would you like to explore together?",
-      "That's so valid. What do you think feels most important right now?"
-    ];
-    return responses[Math.floor(Math.random() * responses.length)];
-  }
 
-  // Get contextual default response
-  private getContextualDefault(): string {
-    if (this.conversationContext.has('career_mentioned')) {
-      return "How do you think this might connect to your career goals?";
-    }
-    if (this.conversationContext.has('positive_mood')) {
-      return "What do you think might be shifting from that positive feeling?";
-    }
-    return "What feels most important for us to explore together right now?";
-  }
 
   // Advanced repetition detection - made less aggressive
   private detectAdvancedRepetition(currentResponse: string): boolean {
@@ -706,7 +649,7 @@ What feels like the most challenging part of this situation for you?`;
   }
 
   // Get contextual recovery response
-  private getContextualRecoveryResponse(userMessage: string): string {
+  private getContextualRecoveryResponse(_userMessage: string): string {
     // Prioritize established goal
     if (this.userGoal) {
       return `Let me refocus on what you wanted to achieve - ${this.userGoal}. What feels most important about that right now?`;
@@ -729,7 +672,7 @@ What feels like the most challenging part of this situation for you?`;
     let summary = `User has discussed: `;
     
     if (contexts.length > 0) {
-      summary += contexts.map(([key, value]) => {
+      summary += contexts.map(([key, _value]) => {
         if (key === 'career_mentioned') return 'career aspirations';
         if (key === 'positive_mood') return 'positive feelings';
         if (key === 'anxiety_mentioned') return 'anxiety concerns';
@@ -759,9 +702,7 @@ What feels like the most challenging part of this situation for you?`;
 
   resetConversation(): void {
     this.clearHistory();
-    this.topicHistory = [];
     this.lastResponses = [];
-    this.conversationPhases = { exploration: 0, deepening: 0, actionPlanning: 0, integration: 0 };
     console.log('Conversation history reset');
   }
 
