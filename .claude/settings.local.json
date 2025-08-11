@@ -27,7 +27,9 @@
       "Bash(rm:*)",
       "WebFetch(domain:elevenlabs.io)",
       "Bash(start http://localhost:5173)",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "Bash(git push:*)",
+      "Bash(start http://localhost:5174)"
     ],
     "deny": []
   }

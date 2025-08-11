@@ -75,15 +75,15 @@ function ChatSection({}: ChatSectionProps = {}) {
 
   return (
     <div className={`relative flex flex-col bg-white/95 backdrop-blur-sm text-gray-800 border border-white/20 overflow-hidden shadow-lg ${isFullscreen ? 'fixed inset-0 z-50 h-screen rounded-none' : 'h-full rounded-2xl'}`}>
-      {/* Header - Fixed */}
-      <div className="flex items-center justify-between p-6 border-b border-gray-200/50 bg-gradient-to-r from-blue-50/80 to-purple-50/80 sticky top-0 z-10">
-        <div className="flex items-center gap-4">
+      {/* Header - Fixed - Reduced Height */}
+      <div className="flex items-center justify-between p-3 border-b border-gray-200/50 bg-gradient-to-r from-blue-50/80 to-purple-50/80 sticky top-0 z-10">
+        <div className="flex items-center gap-3">
           <img 
             src="/luma_photo.jpg" 
             alt="Luma" 
-            className="w-12 h-12 rounded-full object-cover shadow-md"
+            className="w-10 h-10 rounded-full object-cover shadow-md"
           />
-          <h3 className="text-lg font-semibold text-gray-700" style={{fontFamily: 'Gowun Dodum, sans-serif'}}>Talk to Me</h3>
+          <h3 className="text-base font-semibold text-gray-700" style={{fontFamily: 'Gowun Dodum, sans-serif'}}>Chat with Luma</h3>
         </div>
         <button
           type="button"
