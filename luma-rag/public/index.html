@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luma - Voice Chat Companion</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        /* --- 全局和基础设置 --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            /* 使用淡化的main_photo.jpg作为背景 */
+            background: url('main_photo.jpg') center/cover no-repeat fixed;
+            background-color: #f0f2f5;
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start; /* 改为顶部对齐 */
+            justify-content: center;
+            padding: 20px;
+            padding-top: calc(20px + 20vh); /* 整体往下移动20% */
+            position: relative;
+        }
+
+        /* 创建更强的淡化和模糊背景遮罩 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.85); /* 增强透明度 */
+            backdrop-filter: blur(3px);             /* 增强模糊效果 */
+            z-index: -1;
+        }
+
+        /* --- 主容器布局 (左右分栏的核心) --- */
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            backdrop-filter: blur(10px);
+            width: 100%;
+            max-width: 1400px;
+            height: 700px;
+            display: flex; /* 关键: 启用Flexbox布局 */
+            overflow: hidden;
+        }
+
+        /* --- 左侧视频区域 --- */
+        .video-section {
+            flex: 1; /* 关键: 与聊天区域平分空间 */
+            background: #1a1a1a;
+            display: flex;
+            flex-direction: column;
+            border-radius: 20px 0 0 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 视频区域头部 */
+        .video-header {
+            background: #2d2d2d;
+            color: #666;
+            padding: 20px;
+            text-align: center;
+            border-radius: 20px 0 0 0;
+        }
+
+        .video-header h1 {
+            font-size: 24px;
+            font-weight: 300;
+            margin: 0;
+            color: #666;
+        }
+
+        .video-container {
+            flex: 1;
+            position: relative;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0; /* 移除内边距，让视频完全填满 */
+        }
+
+        .video-element {
+            width: 100%;   /* 使用100%宽度填满容器 */
+            height: 100%;  /* 使用100%高度填满容器 */
+            object-fit: cover; /* 改为cover模式，放大人物填满视频区域 */
+            border-radius: 10px; /* 圆角美化 */
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3); /* 添加阴影 */
+        }
+
+        .video-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px 20px;
+            border-radius: 25px;
+        }
+
+        /* 视频控制按钮样式 - 黑色主题 */
+        .video-controls .btn {
+            background: #2d2d2d;
+            color: white;
+            border: 2px solid #555;
+        }
+
+        .video-controls .btn:hover {
+            background: #1a1a1a;
+            border-color: #777;
+            transform: scale(1.05);
+        }
+        
+        /* --- 右侧聊天区域 --- */
+        .chat-section {
+            flex: 1; /* 关键: 与视频区域平分空间 */
+            display: flex;
+            flex-direction: column;
+            background: white;
+            border-radius: 0 20px 20px 0;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            border-radius: 0 20px 0 0;
+        }
+
+        .chat-header h1 {
+            font-size: 32px;           /* 从24px增加到32px */
+            font-weight: bold;         /* 从300改为bold */
+            margin-bottom: 5px;
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: #f8f9fa;
+        }
+
+        .chat-box {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .input-area {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .text-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            outline: none;
+            font-size: 14px;
+        }
+        
+        /* --- 通用按钮样式 --- */
+        .btn {
+            width: 45px;
+            height: 45px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .mic-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .reset-btn {
+            background: #6c757d;
+        }
+
+        /* --- 响应式设计 (让界面在小屏幕上也能良好显示) --- */
+        @media (max-width: 900px) {
+            .container {
+                flex-direction: column;
+                height: 90vh; /* 在较小屏幕上使用视窗高度 */
+                max-width: 600px;
+            }
+            .video-section {
+                flex: 0 0 300px; /* 固定视频区域高度 */
+                border-radius: 20px 20px 0 0;
+            }
+            .chat-section {
+                flex: 1;
+                border-radius: 0 0 20px 20px;
+            }
+        }
+
+        /* --- 聊天消息样式 --- */
+        .message {
+            display: flex;
+            margin-bottom: 15px;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 14px;
+        }
+
+        .avatar.user {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .avatar.bot {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .content {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 18px;
+            max-width: 70%;
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+
+        .message.user .content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin-left: 10px;
+        }
+
+        .message.bot .content {
+            background: #f0f0f0;
+            color: #333;
+            margin-right: 10px;
+        }
+
+        .timestamp {
+            font-size: 11px;
+            color: #888;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <div class="video-section">
+            <!-- 添加视频区域header -->
+            <div class="video-header">
+                <h1>Meet Luma</h1>
+            </div>
+            
+            <div class="video-container">
+                <video 
+                    class="video-element" 
+                    id="videoElement" 
+                    muted 
+                    controls 
+                    preload="auto"
+                    poster=""
+                    webkit-playsinline 
+                    playsinline>
+                    <!-- 使用Video.mp4作为主要视频源 -->
+                    <source src="Video.mp4" type="video/mp4">
+                    <source src="https://videos.pexels.com/video-files/3209828/3209828-sd_640_360_30fps.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <div class="video-placeholder" id="videoPlaceholder" style="display: none;">
+                    <i class="fas fa-video fa-3x"></i>
+                    <p>Video Loading...</p>
+                </div>
+            </div>
+            
+            <div class="video-controls">
+                <button class="btn" id="videoPlayBtn" title="Play/Pause Video">
+                    <i class="fas fa-play"></i>
+                </button>
+                <button class="btn" id="videoMuteBtn" title="Mute/Unmute">
+                    <i class="fas fa-volume-up"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="chat-section">
+            <div class="chat-header">
+                <h1>Talk to Luma</h1>
+            </div>
+            <div class="chat-container">
+                <div class="chat-box" id="chatBox">
+                    <!-- Messages will be dynamically added here -->
+                </div>
+            </div>
+            <div class="input-area">
+                <input type="text" class="text-input" id="textInput" placeholder="Type your message or use voice...">
+                <button class="btn mic-btn" id="micBtn" title="Start voice input">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <button class="btn send-btn" id="sendBtn" title="Send message">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+                <button class="btn reset-btn" id="resetBtn" title="Reset conversation">
+                    <i class="fas fa-refresh"></i>
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 引入主要的JavaScript功能 -->
+    <script src="main.js"></script>
+    
+    <!-- 添加状态监控 -->
+    <script>
+        window.addEventListener('load', function() {
+            console.log('🔧 Page fully loaded');
+            
+            setTimeout(() => {
+                console.log('📊 App status check:');
+                console.log('  - VoiceChatApp class:', typeof VoiceChatApp !== 'undefined' ? '✅' : '❌');
+                console.log('  - App instance:', window.voiceChatApp ? '✅' : '❌');
+                
+                // 验证关键DOM元素
+                const elements = ['chatBox', 'sendBtn', 'textInput', 'micBtn', 'resetBtn'];
+                elements.forEach(id => {
+                    const el = document.getElementById(id);
+                    console.log(`  - ${id}:`, el ? '✅' : '❌');
+                });
+                
+                // 如果一切就绪，测试欢迎消息
+                if (window.voiceChatApp) {
+                    console.log('🎉 App ready! Testing welcome message...');
+                }
+            }, 1000);
+        });
+    </script>
+
+    </body>
+</html>

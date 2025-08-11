@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run dev:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm install:*)",
+      "Bash(mkdir:*)",
+      "Bash(npm run lint)",
+      "Bash(npx tsc:*)",
+      "Bash(git fsck:*)",
+      "Bash(python:*)",
+      "Bash(dir:*)",
+      "Bash(curl:*)",
+      "Bash(git checkout:*)",
+      "Bash(cat:*)",
+      "Bash(taskkill:*)",
+      "Bash(node:*)",
+      "Bash(copy:*)",
+      "Bash(cp:*)",
+      "Bash(grep:*)",
+      "Bash(sed:*)",
+      "Bash(echo:*)",
+      "Bash(start http://localhost:5184)",
+      "Bash(start http://localhost:5175)",
+      "WebFetch(domain:www.npmjs.com)",
+      "Bash(del test_elevenlabs.js)",
+      "Bash(rm:*)",
+      "WebFetch(domain:elevenlabs.io)",
+      "Bash(start http://localhost:5173)",
+      "Bash(powershell:*)"
+    ],
+    "deny": []
+  }
+}
