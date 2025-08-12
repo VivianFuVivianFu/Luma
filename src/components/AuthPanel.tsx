@@ -62,20 +62,6 @@ const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthed }) => {
     }
   }
 
-  async function loginWithMagicLink() {
-    setLoading(true)
-    setMsg('')
-    
-    try {
-      const { error } = await supabase.auth.signInWithOtp({ email })
-      if (error) throw error
-      setMsg('Magic link sent to your email. Please check your inbox.')
-    } catch (err: any) {
-      setMsg(err.message || String(err))
-    } finally {
-      setLoading(false)
-    }
-  }
 
   return (
     <div className="w-full p-8">
@@ -142,15 +128,6 @@ const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthed }) => {
             </button>
           </form>
 
-          <div className="mt-4">
-            <button
-              onClick={loginWithMagicLink}
-              disabled={!email || loading}
-              className="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-            >
-              Login with Magic Link
-            </button>
-          </div>
 
 
           {msg && (
