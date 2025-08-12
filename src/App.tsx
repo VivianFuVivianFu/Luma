@@ -72,8 +72,8 @@ function App() {
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-blue-300 via-purple-300 to-blue-200">
-      {/* Auth Buttons in Top Right */}
-      <div className="absolute top-4 right-4 z-30">
+      {/* Auth Buttons - Desktop: Top Right, Mobile: Below Header */}
+      <div className="hidden sm:block absolute top-4 right-4 z-30">
         <AuthButtons 
           isAuthenticated={authed}
           userEmail={userEmail}
@@ -88,10 +88,19 @@ function App() {
           <br />
           <span className="text-gray-700 font-normal text-xl sm:text-2xl md:text-3xl lg:text-5xl">You're Not Alone.</span>
         </h1>
+        
+        {/* Auth Buttons - Mobile: Below Header Text */}
+        <div className="sm:hidden mt-4">
+          <AuthButtons 
+            isAuthenticated={authed}
+            userEmail={userEmail}
+            onLogout={handleLogout}
+          />
+        </div>
       </div>
 
       {/* Main Content - Video and Chat */}
-      <div className="relative z-10 min-h-screen flex items-start sm:items-center justify-center px-3 sm:px-6 pt-40 sm:pt-48 pb-6 sm:pb-8">
+      <div className="relative z-10 min-h-screen flex items-start sm:items-center justify-center px-3 sm:px-6 pt-48 sm:pt-48 pb-6 sm:pb-8">
         <div className="flex flex-col lg:flex-row items-center justify-center gap-2 sm:gap-3 w-full max-w-6xl">
           {/* Video Section */}
           <div className="w-full lg:w-1/3 flex flex-col">
