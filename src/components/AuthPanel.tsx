@@ -8,7 +8,7 @@ interface AuthPanelProps {
 const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthed }) => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [mode] = useState<'login' | 'signup'>('signup')
+  const [mode, setMode] = useState<'login' | 'signup'>('signup')
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState('')
 
@@ -128,7 +128,15 @@ const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthed }) => {
             </button>
           </form>
 
-
+          <div className="mt-6 text-center text-sm text-gray-600">
+            {mode === 'signup' ? 'Already have an account?' : "Don't have an account?"}{' '}
+            <button
+              onClick={() => setMode(mode === 'signup' ? 'login' : 'signup')}
+              className="text-blue-600 hover:text-blue-800 font-medium"
+            >
+              {mode === 'signup' ? 'Sign In' : 'Sign Up'}
+            </button>
+          </div>
 
           {msg && (
             <div className={`mt-4 text-sm text-center p-3 rounded-lg ${
