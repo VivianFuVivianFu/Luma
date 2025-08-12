@@ -6,9 +6,12 @@ import VoiceCallWidget from './VoiceCallWidget';
 type Sender = 'user' | 'luma';
 type Message = { id: string; content: string; sender: Sender; timestamp: Date };
 
-type ChatSectionProps = {};
+type ChatSectionProps = {
+  isAuthenticated?: boolean;
+  onMembershipPrompt?: () => void;
+};
 
-function ChatSection({}: ChatSectionProps = {}) {
+function ChatSection({ isAuthenticated = false, onMembershipPrompt }: ChatSectionProps = {}) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showVoiceChat, setShowVoiceChat] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -28,6 +31,7 @@ function ChatSection({}: ChatSectionProps = {}) {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [hasShownMembershipPrompt, setHasShownMembershipPrompt] = useState(false);
 
   const canSend = useMemo(() => input.trim().length > 0 && !isLoading, [input, isLoading]);
 
@@ -39,6 +43,22 @@ function ChatSection({}: ChatSectionProps = {}) {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isLoading]);
+
+  // Check for membership prompt after 2 minutes of chatting
+  useEffect(() => {
+    if (!isAuthenticated && !hasShownMembershipPrompt && onMembershipPrompt) {
+      const timer = setTimeout(() => {
+        // Only show if user has sent at least one message
+        const userMessages = messages.filter(m => m.sender === 'user');
+        if (userMessages.length > 0) {
+          setHasShownMembershipPrompt(true);
+          onMembershipPrompt();
+        }
+      }, 2 * 60 * 1000); // 2 minutes
+
+      return () => clearTimeout(timer);
+    }
+  }, [isAuthenticated, hasShownMembershipPrompt, onMembershipPrompt, messages]);
 
   const addMessage = (content: string, sender: Sender) => {
     const id = `m-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;

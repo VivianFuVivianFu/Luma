@@ -71,19 +71,7 @@ const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthed }) => {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-blue-300 via-purple-300 to-blue-200 flex items-center justify-center">
-      {/* Header Text */}
-      <div className="absolute top-8 sm:top-16 left-1/2 transform -translate-x-1/2 z-20 text-center px-4 w-full">
-        <h1 className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-medium text-gray-700 mb-4 sm:mb-8 leading-tight drop-shadow-lg">
-          Heal at Your Pace.
-          <br />
-          <span className="text-gray-700 font-normal text-xl sm:text-2xl md:text-3xl lg:text-5xl">You're Not Alone.</span>
-        </h1>
-      </div>
-
-      {/* Auth Form */}
-      <div className="relative z-10 w-full max-w-md mx-auto px-6">
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-white/20">
+    <div className="w-full p-8">
           <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">
             欢迎来到 Luma
           </h2>
@@ -176,8 +164,6 @@ const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthed }) => {
               {msg}
             </div>
           )}
-        </div>
-      </div>
     </div>
   )
 }
