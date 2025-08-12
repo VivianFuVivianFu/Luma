@@ -8,7 +8,7 @@ interface AuthPanelProps {
 const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthed }) => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [mode] = useState<'login' | 'signup'>('login')
+  const [mode] = useState<'login' | 'signup'>('signup')
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState('')
 
