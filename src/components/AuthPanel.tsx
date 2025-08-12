@@ -8,7 +8,7 @@ interface AuthPanelProps {
 const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthed }) => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [mode, setMode] = useState<'login' | 'signup'>('login')
+  const [mode] = useState<'login' | 'signup'>('signup')
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState('')
 
@@ -40,10 +40,16 @@ const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthed }) => {
     
     try {
       if (mode === 'signup') {
-        const { error } = await supabase.auth.signUp({ email, password })
+        const { data, error } = await supabase.auth.signUp({ email, password })
         if (error) throw error
-        setMsg('Registration successful, please login.')
-        setMode('login')
+        
+        // Check if user needs email confirmation
+        if (data.user && !data.session) {
+          setMsg('Please check your email to confirm your account.')
+        } else if (data.session) {
+          // Auto-login if no email confirmation required
+          onAuthed(data.session)
+        }
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error
@@ -146,15 +152,6 @@ const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthed }) => {
             </button>
           </div>
 
-          <div className="mt-6 text-center text-sm text-gray-600">
-            {mode === 'signup' ? 'Already have an account?' : "Don't have an account?"}{' '}
-            <button
-              onClick={() => setMode(mode === 'signup' ? 'login' : 'signup')}
-              className="text-blue-600 hover:text-blue-800 font-medium"
-            >
-              {mode === 'signup' ? 'Sign In' : 'Sign Up'}
-            </button>
-          </div>
 
           {msg && (
             <div className={`mt-4 text-sm text-center p-3 rounded-lg ${
