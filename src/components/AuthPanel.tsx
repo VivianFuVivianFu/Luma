@@ -41,7 +41,7 @@ const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthed }) => {
       if (mode === 'signup') {
         const { error } = await supabase.auth.signUp({ email, password })
         if (error) throw error
-        setMsg('注册成功，请登录。')
+        setMsg('Registration successful, please login.')
         setMode('login')
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password })
@@ -62,7 +62,7 @@ const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthed }) => {
     try {
       const { error } = await supabase.auth.signInWithOtp({ email })
       if (error) throw error
-      setMsg('魔法链接已发送到邮箱，请查收。')
+      setMsg('Magic link sent to your email. Please check your inbox.')
     } catch (err: any) {
       setMsg(err.message || String(err))
     } finally {
@@ -73,7 +73,7 @@ const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthed }) => {
   return (
     <div className="w-full p-8">
           <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">
-            欢迎来到 Luma
+            Welcome to Luma
           </h2>
           
           {/* Google Login Button - Primary */}
@@ -89,7 +89,7 @@ const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthed }) => {
                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
               </svg>
-              {loading ? '请稍候...' : '使用 Google 账号登录'}
+              {loading ? 'Please wait...' : 'Continue with Google'}
             </button>
           </div>
 
@@ -99,7 +99,7 @@ const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthed }) => {
               <div className="w-full border-t border-gray-300"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">或者</span>
+              <span className="px-2 bg-white text-gray-500">or</span>
             </div>
           </div>
           
@@ -131,7 +131,7 @@ const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthed }) => {
               disabled={loading}
               className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-4 rounded-lg hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium"
             >
-              {loading ? '请稍候...' : (mode === 'signup' ? '注册' : '登录')}
+              {loading ? 'Please wait...' : (mode === 'signup' ? 'Sign Up' : 'Login')}
             </button>
           </form>
 
@@ -141,23 +141,23 @@ const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthed }) => {
               disabled={!email || loading}
               className="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
-              用邮箱魔法链接登录
+              Login with Magic Link
             </button>
           </div>
 
           <div className="mt-6 text-center text-sm text-gray-600">
-            {mode === 'signup' ? '已有账号？' : '还没有账号？'}{' '}
+            {mode === 'signup' ? 'Already have an account?' : "Don't have an account?"}{' '}
             <button
               onClick={() => setMode(mode === 'signup' ? 'login' : 'signup')}
               className="text-blue-600 hover:text-blue-800 font-medium"
             >
-              {mode === 'signup' ? '去登录' : '去注册'}
+              {mode === 'signup' ? 'Sign In' : 'Sign Up'}
             </button>
           </div>
 
           {msg && (
             <div className={`mt-4 text-sm text-center p-3 rounded-lg ${
-              msg.includes('成功') || msg.includes('发送') 
+              msg.includes('successful') || msg.includes('sent') 
                 ? 'bg-green-100 text-green-700' 
                 : 'bg-red-100 text-red-700'
             }`}>

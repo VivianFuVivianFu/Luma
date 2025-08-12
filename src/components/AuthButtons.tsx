@@ -21,9 +21,9 @@ const AuthButtons: React.FC<AuthButtonsProps> = ({ isAuthenticated, userEmail, o
         <button
           onClick={onLogout}
           className="flex items-center gap-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-3 py-1 rounded-full text-xs font-medium transition-all hover:scale-105"
-          title="退出登录"
+          title="Logout"
         >
-          <span>退出</span>
+          <span>Logout</span>
         </button>
       </div>
     )
@@ -37,7 +37,7 @@ const AuthButtons: React.FC<AuthButtonsProps> = ({ isAuthenticated, userEmail, o
           className="flex items-center gap-2 bg-white/80 backdrop-blur-sm hover:bg-white/90 text-gray-700 px-4 py-2 rounded-full text-sm font-medium transition-all hover:scale-105 shadow-lg border border-white/20"
         >
           <LogIn className="w-4 h-4" />
-          <span>登录</span>
+          <span>Login</span>
         </button>
         
         <button
@@ -45,7 +45,7 @@ const AuthButtons: React.FC<AuthButtonsProps> = ({ isAuthenticated, userEmail, o
           className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-4 py-2 rounded-full text-sm font-medium transition-all hover:scale-105 shadow-lg"
         >
           <User className="w-4 h-4" />
-          <span>注册</span>
+          <span>Sign Up</span>
         </button>
       </div>
 

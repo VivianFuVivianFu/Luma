@@ -65,7 +65,7 @@ function App() {
   if (loading) {
     return (
       <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-blue-300 via-purple-300 to-blue-200 flex items-center justify-center">
-        <div className="text-gray-700 text-lg">载入中...</div>
+        <div className="text-gray-700 text-lg">Loading...</div>
       </div>
     )
   }
