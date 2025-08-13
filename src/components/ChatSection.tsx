@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { Send, Phone, Maximize2, Minimize2 } from 'lucide-react';
 import { lumaAI } from '../lib/lumaAI';
 import VoiceCallWidget from './VoiceCallWidget';
+import MemoryStatusIndicator from './MemoryStatusIndicator';
 
 type Sender = 'user' | 'luma';
 type Message = { id: string; content: string; sender: Sender; timestamp: Date };
@@ -172,6 +173,13 @@ function ChatSection({ isAuthenticated = false, onMembershipPrompt }: ChatSectio
           </div>
         )}
         <div ref={messagesEndRef} />
+      </div>
+
+      {/* Memory Status Indicator - Show at bottom of chat */}
+      <div className="px-3 sm:px-6 border-t border-gray-100">
+        <div className="py-2">
+          <MemoryStatusIndicator />
+        </div>
       </div>
 
       {/* Input row */}
