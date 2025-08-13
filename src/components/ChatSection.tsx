@@ -196,23 +196,6 @@ function ChatSection({ isAuthenticated = false, onMembershipPrompt }: ChatSectio
         </div>
       </div>
 
-      {/* Customer Feedback Section */}
-      <div className="p-4 border-t border-gray-200/50 bg-gradient-to-r from-blue-50/50 to-purple-50/50">
-        <div className="text-center">
-          <p className="text-sm text-gray-600 mb-3 leading-relaxed">
-            Your opinions matter — please help us make Luma serve you better.
-          </p>
-          <button
-            onClick={() => window.open('https://tally.so/r/3y5yNp', '_blank')}
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-200 hover:scale-105 shadow-md"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-            Share Feedback
-          </button>
-        </div>
-      </div>
 
       {/* Voice Chat Modal */}
       {showVoiceChat && (
