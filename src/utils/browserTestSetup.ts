@@ -4,6 +4,7 @@ import { memoryService } from '../lib/memoryService';
 import { supabase, sbAdmin } from '../lib/supabase';
 import { logMemorySystemStatus } from './testDbTables';
 import { MemoryTestRunner, memoryTestConversations } from './memoryTestConversations';
+import { MemoryValidationSuite } from './memoryValidationSuite';
 
 // Extend window interface for TypeScript
 declare global {
@@ -18,6 +19,7 @@ declare global {
     testMemorySystem: () => void;
     runMemoryTests: () => Promise<any>;
     checkMemoryStatus: () => void;
+    validateMemoryFeatures: () => Promise<any>;
     
     // Test data
     memoryTestConversations: typeof memoryTestConversations;
@@ -33,8 +35,10 @@ export function setupBrowserTests() {
   window.supabase = supabase;
   window.sbAdmin = sbAdmin;
   
-  // Test runner
+  // Test runners
   const memoryTestRunner = new MemoryTestRunner();
+  const memoryValidator = new MemoryValidationSuite();
+  
   window.memoryTestRunner = memoryTestRunner;
   window.memoryTestConversations = memoryTestConversations;
   
@@ -52,6 +56,7 @@ export function setupBrowserTests() {
     console.log('   • window.checkMemoryStatus() - This function');
     console.log('   • window.testMemorySystem() - Full database check');
     console.log('   • window.runMemoryTests() - Run conversation tests');
+    console.log('   • window.validateMemoryFeatures() - Comprehensive validation suite');
     console.log('\n📋 Test data available:');
     console.log('   • window.memoryTestConversations - Predefined test conversations');
     console.log('   • window.lumaAI - Direct access to AI instance');
@@ -78,6 +83,12 @@ export function setupBrowserTests() {
     }
     
     return await memoryTestRunner.runAllMemoryTests(lumaAI);
+  };
+  
+  // Memory feature validation
+  window.validateMemoryFeatures = async () => {
+    console.log('🔍 Starting comprehensive memory feature validation...');
+    return await memoryValidator.runCompleteValidation();
   };
   
   // Log setup completion

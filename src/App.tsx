@@ -6,6 +6,7 @@ import AuthButtons from '@/components/AuthButtons'
 import AuthPanel from '@/components/AuthPanel'
 import MembershipPrompt from '@/components/MembershipPrompt'
 import MemoryTestPanel from '@/components/MemoryTestPanel'
+import MemoryValidationPanel from '@/components/MemoryValidationPanel'
 
 function App() {
   const [authed, setAuthed] = useState(false)
@@ -154,8 +155,22 @@ function App() {
       {/* Memory Test Panel - Show when URL contains ?test-memory */}
       {window.location.search.includes('test-memory') && (
         <div className="relative z-10 bg-gray-50 border-t border-white/30">
-          <div className="max-w-6xl mx-auto px-6 py-12">
+          <div className="max-w-6xl mx-auto px-6 py-12 space-y-12">
             <MemoryTestPanel />
+            
+            {/* Memory Validation Panel */}
+            <div className="pt-12 border-t border-gray-200">
+              <MemoryValidationPanel />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Memory Validation Panel - Show when URL contains ?validate-memory */}
+      {window.location.search.includes('validate-memory') && (
+        <div className="relative z-10 bg-gray-50 border-t border-white/30">
+          <div className="max-w-6xl mx-auto px-6 py-12">
+            <MemoryValidationPanel />
           </div>
         </div>
       )}
@@ -184,6 +199,12 @@ function App() {
               className="inline-flex items-center gap-2 text-gray-600 hover:text-blue-600 text-sm font-medium transition-colors"
             >
               🧠 Test Memory System
+            </a>
+            <a
+              href="?validate-memory"
+              className="inline-flex items-center gap-2 text-gray-600 hover:text-green-600 text-sm font-medium transition-colors"
+            >
+              ✅ Validate Memory Features
             </a>
           </div>
         </div>
