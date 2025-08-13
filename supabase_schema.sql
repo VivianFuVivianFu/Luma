@@ -1,6 +1,15 @@
 -- Luma Memory System Database Schema
 -- Run this in your Supabase SQL editor to create the required tables
 
+-- Sessions table for tracking conversation sessions
+CREATE TABLE IF NOT EXISTS sessions (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  user_id TEXT NOT NULL,
+  status TEXT DEFAULT 'active' CHECK (status IN ('active', 'closed')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Messages table for storing conversation history
 CREATE TABLE IF NOT EXISTS messages (
   id BIGSERIAL PRIMARY KEY,
@@ -29,6 +38,8 @@ CREATE TABLE IF NOT EXISTS user_memories (
 );
 
 -- Indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_status ON sessions(status);
 CREATE INDEX IF NOT EXISTS idx_messages_session_id ON messages(session_id);
 CREATE INDEX IF NOT EXISTS idx_messages_user_id ON messages(user_id);
 CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at);
@@ -36,11 +47,15 @@ CREATE INDEX IF NOT EXISTS idx_user_memories_user_id ON user_memories(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_memories_created_at ON user_memories(created_at);
 
 -- Row Level Security (RLS) policies
+ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE session_summaries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_memories ENABLE ROW LEVEL SECURITY;
 
 -- Allow users to access their own data
+CREATE POLICY "Users can access own sessions" ON sessions
+  FOR ALL USING (auth.uid()::text = user_id);
+
 CREATE POLICY "Users can access own messages" ON messages
   FOR ALL USING (auth.uid()::text = user_id);
 
@@ -54,6 +69,7 @@ CREATE POLICY "Users can access own memories" ON user_memories
   FOR ALL USING (auth.uid()::text = user_id);
 
 -- Grant permissions to service role for memory operations
+GRANT ALL ON sessions TO service_role;
 GRANT ALL ON messages TO service_role;
 GRANT ALL ON session_summaries TO service_role;
 GRANT ALL ON user_memories TO service_role;

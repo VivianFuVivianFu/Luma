@@ -162,7 +162,7 @@ export class LumaAI {
       }
 
       this.currentUserId = session.user.id;
-      this.currentSessionId = memoryService.generateSessionId(this.currentUserId);
+      this.currentSessionId = await memoryService.getActiveSession(this.currentUserId);
       this.memoryEnabled = true;
 
       // Load existing conversation context from memory
@@ -172,10 +172,20 @@ export class LumaAI {
       );
 
       if (memoryContext) {
-        // Add memory context to system prompt
+        // Add memory context to system prompt (similar to Express API approach)
         this.conversationHistory.push({
           role: 'system',
-          content: `MEMORY CONTEXT FROM PREVIOUS SESSIONS:\n${memoryContext}\nUse this context naturally in your responses to show continuity and understanding of the user's journey.`
+          content: `PERSONALIZATION CONTEXT:
+${memoryContext}
+
+IMPORTANT: Use this context naturally to:
+- Show continuity with previous conversations
+- Reference their preferences and patterns
+- Build on therapeutic progress made
+- Avoid repeating insights they already understand
+- Demonstrate deep understanding of their journey
+
+Safety: Do not provide medical or legal advice. Encourage seeking professional help for crises.`
         });
       }
 
@@ -361,15 +371,18 @@ OUTCOME-FOCUSED GUIDANCE:
           assistantMessage
         );
 
-        // Process memory every 5 exchanges
-        if (this.exchangeCount % 5 === 0) {
-          // Update session summary (short-term memory)
+        // Process memory after each exchange (like Express API approach)
+        try {
+          // Update session summary after every message (more frequent updates)
           await memoryService.updateSummary(this.currentSessionId);
           
-          // Extract long-term memories every 10 exchanges
-          if (this.exchangeCount % 10 === 0) {
+          // Extract long-term memories every 5 exchanges (more frequent extraction)
+          if (this.exchangeCount % 5 === 0) {
             await memoryService.extractLongMemories(this.currentUserId, this.currentSessionId);
           }
+        } catch (memoryError) {
+          console.error('Memory processing error:', memoryError);
+          // Don't fail the conversation if memory processing fails
         }
       }
 
@@ -814,6 +827,11 @@ What feels like the most challenging part of this situation for you?`;
     this.clearHistory();
     this.lastResponses = [];
     console.log('Conversation history reset');
+    
+    // Close current session if it exists
+    if (this.memoryEnabled && this.currentSessionId) {
+      memoryService.closeSession(this.currentSessionId);
+    }
     
     // Reset memory completely
     this.currentUserId = null;
