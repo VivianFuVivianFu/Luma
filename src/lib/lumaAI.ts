@@ -1,8 +1,11 @@
 // src/lib/lumaAI.ts
 // Optimized version - uses LLaMA 3 70B through Together AI with streamlined prompt
 // Enhanced with RAG (Retrieval-Augmented Generation) for knowledge-based responses
+// Enhanced with Memory Service for long-term and short-term memory
 
 import { ragService } from './ragService';
+import { memoryService } from './memoryService';
+import { supabase } from './supabase';
 
 // Together AI configuration - Only LLaMA 3 70B
 const TOGETHER_API_KEY = import.meta.env.VITE_TOGETHER_API_KEY;
@@ -142,9 +145,53 @@ export class LumaAI {
   private lastQuestions: string[] = [];
   private repetitionCount = 0;
   private stuckInLoop = false;
+  
+  // Memory system properties
+  private currentUserId: string | null = null;
+  private currentSessionId: string | null = null;
+  private memoryEnabled = false;
+
+  // Initialize memory system for authenticated users
+  async initializeMemory(): Promise<void> {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error || !session?.user) {
+        this.memoryEnabled = false;
+        return;
+      }
+
+      this.currentUserId = session.user.id;
+      this.currentSessionId = memoryService.generateSessionId(this.currentUserId);
+      this.memoryEnabled = true;
+
+      // Load existing conversation context from memory
+      const memoryContext = await memoryService.getConversationContext(
+        this.currentUserId, 
+        this.currentSessionId
+      );
+
+      if (memoryContext) {
+        // Add memory context to system prompt
+        this.conversationHistory.push({
+          role: 'system',
+          content: `MEMORY CONTEXT FROM PREVIOUS SESSIONS:\n${memoryContext}\nUse this context naturally in your responses to show continuity and understanding of the user's journey.`
+        });
+      }
+
+    } catch (error) {
+      console.error('Memory initialization error:', error);
+      this.memoryEnabled = false;
+    }
+  }
 
   async sendMessage(userMessage: string): Promise<string> {
     try {
+      // Initialize memory if not done yet and user is authenticated
+      if (!this.memoryEnabled && this.currentUserId === null) {
+        await this.initializeMemory();
+      }
+
       // Increment exchange count
       this.exchangeCount++;
 
@@ -170,6 +217,16 @@ export class LumaAI {
       } catch (error) {
         console.log('RAG service not available or failed:', error);
         // Continue without RAG context
+      }
+
+      // Save user message to memory if enabled
+      if (this.memoryEnabled && this.currentUserId && this.currentSessionId) {
+        await memoryService.saveMessage(
+          this.currentSessionId, 
+          this.currentUserId, 
+          'user', 
+          userMessage
+        );
       }
 
       // Add user message to conversation history
@@ -292,6 +349,27 @@ OUTCOME-FOCUSED GUIDANCE:
         this.lastQuestions.push(assistantMessage);
         if (this.lastQuestions.length > 5) {
           this.lastQuestions = this.lastQuestions.slice(-5);
+        }
+      }
+
+      // Save assistant message to memory if enabled
+      if (this.memoryEnabled && this.currentUserId && this.currentSessionId) {
+        await memoryService.saveMessage(
+          this.currentSessionId, 
+          this.currentUserId, 
+          'assistant', 
+          assistantMessage
+        );
+
+        // Process memory every 5 exchanges
+        if (this.exchangeCount % 5 === 0) {
+          // Update session summary (short-term memory)
+          await memoryService.updateSummary(this.currentSessionId);
+          
+          // Extract long-term memories every 10 exchanges
+          if (this.exchangeCount % 10 === 0) {
+            await memoryService.extractLongMemories(this.currentUserId, this.currentSessionId);
+          }
         }
       }
 
@@ -725,12 +803,42 @@ What feels like the most challenging part of this situation for you?`;
     this.lastQuestions = [];
     this.repetitionCount = 0;
     this.stuckInLoop = false;
+    
+    // Reset memory session but keep user ID
+    if (this.memoryEnabled && this.currentUserId) {
+      this.currentSessionId = memoryService.generateSessionId(this.currentUserId);
+    }
   }
 
   resetConversation(): void {
     this.clearHistory();
     this.lastResponses = [];
     console.log('Conversation history reset');
+    
+    // Reset memory completely
+    this.currentUserId = null;
+    this.currentSessionId = null;
+    this.memoryEnabled = false;
+  }
+
+  // Public method to manually enable memory for authenticated users
+  async enableMemory(): Promise<boolean> {
+    await this.initializeMemory();
+    return this.memoryEnabled;
+  }
+
+  // Check if memory is enabled
+  isMemoryEnabled(): boolean {
+    return this.memoryEnabled;
+  }
+
+  // Get current session info
+  getSessionInfo(): { userId: string | null, sessionId: string | null, memoryEnabled: boolean } {
+    return {
+      userId: this.currentUserId,
+      sessionId: this.currentSessionId,
+      memoryEnabled: this.memoryEnabled
+    };
   }
 
   getHistoryLength(): number {

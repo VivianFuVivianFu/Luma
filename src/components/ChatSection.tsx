@@ -35,6 +35,17 @@ function ChatSection({ isAuthenticated = false, onMembershipPrompt }: ChatSectio
 
   const canSend = useMemo(() => input.trim().length > 0 && !isLoading, [input, isLoading]);
 
+  // Enable memory when user is authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      lumaAI.enableMemory().then((enabled) => {
+        if (enabled) {
+          console.log('Memory system enabled for authenticated user');
+        }
+      });
+    }
+  }, [isAuthenticated]);
+
   // Auto-scroll to bottom when messages change
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
