@@ -6,6 +6,8 @@
 import { ragService } from './ragService';
 import { memoryService } from './memoryService';
 import { supabase } from './supabase';
+// @ts-ignore
+import MultiModelSystem from '../multimodel/index.js';
 
 // Together AI configuration - Only LLaMA 3 70B
 const TOGETHER_API_KEY = import.meta.env.VITE_TOGETHER_API_KEY;
@@ -150,6 +152,10 @@ export class LumaAI {
   private currentUserId: string | null = null;
   private currentSessionId: string | null = null;
   private memoryEnabled = false;
+  
+  // Multi-model system
+  private multiModelSystem: any = null;
+  private useMultiModel = true; // Flag to enable/disable multi-model system
 
   // Initialize memory system for authenticated users
   async initializeMemory(): Promise<void> {
@@ -164,6 +170,17 @@ export class LumaAI {
       this.currentUserId = session.user.id;
       this.currentSessionId = await memoryService.getActiveSession(this.currentUserId);
       this.memoryEnabled = true;
+      
+      // Initialize multi-model system if enabled
+      if (this.useMultiModel && !this.multiModelSystem) {
+        try {
+          this.multiModelSystem = new MultiModelSystem();
+          console.log('[LumaAI] Multi-model system initialized');
+        } catch (error) {
+          console.error('[LumaAI] Failed to initialize multi-model system:', error);
+          this.useMultiModel = false;
+        }
+      }
 
       // Load existing conversation context from memory
       const memoryContext = await memoryService.getConversationContext(
@@ -208,6 +225,54 @@ Safety: Do not provide medical or legal advice. Encourage seeking professional h
       // Check for crisis keywords
       if (this.checkCrisisIndicators(userMessage)) {
         return this.getCrisisResponse();
+      }
+
+      // Try multi-model system first if available and enabled
+      if (this.useMultiModel && this.multiModelSystem) {
+        try {
+          console.log('[LumaAI] Using multi-model system for response generation');
+          const multiModelResult = await this.multiModelSystem.processMessage(userMessage);
+          
+          if (multiModelResult && multiModelResult.response) {
+            // Use the multi-model response but continue with memory storage
+            const assistantMessage = multiModelResult.response;
+            
+            // Save user message to memory if enabled
+            if (this.memoryEnabled && this.currentUserId && this.currentSessionId) {
+              await memoryService.saveMessage(
+                this.currentSessionId, 
+                this.currentUserId, 
+                'user', 
+                userMessage
+              );
+              
+              // Save assistant message to memory if enabled
+              await memoryService.saveMessage(
+                this.currentSessionId, 
+                this.currentUserId, 
+                'assistant', 
+                assistantMessage
+              );
+            }
+            
+            // Add to conversation history for context
+            this.conversationHistory.push({
+              role: 'user',
+              content: userMessage
+            });
+            
+            this.conversationHistory.push({
+              role: 'assistant',
+              content: assistantMessage
+            });
+            
+            console.log(`[LumaAI] Multi-model response via ${multiModelResult.metadata?.model} model`);
+            return assistantMessage;
+          }
+        } catch (error) {
+          console.error('[LumaAI] Multi-model system failed, falling back to LLaMA:', error);
+          // Fall through to original LLaMA system
+        }
       }
 
       // Check if user is stating a goal and clean it up
@@ -857,6 +922,39 @@ What feels like the most challenging part of this situation for you?`;
       sessionId: this.currentSessionId,
       memoryEnabled: this.memoryEnabled
     };
+  }
+
+  // Multi-model system controls
+  enableMultiModel(): boolean {
+    this.useMultiModel = true;
+    if (!this.multiModelSystem) {
+      try {
+        this.multiModelSystem = new MultiModelSystem();
+        console.log('[LumaAI] Multi-model system enabled');
+        return true;
+      } catch (error) {
+        console.error('[LumaAI] Failed to enable multi-model system:', error);
+        this.useMultiModel = false;
+        return false;
+      }
+    }
+    return true;
+  }
+
+  disableMultiModel(): void {
+    this.useMultiModel = false;
+    console.log('[LumaAI] Multi-model system disabled');
+  }
+
+  isMultiModelEnabled(): boolean {
+    return this.useMultiModel && this.multiModelSystem !== null;
+  }
+
+  getMultiModelMetrics(): any {
+    if (this.multiModelSystem) {
+      return this.multiModelSystem.getSystemMetrics();
+    }
+    return null;
   }
 
   getHistoryLength(): number {
