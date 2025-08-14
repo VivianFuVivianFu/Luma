@@ -1,6 +1,6 @@
 // Empathy Front — MentaLLaMA-7B（Endpoint 优先；否则 Serverless）
-// ES module 版本；严禁硬编码 token
-import cfg from './env.normalize.js'
+// CommonJS 版本；严禁硬编码 token
+const cfg = require('./env.normalize.js')
 
 function resolveUrl() {
   const url = cfg.HF_ENDPOINT_URL || cfg.EMPATHY_API_URL
@@ -37,4 +37,4 @@ async function empathyReply({ system, user }) {
   return text.split('Assistant:').pop()?.trim() || text.trim()
 }
 
-export { empathyReply }
+module.exports = { empathyReply }

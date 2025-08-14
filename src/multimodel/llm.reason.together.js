@@ -1,5 +1,5 @@
 // Reasoning Sidekick：Together.ai（32B 常态 + 70B 升舱）
-import cfg from './env.normalize.js'
+const cfg = require('./env.normalize.js')
 
 async function togetherChat(model, messages, temperature = 0.3) {
   const r = await fetch(`${cfg.TOGETHER_BASE}/chat/completions`, {
@@ -42,4 +42,4 @@ async function reasonOutline70B({ summary, longmem, user }) {
   return togetherChat(cfg.REASON_70B_MODEL, messages, 0.2)
 }
 
-export { reasonOutline32B, reasonOutline70B }
+module.exports = { reasonOutline32B, reasonOutline70B }

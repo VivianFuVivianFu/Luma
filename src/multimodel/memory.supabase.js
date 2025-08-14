@@ -1,108 +1,135 @@
-/**
- * Supabase 记忆版（与 memory.simple.js 完全同名导出）
- * 导出：
- *   loadContext(userId, sessionId)
- *   saveTurn(userId, { role, content, sessionId })
- *   updateSummary(userId, sessionId)
- *   addLongMemories(userId, bullets = [], sessionId)
- */
-import dotenv from 'dotenv'
-dotenv.config()
-import { createClient } from '@supabase/supabase-js'
+// src/multimodel/memory.supabase.js
+// 用 Supabase 存消息/摘要/长期记忆；把可读 sessionKey => UUID
 
-// 兼容你 .env 的 VITE_ 命名
-const SUPABASE_URL =
-  process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
-const SUPABASE_SERVICE_ROLE_KEY =
+const { createClient } = require('@supabase/supabase-js')
+
+const supa = createClient(
+  process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
+  // 服务端要写库：优先用 Service Role Key；没配的话临时兼容 VITE_ 前缀
   process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY
+)
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-  throw new Error('Supabase env missing: VITE_SUPABASE_URL / VITE_SUPABASE_SERVICE_ROLE_KEY')
-}
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-  auth: { persistSession: false },
-})
-
-// 表名允许通过 .env 覆盖
-const TBL_MESSAGES  = process.env.SUPA_TBL_MESSAGES   || 'messages'
-const TBL_SUMMARIES = process.env.SUPA_TBL_SUMMARIES  || 'session_summaries'
-const TBL_LONGMEM   = process.env.SUPA_TBL_LONGMEM    || 'user_long_memory'
-
-async function loadContext(userId, sessionId = 'default') {
-  // 1) 摘要
-  let summary = ''
-  {
-    const { data, error } = await supabase
-      .from(TBL_SUMMARIES)
-      .select('summary_text')
-      .eq('user_id', userId)
-      .eq('session_id', sessionId)
-      .order('updated_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-    if (!error && data?.summary_text) summary = data.summary_text
-  }
-
-  // 2) 长期记忆 Top-K
-  let longmem = []
-  {
-    const { data, error } = await supabase
-      .rpc('fetch_long_memory_ranked', { p_user_id: userId, p_limit: 6 })
-    if (!error && Array.isArray(data)) {
-      longmem = data.map(r => r.text)
-    } else {
-      const { data: rows, error: e2 } = await supabase
-        .from(TBL_LONGMEM)
-        .select('text')
-        .eq('user_id', userId)
-        .order('importance', { ascending: false })
-        .order('created_at', { ascending: false })
-        .limit(6)
-      if (!e2 && Array.isArray(rows)) longmem = rows.map(r => r.text)
-    }
-  }
-  return { summary, longmem }
-}
-
-async function saveTurn(userId, { role, content, sessionId = 'default' }) {
-  const { error } = await supabase.from(TBL_MESSAGES).insert({
-    user_id: userId, session_id: sessionId, role, content
-  })
-  if (error) throw error
-}
-
-async function updateSummary(userId, sessionId = 'default') {
-  const { data: msgs, error: e1 } = await supabase
-    .from(TBL_MESSAGES)
-    .select('role, content, created_at')
-    .eq('user_id', userId)
-    .eq('session_id', sessionId)
-    .order('created_at', { ascending: true })
-    .limit(200)
-  if (e1) throw e1
-
-  const last12 = (msgs || []).slice(-12).map(m => `${m.role}: ${m.content}`).join('\n')
-  const summary_text = last12.slice(-1200)
-
-  const { error: e2 } = await supabase
-    .from(TBL_SUMMARIES)
-    .upsert(
-      { user_id: userId, session_id: sessionId, summary_text },
-      { onConflict: 'user_id,session_id' }
+// 友好错误：表不存在时给出可读提示
+function assertTableExistsError(e) {
+  const msg = `${e?.message || e}`
+  if (msg.includes("Could not find the table 'public.")) {
+    throw new Error(
+      msg +
+      "  ← 数据库还没有对应的表。请到 Supabase SQL Editor 运行建表脚本（sessions/messages/session_summaries/user_long_memory + get_or_create_session）。"
     )
-  if (e2) throw e2
+  }
+  throw e
 }
 
-async function addLongMemories(userId, bullets = [], sessionId = 'default') {
-  const rows = (bullets || [])
-    .map(t => (t || '').trim())
-    .filter(Boolean)
-    .slice(0, 10)
-    .map(text => ({ user_id: userId, text, importance: 3 }))
-  if (!rows.length) return
-  const { error } = await supabase.from(TBL_LONGMEM).insert(rows)
-  if (error) throw error
+// 1) 把前端传的可读 sessionKey（如 "test-session"）映射到 UUID（sessions.id）
+async function getSessionUUID(userId, sessionKey) {
+  try {
+    const { data, error } = await supa.rpc('get_or_create_session', {
+      p_user: userId,
+      p_key: sessionKey,
+    })
+    if (error) throw error
+    return data // uuid 字符串
+  } catch (e) {
+    assertTableExistsError(e)
+  }
 }
 
-export { loadContext, saveTurn, updateSummary, addLongMemories }
+// 2) 存一条消息
+async function saveTurn(userId, sessionKey, { role, content }) {
+  try {
+    const sessionUUID = await getSessionUUID(userId, sessionKey)
+    const { error } = await supa.from('messages').insert({
+      user_id: userId,
+      session_id: sessionUUID,   // 这里是 UUID！
+      role,
+      content
+    })
+    if (error) throw error
+    return { sessionUUID }
+  } catch (e) {
+    assertTableExistsError(e)
+  }
+}
+
+// 3) 读取会话上下文（最近摘要 + 一些长期记忆）
+async function loadContext(userId, sessionKey) {
+  try {
+    const sessionUUID = await getSessionUUID(userId, sessionKey)
+
+    const { data: sum, error: e1 } = await supa
+      .from('session_summaries')
+      .select('summary_text, updated_at')
+      .eq('session_id', sessionUUID)
+      .maybeSingle()
+    if (e1) throw e1
+
+    const { data: longmem, error: e2 } = await supa
+      .from('user_long_memory')
+      .select('text')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(10)
+    if (e2) throw e2
+
+    return {
+      sessionUUID,
+      summary: sum?.summary_text || '',
+      longmem: (longmem || []).map(r => r.text)
+    }
+  } catch (e) {
+    assertTableExistsError(e)
+  }
+}
+
+// 4) 更新摘要（示例：把最近 N 条串起来再存；你也可以换成更智能的总结）
+async function updateSummary(userId, sessionKey, newSummaryText) {
+  try {
+    const sessionUUID = await getSessionUUID(userId, sessionKey)
+
+    let summaryText = newSummaryText
+    if (!summaryText) {
+      const { data: msgs, error: e3 } = await supa
+        .from('messages')
+        .select('role, content')
+        .eq('session_id', sessionUUID)
+        .order('created_at', { ascending: false })
+        .limit(8)
+      if (e3) throw e3
+
+      summaryText = (msgs || [])
+        .reverse()
+        .map(m => `${m.role === 'user' ? 'U' : 'A'}:${m.content}`)
+        .join(' | ')
+        .slice(0, 1000)
+    }
+
+    const { error } = await supa
+      .from('session_summaries')
+      .upsert({ session_id: sessionUUID, summary_text: summaryText, updated_at: new Date().toISOString() })
+    if (error) throw error
+  } catch (e) {
+    assertTableExistsError(e)
+  }
+}
+
+// 5) 添加入长期记忆（去重/过滤留给你后面优化）
+async function addLongMemories(userId, items = []) {
+  if (!items.length) return
+  try {
+    const rows = items.filter(Boolean).map(text => ({ user_id: userId, text }))
+    const { error } = await supa.from('user_long_memory').insert(rows)
+    if (error) throw error
+  } catch (e) {
+    assertTableExistsError(e)
+  }
+}
+
+module.exports = {
+  getSessionUUID,
+  saveTurn,
+  loadContext,
+  updateSummary,
+  addLongMemories,
+}
+

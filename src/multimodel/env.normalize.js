@@ -1,5 +1,5 @@
 // 统一 & 纠正环境变量，避免改你的 .env
-import dotenv from 'dotenv'
+const dotenv = require('dotenv')
 dotenv.config()
 
 function normQwen(name) {
@@ -53,4 +53,4 @@ function assertRequired() {
 }
 
 assertRequired()
-export default cfg
+module.exports = cfg

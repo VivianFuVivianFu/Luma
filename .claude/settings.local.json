@@ -30,8 +30,33 @@
       "Bash(powershell:*)",
       "Bash(git push:*)",
       "Bash(start http://localhost:5174)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "WebSearch",
+      "Bash(vercel:*)",
+      "Bash(npx vercel:*)",
+      "Bash(git config:*)",
+      "Bash(del validate-env.js)",
+      "Bash(del \"C:\\Users\\vivia\\OneDrive\\Desktop\\Luma 3\\validate-env.js\")",
+      "Bash(npm run start:server:*)",
+      "WebFetch(domain:huggingface.co)",
+      "Bash(del debug-routes.js)",
+      "Bash(supabase status:*)",
+      "Bash(supabase init:*)",
+      "Bash(npx supabase:*)",
+      "Bash(psql:*)",
+      "Bash(FROM_EMAIL=\"Luma <noreply@placeholder-domain.com>\" )",
+      "Bash(HF_MODEL_ID=\"klyang/MentaLLaMA-chat-7B\" )",
+      "Bash(./setup-nudge-system.bat)",
+      "Bash(export TERM=xterm)",
+      "Bash(export BROWSER=\"/c/Program Files (x86)/Microsoft/Edge/Application/msedge.exe\")",
+      "Bash(export FORCE_COLOR=1)",
+      "Bash(winpty npx supabase login)",
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_1086cfd31b066daeac15848e3578b588f971a5d1 npx supabase projects list)",
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_1086cfd31b066daeac15848e3578b588f971a5d1 npx supabase link --project-ref oyqzljunafjfuwdedjee --password skip)",
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_1086cfd31b066daeac15848e3578b588f971a5d1 npx supabase secrets set --project-ref oyqzljunafjfuwdedjee SUPABASE_URL=\"https://oyqzljunafjfuwdedjee.supabase.co\" SUPABASE_SERVICE_ROLE_KEY=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95cXpsanVuYWZqZnV3ZGVkamVlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDY1ODIwNiwiZXhwIjoyMDcwMjM0MjA2fQ.eUbnUfEeXJ7p7SCTBS3-MuUPglnR8ztIiqqsZgHruUg\" RESEND_API_KEY=\"re_fyNdBZxk_61v8KRBJ8aTUxJnNp92GBCSr\")",
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_1086cfd31b066daeac15848e3578b588f971a5d1 npx supabase functions deploy nudge-email-24h --project-ref oyqzljunafjfuwdedjee --no-verify-jwt)"
     ],
-    "deny": []
+    "deny": [],
+    "defaultMode": "acceptEdits"
   }
 }

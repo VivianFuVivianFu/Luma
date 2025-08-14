@@ -1,0 +1,49 @@
+Luma 关怀邮件系统 - 手动部署命令清单
+=================================================
+
+请在 Windows 命令提示符 (cmd) 中逐条执行以下命令：
+
+1. 导航到项目目录：
+   cd "C:\Users\vivia\OneDrive\Desktop\Luma 3"
+
+2. 登录 Supabase（会打开浏览器）：
+   npx supabase login
+
+3. 链接到您的项目（需要输入数据库密码）：
+   npx supabase link --project-ref oyqzljunafjfuwdedjee
+
+4. 部署数据库架构：
+   npx supabase db push
+
+   如果失败，请访问：
+   https://supabase.com/dashboard/project/oyqzljunafjfuwdedjee/sql
+   在 SQL Editor 中执行 supabase_schema.sql 的内容
+
+5. 设置环境变量：
+   npx supabase secrets set SUPABASE_URL="https://oyqzljunafjfuwdedjee.supabase.co" SUPABASE_SERVICE_ROLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95cXpsanVuYWZqZnV3ZGVkamVlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDY1ODIwNiwiZXhwIjoyMDcwMjM0MjA2fQ.eUbnUfEeXJ7p7SCTBS3-MuUPglnR8ztIiqqsZgHruUg" RESEND_API_KEY="re_fyNdBZxk_61v8KRBJ8aTUxJnNp92GBCSr" FROM_EMAIL="Luma <noreply@placeholder-domain.com>" HUGGINGFACE_API_KEY="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" HF_MODEL_ID="klyang/MentaLLaMA-chat-7B" CRON_SECRET="iugftdhuy8756475e5dvhgkdt"
+
+6. 部署 Edge Function：
+   npx supabase functions deploy nudge-email-24h --no-verify-jwt
+
+7. 验证系统：
+   node verify-nudge-system.js
+
+8. 设置定时任务（需要在浏览器中手动完成）：
+   访问：https://supabase.com/dashboard/project/oyqzljunafjfuwdedjee/functions
+   - 找到 nudge-email-24h 函数
+   - 点击进入，选择 Schedules 标签
+   - 添加定时任务：
+     * Cron: 0 10 * * *
+     * Method: POST  
+     * URL: https://oyqzljunafjfuwdedjee.functions.supabase.co/nudge-email-24h?token=iugftdhuy8756475e5dvhgkdt
+
+完成后的测试命令：
+curl -X POST "https://oyqzljunafjfuwdedjee.functions.supabase.co/nudge-email-24h?token=iugftdhuy8756475e5dvhgkdt"
+
+=================================================
+注意事项：
+- 如果某步失败，请查看错误信息
+- 第4步如果失败，可以手动在 Supabase SQL Editor 执行 SQL
+- FROM_EMAIL 中的域名需要在 Resend 中验证（或使用测试模式）
+- 定时任务设置完成后，系统每天上午10点自动检查并发送关怀邮件
+=================================================

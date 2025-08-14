@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luma Memory System Testing Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 1.2em;
+        }
+        
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .test-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            border: 2px solid #e1e8ed;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .test-card:hover {
+            border-color: #667eea;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .test-card.running {
+            border-color: #f39c12;
+            background: #fff8f0;
+        }
+        
+        .test-card.success {
+            border-color: #27ae60;
+            background: #f0fff4;
+        }
+        
+        .test-card.error {
+            border-color: #e74c3c;
+            background: #fff5f5;
+        }
+        
+        .test-card h3 {
+            font-size: 1.3em;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .test-card p {
+            color: #666;
+            margin-bottom: 15px;
+        }
+        
+        .test-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .test-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-idle { background: #95a5a6; }
+        .status-running { background: #f39c12; animation: pulse 1.5s infinite; }
+        .status-success { background: #27ae60; }
+        .status-error { background: #e74c3c; }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .console-output {
+            background: #1e1e1e;
+            color: #f0f0f0;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+            white-space: pre-wrap;
+        }
+        
+        .results-summary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .results-summary h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+        
+        .score-display {
+            font-size: 3em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .recommendations {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        .recommendations h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        
+        .recommendations ul {
+            color: #856404;
+            margin-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧠 Luma Memory System Testing Dashboard</h1>
+            <p>Comprehensive testing and validation of all memory features</p>
+        </div>
+        
+        <div class="test-grid">
+            <div class="test-card" id="quick-test-card">
+                <h3><span class="status-indicator status-idle" id="quick-status"></span>Quick Memory Check</h3>
+                <p>Fast validation of basic memory system functionality and connectivity.</p>
+                <button class="test-button" onclick="runQuickTest()" id="quick-test-btn">Run Quick Test</button>
+            </div>
+            
+            <div class="test-card" id="full-test-card">
+                <h3><span class="status-indicator status-idle" id="full-status"></span>Full System Test</h3>
+                <p>Complete memory system testing including database connectivity and configuration.</p>
+                <button class="test-button" onclick="runFullTest()" id="full-test-btn">Run Full Test</button>
+            </div>
+            
+            <div class="test-card" id="demo-test-card">
+                <h3><span class="status-indicator status-idle" id="demo-status"></span>Live Demo</h3>
+                <p>Interactive demonstration of all memory features with realistic conversation simulation.</p>
+                <button class="test-button" onclick="runDemo()" id="demo-test-btn">Run Live Demo</button>
+            </div>
+            
+            <div class="test-card" id="validation-test-card">
+                <h3><span class="status-indicator status-idle" id="validation-status"></span>Feature Validation</h3>
+                <p>Comprehensive validation of short-term, long-term, integration, and persistence features.</p>
+                <button class="test-button" onclick="runValidation()" id="validation-test-btn">Run Validation</button>
+            </div>
+        </div>
+        
+        <div class="console-output" id="console-output">
+            Welcome to the Luma Memory System Testing Dashboard!
+            
+            Available Tests:
+            • Quick Memory Check - Fast functionality validation
+            • Full System Test - Complete system assessment  
+            • Live Demo - Interactive feature demonstration
+            • Feature Validation - Comprehensive memory testing
+            
+            Click any test button above to begin testing...
+        </div>
+        
+        <div id="results-summary" style="display: none;" class="results-summary">
+            <h3>Test Results Summary</h3>
+            <div class="score-display" id="overall-score">--</div>
+            <p id="status-message">No tests completed yet</p>
+        </div>
+        
+        <div id="recommendations" style="display: none;" class="recommendations">
+            <h4>📋 Recommendations</h4>
+            <ul id="recommendation-list"></ul>
+        </div>
+    </div>
+
+    <script>
+        let consoleOutput = document.getElementById('console-output');
+        let currentTest = null;
+        
+        function updateStatus(testId, status) {
+            const statusElement = document.getElementById(`${testId}-status`);
+            const cardElement = document.getElementById(`${testId}-test-card`);
+            const buttonElement = document.getElementById(`${testId}-test-btn`);
+            
+            statusElement.className = `status-indicator status-${status}`;
+            cardElement.className = `test-card ${status}`;
+            
+            if (status === 'running') {
+                buttonElement.disabled = true;
+                buttonElement.textContent = 'Running...';
+            } else {
+                buttonElement.disabled = false;
+                buttonElement.textContent = buttonElement.textContent.replace('Running...', 
+                    buttonElement.id.includes('quick') ? 'Run Quick Test' :
+                    buttonElement.id.includes('full') ? 'Run Full Test' :
+                    buttonElement.id.includes('demo') ? 'Run Live Demo' : 'Run Validation');
+            }
+        }
+        
+        function logToConsole(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
+            const logMessage = `[${timestamp}] ${prefix} ${message}\n`;
+            
+            consoleOutput.textContent += logMessage;
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+        
+        function clearConsole() {
+            consoleOutput.textContent = '';
+        }
+        
+        function showResults(score, status, recommendations = []) {
+            const resultsDiv = document.getElementById('results-summary');
+            const scoreDiv = document.getElementById('overall-score');
+            const statusDiv = document.getElementById('status-message');
+            const recsDiv = document.getElementById('recommendations');
+            const recsList = document.getElementById('recommendation-list');
+            
+            scoreDiv.textContent = `${score}%`;
+            statusDiv.textContent = status;
+            resultsDiv.style.display = 'block';
+            
+            if (recommendations.length > 0) {
+                recsList.innerHTML = recommendations.map(rec => `<li>${rec}</li>`).join('');
+                recsDiv.style.display = 'block';
+            } else {
+                recsDiv.style.display = 'none';
+            }
+        }
+        
+        async function runQuickTest() {
+            if (currentTest) return;
+            
+            currentTest = 'quick';
+            updateStatus('quick', 'running');
+            clearConsole();
+            logToConsole('Starting Quick Memory Check...', 'info');
+            
+            try {
+                // Check if quick validation is available
+                if (typeof window.quickMemoryValidation === 'function') {
+                    const result = await window.quickMemoryValidation();
+                    
+                    if (result) {
+                        const score = result.results?.functionsAvailable?.score || 0;
+                        logToConsole(`Quick test completed with score: ${score}%`, score >= 80 ? 'success' : 'warning');
+                        showResults(score, result.summary, result.recommendations);
+                        updateStatus('quick', score >= 80 ? 'success' : 'error');
+                    } else {
+                        throw new Error('Quick validation returned no results');
+                    }
+                } else {
+                    throw new Error('Quick validation function not available');
+                }
+                
+            } catch (error) {
+                logToConsole(`Quick test failed: ${error.message}`, 'error');
+                updateStatus('quick', 'error');
+                showResults(0, 'Quick test failed', ['Ensure memory system is properly loaded', 'Check browser console for errors']);
+            }
+            
+            currentTest = null;
+        }
+        
+        async function runFullTest() {
+            if (currentTest) return;
+            
+            currentTest = 'full';
+            updateStatus('full', 'running');
+            clearConsole();
+            logToConsole('Starting Full System Test...', 'info');
+            
+            try {
+                if (typeof window.testMemorySystem === 'function') {
+                    const result = await window.testMemorySystem();
+                    
+                    if (result) {
+                        const passCount = Object.values(result.tests).filter(t => t.status === 'pass').length;
+                        const totalTests = Object.keys(result.tests).length;
+                        const score = Math.round((passCount / totalTests) * 100);
+                        
+                        logToConsole(`Full test completed: ${passCount}/${totalTests} tests passed`, score >= 80 ? 'success' : 'warning');
+                        showResults(score, result.summary, result.recommendations);
+                        updateStatus('full', score >= 80 ? 'success' : 'error');
+                    } else {
+                        throw new Error('Full test returned no results');
+                    }
+                } else {
+                    throw new Error('Full test function not available');
+                }
+                
+            } catch (error) {
+                logToConsole(`Full test failed: ${error.message}`, 'error');
+                updateStatus('full', 'error');
+                showResults(0, 'Full test failed', ['Check database connection', 'Verify environment configuration']);
+            }
+            
+            currentTest = null;
+        }
+        
+        async function runDemo() {
+            if (currentTest) return;
+            
+            currentTest = 'demo';
+            updateStatus('demo', 'running');
+            clearConsole();
+            logToConsole('Starting Live Memory Demo...', 'info');
+            
+            try {
+                if (typeof window.runMemoryDemo === 'function') {
+                    const result = await window.runMemoryDemo();
+                    
+                    if (result && result.finalAssessment) {
+                        const score = result.finalAssessment.overallScore;
+                        const status = result.finalAssessment.status;
+                        
+                        logToConsole(`Demo completed with ${status} performance (${score}%)`, score >= 80 ? 'success' : 'warning');
+                        showResults(score, `Live demo: ${status}`, ['Demo completed successfully', 'Check console for detailed results']);
+                        updateStatus('demo', score >= 80 ? 'success' : 'error');
+                    } else {
+                        throw new Error('Demo returned incomplete results');
+                    }
+                } else {
+                    throw new Error('Demo function not available');
+                }
+                
+            } catch (error) {
+                logToConsole(`Demo failed: ${error.message}`, 'error');
+                updateStatus('demo', 'error');
+                showResults(0, 'Demo failed', ['Ensure database access is available', 'Check memory service configuration']);
+            }
+            
+            currentTest = null;
+        }
+        
+        async function runValidation() {
+            if (currentTest) return;
+            
+            currentTest = 'validation';
+            updateStatus('validation', 'running');
+            clearConsole();
+            logToConsole('Starting Feature Validation Suite...', 'info');
+            
+            try {
+                if (typeof window.validateMemoryFeatures === 'function') {
+                    const result = await window.validateMemoryFeatures();
+                    
+                    if (result) {
+                        const score = result.overallScore;
+                        logToConsole(`Validation completed with score: ${score}%`, score >= 80 ? 'success' : 'warning');
+                        showResults(score, result.summary, result.recommendations);
+                        updateStatus('validation', score >= 80 ? 'success' : 'error');
+                    } else {
+                        throw new Error('Validation returned no results');
+                    }
+                } else {
+                    throw new Error('Validation function not available');
+                }
+                
+            } catch (error) {
+                logToConsole(`Validation failed: ${error.message}`, 'error');
+                updateStatus('validation', 'error');
+                showResults(0, 'Validation failed', ['Check user authentication', 'Verify database setup']);
+            }
+            
+            currentTest = null;
+        }
+        
+        // Initialize the page
+        logToConsole('Memory Testing Dashboard initialized', 'success');
+        logToConsole('Ready to run memory system tests', 'info');
+        
+        // Auto-load test scripts if they exist
+        setTimeout(() => {
+            if (typeof window.quickMemoryValidation === 'function') {
+                logToConsole('Quick validation functions loaded', 'success');
+            }
+            if (typeof window.testMemorySystem === 'function') {
+                logToConsole('Full test functions loaded', 'success');
+            }
+            if (typeof window.runMemoryDemo === 'function') {
+                logToConsole('Demo functions loaded', 'success');
+            }
+            if (typeof window.validateMemoryFeatures === 'function') {
+                logToConsole('Validation functions loaded', 'success');
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

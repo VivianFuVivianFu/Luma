@@ -1,5 +1,5 @@
 // HF Inference API：BERT triage（情绪/风险分类）
-import cfg from './env.normalize.js'
+const cfg = require('./env.normalize.js')
 
 async function triage(text) {
   if (!cfg.TRIAGE_API_URL || !cfg.HF_API_TOKEN) {
@@ -36,4 +36,4 @@ async function triage(text) {
   throw new Error('HF Inference API cold start timeout')
 }
 
-export { triage }
+module.exports = { triage }

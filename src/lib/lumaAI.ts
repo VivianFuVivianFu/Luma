@@ -6,8 +6,7 @@
 import { ragService } from './ragService';
 import { memoryService } from './memoryService';
 import { supabase } from './supabase';
-// @ts-ignore
-import { MultiModelSystem } from '../multimodel/index.js';
+import { MultiModelSystem } from './multiModelWrapper';
 
 // Together AI configuration - Only LLaMA 3 70B
 const TOGETHER_API_KEY = import.meta.env.VITE_TOGETHER_API_KEY;
