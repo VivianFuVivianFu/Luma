@@ -76,7 +76,11 @@ venv.bak/
 *.pyd
 site-packages/
 Lib/
-lib/
+/lib/
+
+# Unignore source lib directories
+!/src/lib/
+!/src/lib/**
 
 # Conda environments
 conda-meta/
