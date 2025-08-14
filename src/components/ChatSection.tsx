@@ -1,237 +1,241 @@
-import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { Send, Phone, Maximize2, Minimize2 } from 'lucide-react';
-import { lumaAI } from '../lib/lumaAI';
-import VoiceCallWidget from './VoiceCallWidget';
-import MemoryStatusIndicator from './MemoryStatusIndicator';
+import { useState, useRef, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Mic, MicOff, Send, Volume2 } from 'lucide-react';
+import { useConversation } from '@11labs/react';
+import { lumaAI } from '@/lib/lumaAI';
+import lumaAvatar from '@/assets/luma-avatar.png';
 
-type Sender = 'user' | 'luma';
-type Message = { id: string; content: string; sender: Sender; timestamp: Date };
+interface Message {
+  id: string;
+  content: string;
+  sender: 'user' | 'luma';
+  timestamp: Date;
+}
 
-type ChatSectionProps = {
-  isAuthenticated?: boolean;
-  onMembershipPrompt?: () => void;
-};
-
-function ChatSection({ isAuthenticated = false, onMembershipPrompt }: ChatSectionProps = {}) {
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [showVoiceChat, setShowVoiceChat] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const handleFullscreenToggle = () => {
-    setIsFullscreen(!isFullscreen);
-  };
-
+const ChatSection = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
-      id: 'm-1',
-      content:
-        "Hi, I'm Luma your AI emotional companion, thoughtfully designed with empathy, psychology, and neuroscience. I'm here to support your journey of reflection, healing, and transformation. Wherever you are on your journey, let's take the next step together.",
+      id: '1',
+      content: "Hi, I'm Luma — your gentle companion powered by LLaMA 3 70B. I'm here to support you in self-reflection and transformation with advanced AI understanding. Wherever you are on your journey, I'm here to hold space with care and empathy. What would you like to talk about today?",
       sender: 'luma',
-      timestamp: new Date(),
-    },
-  ]);
-  const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasShownMembershipPrompt, setHasShownMembershipPrompt] = useState(false);
-
-  const canSend = useMemo(() => input.trim().length > 0 && !isLoading, [input, isLoading]);
-
-  // Enable memory when user is authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      lumaAI.enableMemory().then((enabled) => {
-        if (enabled) {
-          console.log('Memory system enabled for authenticated user');
-        }
-      });
+      timestamp: new Date()
     }
-  }, [isAuthenticated]);
+  ]);
+  const [inputValue, setInputValue] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isVoiceConnected, setIsVoiceConnected] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom when messages change
+  const conversation = useConversation({
+    apiKey: 'sk_415684fdf9ebc8dc4aaeca3706625ab0b496276d0a69f74e',
+    onConnect: () => {
+      console.log('Voice conversation connected');
+      setIsVoiceConnected(true);
+      addMessage("Voice conversation connected! You can now speak with me.", "luma");
+    },
+    onDisconnect: () => {
+      console.log('Voice conversation disconnected');
+      setIsVoiceConnected(false);
+      addMessage("Voice conversation ended.", "luma");
+    },
+    onMessage: (message) => {
+      if (message.message) {
+        addMessage(message.message, 'luma');
+      }
+    },
+    onError: (error) => {
+      console.error('Voice conversation error:', error);
+      setIsVoiceConnected(false);
+      addMessage("Sorry, there was an error with the voice conversation. Please try again.", "luma");
+    },
+  });
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isLoading]);
+  }, [messages]);
 
-  // Check for membership prompt after 2 minutes of chatting
-  useEffect(() => {
-    if (!isAuthenticated && !hasShownMembershipPrompt && onMembershipPrompt) {
-      const timer = setTimeout(() => {
-        // Only show if user has sent at least one message
-        const userMessages = messages.filter(m => m.sender === 'user');
-        if (userMessages.length > 0) {
-          setHasShownMembershipPrompt(true);
-          onMembershipPrompt();
-        }
-      }, 2 * 60 * 1000); // 2 minutes
-
-      return () => clearTimeout(timer);
-    }
-  }, [isAuthenticated, hasShownMembershipPrompt, onMembershipPrompt, messages]);
-
-  const addMessage = (content: string, sender: Sender) => {
-    const id = `m-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    setMessages((prev) => [...prev, { id, content, sender, timestamp: new Date() }]);
+  const addMessage = (content: string, sender: 'user' | 'luma') => {
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      content,
+      sender,
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, newMessage]);
   };
 
   const sendMessage = async () => {
-    const text = input.trim();
-    if (!text) return;
-    addMessage(text, 'user');
-    setInput('');
+    if (!inputValue.trim() || isLoading) return;
+
+    const userMessage = inputValue.trim();
+    setInputValue('');
+    addMessage(userMessage, 'user');
     setIsLoading(true);
 
     try {
-      // Use LumaAI to get natural conversation responses
-      const response = await lumaAI.sendMessage(text);
-      addMessage(response, 'luma');
+      // Use LLaMA 3 70B via Together AI
+      const lumaResponse = await lumaAI.sendMessage(userMessage);
+      addMessage(lumaResponse, 'luma');
+      setIsLoading(false);
     } catch (error) {
-      console.error('Error getting response from Luma:', error);
-      // Fallback response if API fails
-      addMessage('I apologize, but I\'m having trouble connecting right now. Please try again in a moment.', 'luma');
+      console.error('Error sending message:', error);
+      addMessage("I'm sorry, I'm having trouble connecting right now. Please try again.", 'luma');
+      setIsLoading(false);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
+  const startVoiceConversation = async () => {
+    try {
+      setIsLoading(true);
+
+      // Start conversation with the agent ID
+      await conversation.startSession({
+        agentId: 'agent_6901k1fgqzszfq89cxndsfs69z7m',
+      });
+
+    } catch (error) {
+      console.error('Error starting voice conversation:', error);
+      addMessage("Sorry, I couldn't start the voice conversation. Please try again later.", "luma");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const onKeyDown: React.KeyboardEventHandler<HTMLInputElement> = (e) => {
-    if (e.key === 'Enter' && canSend) sendMessage();
+  const endVoiceConversation = () => {
+    conversation.endSession();
   };
 
-  const startVoiceCall = () => {
-    setShowVoiceChat(true);
+  const clearConversation = () => {
+    lumaAI.clearHistory();
+    setMessages([
+      {
+        id: '1',
+        content: "Hi, I'm Luma — your gentle companion powered by LLaMA 3 70B. I'm here to support you in self-reflection and transformation with advanced AI understanding. What would you like to talk about today?",
+        sender: 'luma',
+        timestamp: new Date()
+      }
+    ]);
   };
 
   return (
-    <div className={`relative flex flex-col bg-white/95 backdrop-blur-sm text-gray-800 border border-white/20 overflow-hidden shadow-lg ${isFullscreen ? 'fixed inset-0 z-50 h-screen rounded-none' : 'h-full rounded-2xl'}`}>
-      {/* Header - Fixed - Reduced Height */}
-      <div className="flex items-center justify-between p-3 border-b border-gray-200/50 bg-gradient-to-r from-blue-50/80 to-purple-50/80 sticky top-0 z-10">
+    <div className="flex flex-col h-full bg-card rounded-2xl border border-border overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 border-b border-border bg-secondary/50">
         <div className="flex items-center gap-3">
-          <img 
-            src="/luma_photo.jpg" 
-            alt="Luma" 
-            className="w-10 h-10 rounded-full object-cover shadow-md"
+          <img
+            src={lumaAvatar}
+            alt="Luma Avatar"
+            className="w-8 h-8 rounded-full"
           />
-          <h3 className="text-base font-semibold text-gray-700" style={{fontFamily: 'Gowun Dodum, sans-serif'}}>Chat with Luma</h3>
+          <div>
+            <h3 className="font-semibold text-card-foreground">Luma</h3>
+            <p className="text-xs text-muted-foreground">
+              {isVoiceConnected ? 'Voice Active' : 'Your AI Companion'}
+            </p>
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={handleFullscreenToggle}
-          className="inline-flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 text-gray-600 p-2 transition-all duration-200 hover:scale-105"
-          title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-        >
-          {isFullscreen ? (
-            <Minimize2 className="w-5 h-5" />
-          ) : (
-            <Maximize2 className="w-5 h-5" />
-          )}
-        </button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={isVoiceConnected ? endVoiceConversation : startVoiceConversation}
+            disabled={isLoading}
+            className={`transition-colors px-4 py-2 min-w-[120px] ${
+              isVoiceConnected
+                ? 'text-red-500 hover:text-red-600 bg-red-50'
+                : 'text-luma-blue hover:text-luma-blue-dark'
+            }`}
+            title={isVoiceConnected ? 'End Voice Chat' : 'Start Voice Chat'}
+          >
+            <div className="flex items-center gap-2">
+              {isVoiceConnected ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+              <span className="text-sm font-medium">
+                {isVoiceConnected ? 'End Call' : 'Call Luma'}
+              </span>
+            </div>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-luma-blue hover:text-luma-blue-dark"
+            title="Voice Settings"
+          >
+            <Volume2 className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-auto p-6 space-y-4">
-        {messages.map((m) => (
-          <div key={m.id} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start items-end'}`}>
-            {m.sender === 'luma' && (
-              <img 
-                src="/luma_photo.jpg" 
-                alt="Luma" 
-                className="w-8 h-8 rounded-full object-cover shadow-sm mr-3 mb-1 flex-shrink-0"
-              />
-            )}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {messages.map((message) => (
+          <div
+            key={message.id}
+            className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+          >
             <div
-              className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm ${
-                m.sender === 'user'
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
-                  : 'bg-gray-100 text-gray-700 border border-gray-200'
+              className={`max-w-[80%] p-3 rounded-2xl ${
+                message.sender === 'user'
+                  ? 'bg-luma-blue text-luma-blue-foreground ml-4'
+                  : 'bg-secondary text-secondary-foreground mr-4'
               }`}
             >
-              {m.content}
+              <p className="text-sm leading-relaxed">{message.content}</p>
+              <p className="text-xs opacity-70 mt-1">
+                {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </p>
             </div>
           </div>
         ))}
+
         {isLoading && (
-          <div className="flex justify-start items-end">
-            <img 
-              src="/luma_photo.jpg" 
-              alt="Luma" 
-              className="w-8 h-8 rounded-full object-cover shadow-sm mr-3 mb-1 flex-shrink-0"
-            />
-            <div className="bg-gray-100 rounded-2xl px-4 py-3 text-sm text-gray-600 border border-gray-200">
-              <div className="flex items-center gap-2">
-                <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                </div>
-                <span>Luma is thinking...</span>
+          <div className="flex justify-start">
+            <div className="bg-secondary text-secondary-foreground p-3 rounded-2xl mr-4">
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-luma-blue rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-luma-blue rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                <div className="w-2 h-2 bg-luma-blue rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
               </div>
             </div>
           </div>
         )}
+
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Memory Status Indicator - Show at bottom of chat */}
-      <div className="px-3 sm:px-6 border-t border-gray-100">
-        <div className="py-2">
-          <MemoryStatusIndicator />
-        </div>
-      </div>
-
-      {/* Input row */}
-      <div className="p-3 sm:p-6 border-t border-gray-200/50 bg-gradient-to-r from-gray-50/80 to-blue-50/80">
-        <div className="flex items-center gap-2 sm:gap-4">
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={onKeyDown}
-            placeholder="Share what's on your mind..."
-            className="flex-1 bg-white border border-gray-300 rounded-full px-4 sm:px-6 py-2 sm:py-3 text-gray-700 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-transparent shadow-sm placeholder-gray-500 text-sm sm:text-base"
+      {/* Input */}
+      <div className="p-4 border-t border-border bg-secondary/30">
+        <div className="flex items-center gap-2">
+          <Input
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder={isVoiceConnected ? "Voice chat active - speak or type..." : "Share what's on your mind..."}
+            className="flex-1 bg-input border-border focus:ring-luma-blue focus:border-luma-blue"
             disabled={isLoading}
           />
-          <button
-            type="button"
+          <Button
             onClick={sendMessage}
-            disabled={!canSend}
-            className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white p-2 sm:p-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-md transition-all duration-200 hover:scale-105 flex-shrink-0"
-            title="Send message"
+            disabled={!inputValue.trim() || isLoading}
+            className="bg-luma-blue hover:bg-luma-blue-dark text-luma-blue-foreground"
           >
-            <Send className="w-4 h-4 sm:w-5 sm:h-5" />
-          </button>
-          <button
-            type="button"
-            onClick={startVoiceCall}
-            className="inline-flex items-center gap-1 sm:gap-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-md transition-all duration-200 hover:scale-105 p-2 sm:p-3 flex-shrink-0"
-            title="Start voice call"
-          >
-            <Phone className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span className="text-xs font-medium hidden sm:inline" style={{fontFamily: 'Gowun Dodum, sans-serif'}}>Voice</span>
-            <span className="text-xs font-medium sm:hidden">📞</span>
-          </button>
+            <Send className="w-4 h-4" />
+          </Button>
         </div>
       </div>
-
-
-      {/* Voice Chat Modal */}
-      {showVoiceChat && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-          <div className="relative">
-            <button 
-              onClick={() => setShowVoiceChat(false)}
-              className="absolute -top-2 -right-2 z-10 text-white bg-gray-800/70 hover:bg-gray-700 rounded-full p-2 text-xl font-bold"
-            >
-              ×
-            </button>
-            <VoiceCallWidget agentId={import.meta.env.VITE_ELEVENLABS_AGENT_ID || 'agent_6901k1fgqzszfq89cxndsfs69z7m'} />
-          </div>
-        </div>
-      )}
     </div>
   );
-}
+};
 
 export default ChatSection;
