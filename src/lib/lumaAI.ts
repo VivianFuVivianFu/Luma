@@ -7,7 +7,7 @@ import { ragService } from './ragService';
 import { memoryService } from './memoryService';
 import { supabase } from './supabase';
 // @ts-ignore
-import MultiModelSystem from '../multimodel/index.js';
+// import MultiModelSystem from '../multimodel/index.js';
 
 // Together AI configuration - Only LLaMA 3 70B
 const TOGETHER_API_KEY = import.meta.env.VITE_TOGETHER_API_KEY;
@@ -154,8 +154,8 @@ export class LumaAI {
   private memoryEnabled = false;
   
   // Multi-model system
-  private multiModelSystem: any = null;
-  private useMultiModel = true; // Flag to enable/disable multi-model system
+  private multiModelSystem: any = null; // Temporarily disabled
+  private useMultiModel = false; // Flag to enable/disable multi-model system - DISABLED FOR BUILD
 
   // Initialize memory system for authenticated users
   async initializeMemory(): Promise<void> {
@@ -172,15 +172,15 @@ export class LumaAI {
       this.memoryEnabled = true;
       
       // Initialize multi-model system if enabled
-      if (this.useMultiModel && !this.multiModelSystem) {
-        try {
-          this.multiModelSystem = new MultiModelSystem();
-          console.log('[LumaAI] Multi-model system initialized');
-        } catch (error) {
-          console.error('[LumaAI] Failed to initialize multi-model system:', error);
-          this.useMultiModel = false;
-        }
-      }
+      // if (this.useMultiModel && !this.multiModelSystem) {
+      //   try {
+      //     this.multiModelSystem = new MultiModelSystem();
+      //     console.log('[LumaAI] Multi-model system initialized');
+      //   } catch (error) {
+      //     console.error('[LumaAI] Failed to initialize multi-model system:', error);
+      //     this.useMultiModel = false;
+      //   }
+      // }
 
       // Load existing conversation context from memory
       const memoryContext = await memoryService.getConversationContext(
@@ -926,19 +926,19 @@ What feels like the most challenging part of this situation for you?`;
 
   // Multi-model system controls
   enableMultiModel(): boolean {
-    this.useMultiModel = true;
-    if (!this.multiModelSystem) {
-      try {
-        this.multiModelSystem = new MultiModelSystem();
-        console.log('[LumaAI] Multi-model system enabled');
-        return true;
-      } catch (error) {
-        console.error('[LumaAI] Failed to enable multi-model system:', error);
-        this.useMultiModel = false;
-        return false;
-      }
-    }
-    return true;
+    // this.useMultiModel = true;
+    // if (!this.multiModelSystem) {
+    //   try {
+    //     this.multiModelSystem = new MultiModelSystem();
+    //     console.log('[LumaAI] Multi-model system enabled');
+    //     return true;
+    //   } catch (error) {
+    //     console.error('[LumaAI] Failed to enable multi-model system:', error);
+    //     this.useMultiModel = false;
+    //     return false;
+    //   }
+    // }
+    return false; // Multi-model disabled for build
   }
 
   disableMultiModel(): void {
