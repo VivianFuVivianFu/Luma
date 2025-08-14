@@ -117,17 +117,6 @@ const ChatSection = () => {
     conversation.endSession();
   };
 
-  const clearConversation = () => {
-    lumaAI.clearHistory();
-    setMessages([
-      {
-        id: '1',
-        content: "Hi, I'm Luma — your gentle companion powered by LLaMA 3 70B. I'm here to support you in self-reflection and transformation with advanced AI understanding. What would you like to talk about today?",
-        sender: 'luma',
-        timestamp: new Date()
-      }
-    ]);
-  };
 
   return (
     <div className="flex flex-col h-full bg-card rounded-2xl border border-border overflow-hidden">
