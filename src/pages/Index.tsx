@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 
 const Index = () => {
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-blue-900 via-purple-900 to-blue-800">
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-blue-300 via-purple-300 to-blue-200">
       {/* Navigation Bar */}
       <div className="absolute top-0 right-0 p-6 z-30">
         <div className="flex gap-3">
@@ -22,8 +22,8 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Header Text - moved down 15% */}
-      <div className="absolute top-[15vh] left-1/2 transform -translate-x-1/2 z-20 text-center">
+      {/* Header Text - moved to 10vh (15vh - 5vh) */}
+      <div className="absolute top-[10vh] left-1/2 transform -translate-x-1/2 z-20 text-center">
         <h1 className="text-4xl font-bold text-white">You're Not Alone.</h1>
       </div>
 
