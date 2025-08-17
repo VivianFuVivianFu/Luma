@@ -55,10 +55,6 @@ const Index = () => {
             <span className="bg-gradient-to-r from-rose-400 to-purple-500 bg-clip-text text-transparent">Alone.</span>
           </h1>
           
-          <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-            Meet Luma, your compassionate AI companion designed with empathy, psychology, and neuroscience. 
-            <span className="text-purple-600 font-medium"> A safe space for healing, growth, and transformation.</span>
-          </p>
         </div>
 
         {/* Interactive Demo Section */}
@@ -72,25 +68,9 @@ const Index = () => {
               <h3 className="text-2xl font-bold text-gray-800">Meet Luma</h3>
             </div>
             
-            <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 shadow-xl border border-white/20">
-              <div className="h-[350px] lg:h-[450px] rounded-2xl overflow-hidden bg-gradient-to-br from-rose-100 to-purple-100">
+            <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 overflow-hidden">
+              <div className="h-[350px] lg:h-[450px]">
                 <VideoSection />
-              </div>
-              
-              {/* Features */}
-              <div className="grid grid-cols-3 gap-4 mt-6">
-                <div className="text-center p-3 bg-white/50 rounded-xl">
-                  <Shield className="w-6 h-6 text-purple-500 mx-auto mb-2" />
-                  <span className="text-sm font-medium text-gray-700">Safe Space</span>
-                </div>
-                <div className="text-center p-3 bg-white/50 rounded-xl">
-                  <Heart className="w-6 h-6 text-rose-500 mx-auto mb-2" />
-                  <span className="text-sm font-medium text-gray-700">Empathetic</span>
-                </div>
-                <div className="text-center p-3 bg-white/50 rounded-xl">
-                  <Sparkles className="w-6 h-6 text-purple-500 mx-auto mb-2" />
-                  <span className="text-sm font-medium text-gray-700">Always Here</span>
-                </div>
               </div>
             </div>
           </div>
@@ -107,22 +87,6 @@ const Index = () => {
             <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 overflow-hidden">
               <div className="h-[350px] lg:h-[450px]">
                 <ChatSection />
-              </div>
-            </div>
-            
-            {/* Trust Indicators */}
-            <div className="flex items-center justify-center space-x-6 text-sm text-gray-500">
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                <span>Private & Secure</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
-                <span>24/7 Available</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-rose-400 rounded-full"></div>
-                <span>Science-Based</span>
               </div>
             </div>
           </div>
