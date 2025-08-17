@@ -3,7 +3,7 @@
 // Enhanced with RAG (Retrieval-Augmented Generation) for knowledge-based responses
 // Enhanced with Memory Service for long-term and short-term memory
 
-import { ragService } from './ragService';
+// RAG service temporarily disabled for deployment
 import { memoryService } from './memoryService';
 import { supabase } from './supabase';
 import { MultiModelSystem } from './multiModelWrapper';
@@ -279,19 +279,9 @@ Safety: Do not provide medical or legal advice. Encourage seeking professional h
         this.userGoal = this.extractCleanGoal(userMessage);
       }
 
-      // Try to get RAG context for knowledge-based questions
+      // RAG context temporarily disabled for deployment
       let ragContext = '';
-      try {
-        if (await ragService.isAvailable() && this.shouldUseRAG(userMessage)) {
-          const contextResponse = await ragService.getContext(userMessage, 1500);
-          if (contextResponse.context && contextResponse.context.trim()) {
-            ragContext = `\n\nRELEVANT KNOWLEDGE CONTEXT:\n${contextResponse.context}\n\nUse this context to inform your response when relevant, but maintain your natural conversational style. Don't mention that you're using external knowledge - just incorporate insights naturally.`;
-          }
-        }
-      } catch (error) {
-        console.log('RAG service not available or failed:', error);
-        // Continue without RAG context
-      }
+      // TODO: Re-enable RAG service after deployment issues are resolved
 
       // Save user message to memory if enabled
       if (this.memoryEnabled && this.currentUserId && this.currentSessionId) {
@@ -606,19 +596,8 @@ You deserve immediate, professional support. I'm here with you, but you need spe
     return cleanGoal.trim();
   }
 
-  private shouldUseRAG(message: string): boolean {
-    const lowerMessage = message.toLowerCase();
-    const ragIndicators = [
-      'cptsd', 'c-ptsd', 'c ptsd', 'complex ptsd', 'trauma', 'ptsd',
-      'attachment', 'anxious attachment', 'avoidant attachment', 'secure attachment',
-      'therapy', 'therapist', 'counseling', 'dbt', 'cbt', 'emdr', 'ifs',
-      'depression', 'anxiety', 'panic', 'ocd', 'bipolar', 'borderline',
-      'narcissist', 'narcissistic', 'codependent', 'codependency',
-      'what is', 'how do', 'why do', 'can you explain', 'tell me about',
-      'do you know', 'signs of', 'symptoms of'
-    ];
-    return ragIndicators.some(indicator => lowerMessage.includes(indicator));
-  }
+  // RAG logic temporarily disabled for deployment
+  // private shouldUseRAG(message: string): boolean { ... }
 
   // Update conversation context with key information
   private updateConversationContext(userMessage: string): void {

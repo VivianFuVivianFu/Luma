@@ -1,8 +1,8 @@
-# Exclude RAG files from Vercel build
-src/rag/
-src/rag/**/*
-
-# Development files
+# Development files only
 .env.local
 .env.development
 *.log
+
+# Python files not needed for web app
+*.py
+luma-rag/
