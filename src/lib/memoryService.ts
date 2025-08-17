@@ -108,7 +108,7 @@ export class MemoryService {
         .order('created_at', { ascending: false })
         .limit(5);
 
-      const longMemText = (mems || []).map(m => `- ${m.content}`).join('\n');
+      const longMemText = (mems || []).map((m: any) => `- ${m.content}`).join('\n');
 
       return { 
         summary: ss?.summary || '', 
@@ -132,7 +132,7 @@ export class MemoryService {
 
       if (!msgs || msgs.length === 0) return;
 
-      const dialogue = msgs.map(m => 
+      const dialogue = msgs.map((m: any) => 
         `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`
       ).join('\n');
 
@@ -171,7 +171,7 @@ export class MemoryService {
 
       if (!lastMsgs || lastMsgs.length === 0) return;
 
-      const dialogue = lastMsgs.reverse().map(m => 
+      const dialogue = lastMsgs.reverse().map((m: any) => 
         `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`
       ).join('\n');
 

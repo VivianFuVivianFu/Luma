@@ -184,7 +184,7 @@ export class MemoryValidationSuite {
           { pattern: /meditation|coping|boundaries/, name: 'Coping Strategies', points: 30 }
         ];
 
-        memories.forEach((memory, index) => {
+        memories.forEach((memory: any, index: number) => {
           details.push(`   📝 Memory ${index + 1}: ${memory.content}`);
           
           // Check content quality

@@ -167,7 +167,7 @@ export class LumaAI {
       }
 
       this.currentUserId = session.user.id;
-      this.currentSessionId = await memoryService.getActiveSession(this.currentUserId);
+      this.currentSessionId = await memoryService.getActiveSession(this.currentUserId || '');
       this.memoryEnabled = true;
       
       // Initialize multi-model system if enabled
@@ -183,8 +183,8 @@ export class LumaAI {
 
       // Load existing conversation context from memory
       const memoryContext = await memoryService.getConversationContext(
-        this.currentUserId, 
-        this.currentSessionId
+        this.currentUserId || '', 
+        this.currentSessionId || ''
       );
 
       if (memoryContext) {
