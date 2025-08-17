@@ -7,6 +7,7 @@ const Index = () => {
       {/* Header Text */}
       <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-20 text-center">
         <h1 className="text-4xl font-bold text-white">You're Not Alone.</h1>
+        {/* VERCEL FORCE DEPLOY: 2025-08-17-14:45 - REMOVE DISCLAIMER */}
       </div>
 
       {/* Main Content */}
