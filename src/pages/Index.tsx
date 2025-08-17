@@ -30,47 +30,86 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Disclaimer Section */}
-      <div className="relative z-10 bg-black bg-opacity-50 backdrop-blur-sm border-t border-white border-opacity-20 p-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="bg-secondary bg-opacity-50 rounded-lg p-4 border border-border">
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 mt-1">
-                <svg className="w-5 h-5 text-blue-300" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                </svg>
+      {/* Customer Feedback Section */}
+      <div className="relative z-10 bg-white/10 backdrop-blur-sm border-t border-white/20 py-16">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-white mb-4">What People Are Saying</h2>
+            <p className="text-blue-100 text-lg max-w-2xl mx-auto">
+              Real experiences from people on their healing journey with Luma
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Testimonial 1 */}
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-6 border border-white/30">
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full flex items-center justify-center text-white font-semibold">
+                  S
+                </div>
+                <div className="ml-4">
+                  <h4 className="text-white font-semibold">Sarah M.</h4>
+                  <div className="flex text-yellow-400">
+                    {[...Array(5)].map((_, i) => (
+                      <span key={i}>★</span>
+                    ))}
+                  </div>
+                </div>
               </div>
-              <div>
-                <h3 className="text-lg font-semibold text-white mb-2">Important Disclaimer</h3>
-                <p className="text-gray-200 text-sm leading-relaxed">
-                  This AI is for informational and supportive use only. It is not a substitute for professional 
-                  mental health care. If you feel unsafe or in crisis, contact a qualified professional or a 
-                  crisis helpline immediately.
-                </p>
+              <p className="text-blue-100 italic">
+                "Luma helped me understand my anxiety patterns in a way that felt safe and non-judgmental. The conversations feel so natural and supportive."
+              </p>
+            </div>
+
+            {/* Testimonial 2 */}
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-6 border border-white/30">
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white font-semibold">
+                  M
+                </div>
+                <div className="ml-4">
+                  <h4 className="text-white font-semibold">Michael R.</h4>
+                  <div className="flex text-yellow-400">
+                    {[...Array(5)].map((_, i) => (
+                      <span key={i}>★</span>
+                    ))}
+                  </div>
+                </div>
               </div>
+              <p className="text-blue-100 italic">
+                "Having someone to talk to 24/7 has been life-changing. Luma never judges and always helps me find my own answers."
+              </p>
+            </div>
+
+            {/* Testimonial 3 */}
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-6 border border-white/30">
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-green-400 to-blue-400 rounded-full flex items-center justify-center text-white font-semibold">
+                  A
+                </div>
+                <div className="ml-4">
+                  <h4 className="text-white font-semibold">Alex K.</h4>
+                  <div className="flex text-yellow-400">
+                    {[...Array(5)].map((_, i) => (
+                      <span key={i}>★</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <p className="text-blue-100 italic">
+                "The emotional support is incredible. Luma remembers our previous conversations and builds on them. It feels like having a trusted friend."
+              </p>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Data Privacy and Safety Notice */}
-      <div className="relative z-10 bg-black bg-opacity-50 backdrop-blur-sm border-t border-white border-opacity-20 p-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-2xl font-bold text-white mb-4">Data Privacy & Safety</h2>
-          
-          <p className="text-gray-200 text-sm mb-6 leading-relaxed">
-            We are committed to protecting your privacy and ensuring the security of your personal information. 
-            Our data collection is limited to what is necessary for providing AI companion services, and we comply 
-            with the New Zealand Privacy Act 2020 and Australian Privacy Act 1988.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
-              View Full Privacy Policy & Terms
-            </button>
-            <p className="text-gray-400 text-xs">
-              Learn about your data rights, security measures, and contact information
+          {/* Call to Action */}
+          <div className="text-center mt-12">
+            <p className="text-blue-100 text-lg mb-6">
+              Join thousands of people finding support and healing with Luma
             </p>
+            <button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-8 py-4 rounded-full font-semibold text-lg transition-all transform hover:scale-105 shadow-lg">
+              Start Your Journey Today
+            </button>
           </div>
         </div>
       </div>

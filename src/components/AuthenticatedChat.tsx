@@ -63,7 +63,7 @@ const AuthenticatedChat: React.FC = () => {
       </div>
 
       {/* Main Title */}
-      <div className="absolute top-8 sm:top-16 left-1/2 transform -translate-x-1/2 z-20 text-center px-4 w-full">
+      <div className="absolute top-16 sm:top-24 left-1/2 transform -translate-x-1/2 z-20 text-center px-4 w-full">
         <h1 className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-medium text-gray-700 mb-4 sm:mb-8 leading-tight drop-shadow-lg">
           Heal at Your Pace.
           <br />

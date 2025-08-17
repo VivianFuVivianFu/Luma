@@ -1,6 +1,14 @@
 const cron = require('node-cron')
 const { processPendingNotifications, createCareNudges } = require('./nudge.sender.js')
 
+// Import monitoring functions
+let monitoringFunctions = {}
+try {
+  monitoringFunctions = require('./api.monitoring.js')
+} catch (e) {
+  console.log('Monitoring functions not available for cron jobs')
+}
+
 class CronScheduler {
   constructor() {
     this.jobs = {}
@@ -73,25 +81,95 @@ class CronScheduler {
       timezone: "America/New_York"
     })
 
+    // Collect capacity metrics every 15 minutes
+    this.jobs.capacityCollection = cron.schedule('*/15 * * * *', async () => {
+      console.log('[Cron] Collecting capacity metrics...')
+      try {
+        if (monitoringFunctions.collectCapacityMetrics) {
+          // Simulate request/response for the monitoring function
+          const mockReq = {}
+          const mockRes = {
+            json: (data) => {
+              if (data.success) {
+                console.log(`[Cron] Capacity metrics collected: ${data.data?.total_gb || 'unknown'} GB used`)
+              } else {
+                console.error('[Cron] Failed to collect capacity metrics:', data.error)
+              }
+            },
+            status: (code) => ({ json: (data) => console.error(`[Cron] Capacity collection error ${code}:`, data) })
+          }
+          await monitoringFunctions.collectCapacityMetrics(mockReq, mockRes)
+        }
+      } catch (e) {
+        console.error('[Cron] Error in capacity collection:', e)
+      }
+    }, {
+      scheduled: false,
+      timezone: "America/New_York"
+    })
+
+    // Check capacity alerts every 30 minutes
+    this.jobs.capacityAlerts = cron.schedule('*/30 * * * *', async () => {
+      console.log('[Cron] Checking capacity alerts...')
+      try {
+        if (monitoringFunctions.checkCapacityAlerts) {
+          const mockReq = {}
+          const mockRes = {
+            json: (data) => {
+              if (data.success && data.alert_check?.alert_created) {
+                console.log(`[Cron] Capacity alert created: ${data.alert_check.alert_id}`)
+              } else if (data.success) {
+                console.log('[Cron] No capacity alerts needed')
+              } else {
+                console.error('[Cron] Failed to check capacity alerts:', data.error)
+              }
+            },
+            status: (code) => ({ json: (data) => console.error(`[Cron] Capacity alert check error ${code}:`, data) })
+          }
+          await monitoringFunctions.checkCapacityAlerts(mockReq, mockRes)
+        }
+      } catch (e) {
+        console.error('[Cron] Error in capacity alert check:', e)
+      }
+    }, {
+      scheduled: false,
+      timezone: "America/New_York"
+    })
+
     // Health check - runs every hour to ensure system is working
     this.jobs.healthCheck = cron.schedule('0 * * * *', async () => {
       const now = new Date()
       console.log(`[Cron] Health check at ${now.toISOString()} - All systems operational`)
       
-      // Could add database connectivity checks, API health checks, etc.
       try {
-        const { createClient } = require('@supabase/supabase-js')
-        const supa = createClient(
-          process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '',
-          process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY || ''
-        )
-        
-        // Simple connectivity test
-        const { data, error } = await supa.from('notifications').select('count').limit(1)
-        if (error) {
-          console.error('[Cron] Database health check failed:', error)
+        if (monitoringFunctions.getSystemHealth) {
+          const mockReq = {}
+          const mockRes = {
+            json: (data) => {
+              if (data.success) {
+                const health = data.health
+                console.log(`[Cron] System health: ${health.overall_health} - Capacity: ${health.capacity?.used_pct || 'unknown'}% - Alerts: ${health.active_alerts || 0}`)
+              } else {
+                console.error('[Cron] Failed to get system health:', data.error)
+              }
+            },
+            status: (code) => ({ json: (data) => console.error(`[Cron] Health check error ${code}:`, data) })
+          }
+          await monitoringFunctions.getSystemHealth(mockReq, mockRes)
         } else {
-          console.log('[Cron] Database connectivity: OK')
+          // Fallback basic database connectivity check
+          const { createClient } = require('@supabase/supabase-js')
+          const supa = createClient(
+            process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '',
+            process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY || ''
+          )
+          
+          const { data, error } = await supa.from('notifications').select('count').limit(1)
+          if (error) {
+            console.error('[Cron] Database health check failed:', error)
+          } else {
+            console.log('[Cron] Database connectivity: OK')
+          }
         }
       } catch (e) {
         console.error('[Cron] Health check error:', e)
@@ -109,6 +187,8 @@ class CronScheduler {
     console.log('  - Process notifications: Every 5 minutes')
     console.log('  - Create care nudges: Daily at 10 AM')
     console.log('  - Crisis follow-ups: Every 2 hours')
+    console.log('  - Collect capacity metrics: Every 15 minutes')
+    console.log('  - Check capacity alerts: Every 30 minutes')
     console.log('  - Health checks: Every hour')
   }
 

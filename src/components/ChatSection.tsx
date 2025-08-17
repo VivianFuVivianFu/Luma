@@ -17,7 +17,7 @@ const ChatSection = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: "Hi, I'm Luma — your gentle companion powered by LLaMA 3 70B. I'm here to support you in self-reflection and transformation with advanced AI understanding. Wherever you are on your journey, I'm here to hold space with care and empathy. What would you like to talk about today?",
+      content: "Hi, I'm Luma — your gentle companion. I'm here to support you in self-reflection and transformation with deep understanding and care. Wherever you are on your journey, I'm here to hold space with empathy and warmth. What would you like to talk about today?",
       sender: 'luma',
       timestamp: new Date()
     }
@@ -117,6 +117,17 @@ const ChatSection = () => {
     conversation.endSession();
   };
 
+  const clearConversation = () => {
+    lumaAI.clearHistory();
+    setMessages([
+      {
+        id: '1',
+        content: "Hi, I'm Luma — your gentle companion. I'm here to support you in self-reflection and transformation with deep understanding and care. What would you like to talk about today?",
+        sender: 'luma',
+        timestamp: new Date()
+      }
+    ]);
+  };
 
   return (
     <div className="flex flex-col h-full bg-card rounded-2xl border border-border overflow-hidden">
@@ -141,19 +152,14 @@ const ChatSection = () => {
             size="sm"
             onClick={isVoiceConnected ? endVoiceConversation : startVoiceConversation}
             disabled={isLoading}
-            className={`transition-colors px-4 py-2 min-w-[120px] ${
+            className={`transition-colors ${
               isVoiceConnected
                 ? 'text-red-500 hover:text-red-600 bg-red-50'
                 : 'text-luma-blue hover:text-luma-blue-dark'
             }`}
             title={isVoiceConnected ? 'End Voice Chat' : 'Start Voice Chat'}
           >
-            <div className="flex items-center gap-2">
-              {isVoiceConnected ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-              <span className="text-sm font-medium">
-                {isVoiceConnected ? 'End Call' : 'Call Luma'}
-              </span>
-            </div>
+            {isVoiceConnected ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
           </Button>
           <Button
             variant="ghost"

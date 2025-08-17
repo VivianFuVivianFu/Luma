@@ -113,6 +113,31 @@ async function updateSummary(userId, sessionKey, newSummaryText) {
   }
 }
 
+// 4.5) 加载最近的对话轮次，用于重现分析
+async function loadRecentTurns(userId, sessionId, limit = 10) {
+  try {
+    const sessionUUID = await getOrCreateSessionUUID(userId, sessionId)
+    
+    const { data, error } = await supa
+      .from('messages')
+      .select('role, content, created_at')
+      .eq('session_id', sessionUUID)
+      .order('created_at', { ascending: false })
+      .limit(limit * 2) // 获取更多数据以确保有足够的用户消息
+    
+    if (error) throw error
+    
+    // 只返回用户消息，用于重现分析
+    return (data || [])
+      .filter(msg => msg.role === 'user')
+      .slice(0, limit)
+      .reverse() // 按时间正序排列
+  } catch (e) {
+    console.error('[Memory] Error loading recent turns:', e)
+    return []
+  }
+}
+
 // 5) 添加入长期记忆（去重/过滤留给你后面优化）
 async function addLongMemories(userId, items = []) {
   if (!items.length) return
@@ -131,5 +156,6 @@ module.exports = {
   loadContext,
   updateSummary,
   addLongMemories,
+  loadRecentTurns
 }
 
