@@ -115,7 +115,7 @@ const Index = () => {
               <h3 className="text-2xl font-bold text-gray-800">Meet Luma</h3>
             </div>
             
-            <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 overflow-hidden">
+            <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-lg border border-blue-100/50 overflow-hidden">
               <div className="h-[350px] lg:h-[450px]">
                 <VideoSection />
               </div>
@@ -131,7 +131,7 @@ const Index = () => {
               <h3 className="text-2xl font-bold text-gray-800">Start Your Journey</h3>
             </div>
             
-            <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 overflow-hidden">
+            <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-lg border border-indigo-100/50 overflow-hidden">
               <div className="h-[350px] lg:h-[450px]">
                 <ChatSection />
               </div>
@@ -144,7 +144,7 @@ const Index = () => {
       <div className="relative z-10 mt-20 lg:mt-32">
         {/* Feedback Section */}
         <div className="max-w-4xl mx-auto px-6 lg:px-12 text-center mb-16">
-          <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 lg:p-12 shadow-xl border border-white/20">
+          <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 lg:p-12 shadow-md border border-blue-100/30">
             <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-full px-6 py-2 mb-6">
               <Heart className="w-4 h-4 text-indigo-600" />
               <span className="text-sm font-medium text-gray-700">Help Us Improve</span>
@@ -171,7 +171,7 @@ const Index = () => {
 
         {/* Disclaimer Section */}
         <div className="max-w-4xl mx-auto px-6 lg:px-12 text-center mb-16">
-          <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 lg:p-12 shadow-xl border border-white/20">
+          <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 lg:p-12 shadow-md border border-indigo-100/30">
             <h3 className="text-xl font-bold text-gray-800 mb-6">Disclaimer</h3>
             <div className="text-gray-600 text-sm leading-relaxed max-w-3xl mx-auto">
               <p>
