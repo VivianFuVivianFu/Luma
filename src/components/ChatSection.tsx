@@ -17,7 +17,7 @@ const ChatSection = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: "Hi, I'm Luma — your AI emotional companion. Thoughtfully designed with empathy, psychology, and neuroscience, I'm here to support your self-reflection and transformation. Wherever you are on your journey, I'll hold a caring and warm space for you. Let's take the next step together.",
+      content: "Hi, I'm so glad you reached out. I want you to know that you are safe here, and you deserve to be heard and understood. What would you like to explore together today?",
       sender: 'luma',
       timestamp: new Date()
     }
