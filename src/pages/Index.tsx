@@ -1,13 +1,30 @@
 import VideoSection from '@/components/VideoSection';
 import ChatSection from '@/components/ChatSection';
+import { Button } from '@/components/ui/button';
 
 const Index = () => {
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-blue-900 via-purple-900 to-blue-800">
-      {/* Header Text */}
-      <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-20 text-center">
+      {/* Navigation Bar */}
+      <div className="absolute top-0 right-0 p-6 z-30">
+        <div className="flex gap-3">
+          <Button 
+            variant="outline" 
+            className="bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white/20 hover:text-white"
+          >
+            Log In
+          </Button>
+          <Button 
+            className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white border-0"
+          >
+            Sign Up
+          </Button>
+        </div>
+      </div>
+
+      {/* Header Text - moved down 15% */}
+      <div className="absolute top-[15vh] left-1/2 transform -translate-x-1/2 z-20 text-center">
         <h1 className="text-4xl font-bold text-white">You're Not Alone.</h1>
-        {/* VERCEL FORCE DEPLOY: 2025-08-17-14:45 - REMOVE DISCLAIMER */}
       </div>
 
       {/* Main Content */}
@@ -108,10 +125,19 @@ const Index = () => {
             <p className="text-blue-100 text-lg mb-6">
               Join thousands of people finding support and healing with Luma
             </p>
-            <button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-8 py-4 rounded-full font-semibold text-lg transition-all transform hover:scale-105 shadow-lg">
-              Start Your Journey Today
-            </button>
-            {/* Force cache invalidation timestamp: 2025-08-17 14:35 */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-8 py-4 rounded-full font-semibold text-lg transition-all transform hover:scale-105 shadow-lg">
+                Start Your Journey Today
+              </button>
+              <a 
+                href="https://tally.so/r/mYPvqP" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="bg-white/20 backdrop-blur-sm border border-white/30 text-white px-8 py-4 rounded-full font-semibold text-lg transition-all transform hover:scale-105 hover:bg-white/30 shadow-lg"
+              >
+                Share Your Feedback
+              </a>
+            </div>
           </div>
         </div>
       </div>

@@ -17,7 +17,7 @@ const ChatSection = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: "Hi, I'm Luma — your gentle companion. I'm here to support you in self-reflection and transformation with deep understanding and care. Wherever you are on your journey, I'm here to hold space with empathy and warmth. What would you like to talk about today?",
+      content: "Hi, I'm Luma — your AI emotional companion. I'm here to support your self-reflection and transformation with understanding and care. Wherever you are on your journey, I'll walk alongside you. What would you like to talk about today?",
       sender: 'luma',
       timestamp: new Date()
     }
@@ -140,20 +140,6 @@ const ChatSection = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={isVoiceConnected ? endVoiceConversation : startVoiceConversation}
-            disabled={isLoading}
-            className={`transition-colors ${
-              isVoiceConnected
-                ? 'text-red-500 hover:text-red-600 bg-red-50'
-                : 'text-luma-blue hover:text-luma-blue-dark'
-            }`}
-            title={isVoiceConnected ? 'End Voice Chat' : 'Start Voice Chat'}
-          >
-            {isVoiceConnected ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
             className="text-luma-blue hover:text-luma-blue-dark"
             title="Voice Settings"
           >
@@ -210,6 +196,21 @@ const ChatSection = () => {
             className="flex-1 bg-input border-border focus:ring-luma-blue focus:border-luma-blue"
             disabled={isLoading}
           />
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={isVoiceConnected ? endVoiceConversation : startVoiceConversation}
+              disabled={isLoading}
+              className={`transition-colors ${
+                isVoiceConnected
+                  ? 'bg-red-500 hover:bg-red-600 text-white'
+                  : 'bg-green-500 hover:bg-green-600 text-white'
+              }`}
+              title={isVoiceConnected ? 'End Voice Chat' : 'Start Voice Chat'}
+            >
+              {isVoiceConnected ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+            </Button>
+            <span className="text-sm text-muted-foreground whitespace-nowrap">Call Luma</span>
+          </div>
           <Button
             onClick={sendMessage}
             disabled={!inputValue.trim() || isLoading}
