@@ -5,7 +5,7 @@
 // RAG service temporarily disabled for deployment
 
 // Together AI configuration - Only LLaMA 3 70B
-const TOGETHER_API_KEY = import.meta.env.VITE_TOGETHER_API_KEY;
+const TOGETHER_API_KEY = import.meta.env.VITE_TOGETHER_API_KEY || '';
 const TOGETHER_BASE_URL = 'https://api.together.xyz/v1/chat/completions';
 const LLAMA_MODEL = 'meta-llama/Llama-3-70b-chat-hf'; // Fixed model
 
