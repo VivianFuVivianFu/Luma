@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 
 const Index = () => {
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-blue-300 via-purple-300 to-blue-200">
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-blue-100 via-purple-100 to-blue-50">
       {/* Navigation Bar */}
       <div className="absolute top-0 right-0 p-6 z-30">
         <div className="flex gap-3">
