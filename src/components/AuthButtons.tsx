@@ -42,7 +42,7 @@ const AuthButtons: React.FC<AuthButtonsProps> = ({ isAuthenticated, userEmail, o
         
         <button
           onClick={() => setShowAuthModal(true)}
-          className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-4 py-2 rounded-full text-sm font-medium transition-all hover:scale-105 shadow-lg"
+          className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2 rounded-full text-sm font-medium transition-all hover:scale-105 shadow-lg"
         >
           <User className="w-4 h-4" />
           <span>Sign Up</span>
