@@ -1,0 +1,115 @@
+name: RAG Maintenance Scheduler
+
+on:
+  schedule:
+    # Daily evaluation at 02:00 UTC
+    - cron: '0 2 * * *'
+    # Hourly jobs
+    - cron: '0 * * * *'
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Task to run (eval, jobs, or both)'
+        required: false
+        default: 'both'
+        type: choice
+        options:
+          - both
+          - eval
+          - jobs
+
+jobs:
+  rag-maintenance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Determine tasks to run
+        id: tasks
+        run: |
+          if [[ "${{ github.event_name }}" == "schedule" ]]; then
+            if [[ "${{ github.event.schedule }}" == "0 2 * * *" ]]; then
+              echo "run_eval=true" >> $GITHUB_OUTPUT
+              echo "run_jobs=false" >> $GITHUB_OUTPUT
+            else
+              echo "run_eval=false" >> $GITHUB_OUTPUT
+              echo "run_jobs=true" >> $GITHUB_OUTPUT
+            fi
+          else
+            # Manual trigger
+            TASK="${{ github.event.inputs.task }}"
+            if [[ "$TASK" == "eval" || "$TASK" == "both" ]]; then
+              echo "run_eval=true" >> $GITHUB_OUTPUT
+            else
+              echo "run_eval=false" >> $GITHUB_OUTPUT
+            fi
+            if [[ "$TASK" == "jobs" || "$TASK" == "both" ]]; then
+              echo "run_jobs=true" >> $GITHUB_OUTPUT
+            else
+              echo "run_jobs=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+      - name: Run RAG Evaluation
+        if: steps.tasks.outputs.run_eval == 'true'
+        run: |
+          echo "🔍 Running RAG Evaluation..."
+          echo "API Base: ${{ secrets.API_BASE }}"
+          echo "Timestamp: $(date -u)"
+          
+          response=$(curl -s -w "\nHTTP_CODE:%{http_code}\nTIME_TOTAL:%{time_total}" \
+            -X POST "${{ secrets.API_BASE }}/api/rag/eval" \
+            -H "Authorization: Bearer ${{ secrets.ADMIN_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"source": "github_actions"}')
+          
+          echo "=== RAG Evaluation Response ==="
+          echo "$response"
+          echo "==============================="
+          
+          # Extract HTTP code
+          http_code=$(echo "$response" | grep "HTTP_CODE:" | cut -d: -f2)
+          if [[ "$http_code" -ge 200 && "$http_code" -lt 300 ]]; then
+            echo "✅ RAG Evaluation completed successfully (HTTP $http_code)"
+          else
+            echo "❌ RAG Evaluation failed (HTTP $http_code)"
+            exit 1
+          fi
+
+      - name: Run RAG Jobs
+        if: steps.tasks.outputs.run_jobs == 'true'
+        run: |
+          echo "⚙️ Running RAG Jobs..."
+          echo "API Base: ${{ secrets.API_BASE }}"
+          echo "Timestamp: $(date -u)"
+          
+          response=$(curl -s -w "\nHTTP_CODE:%{http_code}\nTIME_TOTAL:%{time_total}" \
+            -X POST "${{ secrets.API_BASE }}/api/rag/jobs/run" \
+            -H "Authorization: Bearer ${{ secrets.ADMIN_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"source": "github_actions"}')
+          
+          echo "=== RAG Jobs Response ==="
+          echo "$response"
+          echo "========================="
+          
+          # Extract HTTP code
+          http_code=$(echo "$response" | grep "HTTP_CODE:" | cut -d: -f2)
+          if [[ "$http_code" -ge 200 && "$http_code" -lt 300 ]]; then
+            echo "✅ RAG Jobs completed successfully (HTTP $http_code)"
+          else
+            echo "❌ RAG Jobs failed (HTTP $http_code)"
+            exit 1
+          fi
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "📊 RAG Maintenance Summary"
+          echo "========================="
+          echo "Trigger: ${{ github.event_name }}"
+          echo "Evaluation run: ${{ steps.tasks.outputs.run_eval }}"
+          echo "Jobs run: ${{ steps.tasks.outputs.run_jobs }}"
+          echo "Completed at: $(date -u)"
+          echo "========================="
