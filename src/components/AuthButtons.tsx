@@ -10,6 +10,7 @@ interface AuthButtonsProps {
 
 const AuthButtons: React.FC<AuthButtonsProps> = ({ isAuthenticated, userEmail, onLogout }) => {
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login')
 
   if (isAuthenticated) {
     return (
@@ -33,7 +34,10 @@ const AuthButtons: React.FC<AuthButtonsProps> = ({ isAuthenticated, userEmail, o
     <>
       <div className="flex items-center gap-2">
         <button
-          onClick={() => setShowAuthModal(true)}
+          onClick={() => {
+            setAuthMode('login')
+            setShowAuthModal(true)
+          }}
           className="flex items-center gap-2 bg-white/80 backdrop-blur-sm hover:bg-white/90 text-gray-700 px-4 py-2 rounded-full text-sm font-medium transition-all hover:scale-105 shadow-lg border border-white/20"
         >
           <LogIn className="w-4 h-4" />
@@ -41,7 +45,10 @@ const AuthButtons: React.FC<AuthButtonsProps> = ({ isAuthenticated, userEmail, o
         </button>
         
         <button
-          onClick={() => setShowAuthModal(true)}
+          onClick={() => {
+            setAuthMode('signup')
+            setShowAuthModal(true)
+          }}
           className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2 rounded-full text-sm font-medium transition-all hover:scale-105 shadow-lg"
         >
           <User className="w-4 h-4" />
@@ -60,7 +67,7 @@ const AuthButtons: React.FC<AuthButtonsProps> = ({ isAuthenticated, userEmail, o
               ×
             </button>
             <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-white/20">
-              <AuthPanel onAuthed={() => setShowAuthModal(false)} />
+              <AuthPanel onAuthed={() => setShowAuthModal(false)} mode={authMode} />
             </div>
           </div>
         </div>

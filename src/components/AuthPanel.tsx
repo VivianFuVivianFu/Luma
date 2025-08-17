@@ -3,12 +3,13 @@ import { supabase } from '@/lib/supabase'
 
 interface AuthPanelProps {
   onAuthed: (session: any) => void
+  mode?: 'login' | 'signup'
 }
 
-const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthed }) => {
+const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthed, mode: initialMode = 'signup' }) => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [mode] = useState<'login' | 'signup'>('signup')
+  const [mode, setMode] = useState<'login' | 'signup'>(initialMode)
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState('')
 
@@ -138,6 +139,19 @@ const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthed }) => {
               {msg}
             </div>
           )}
+
+          {/* Toggle between login and signup */}
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-600">
+              {mode === 'signup' ? 'Already have an account?' : "Don't have an account?"}
+              <button
+                onClick={() => setMode(mode === 'signup' ? 'login' : 'signup')}
+                className="ml-2 text-blue-600 hover:text-blue-700 font-medium underline"
+              >
+                {mode === 'signup' ? 'Login' : 'Sign Up'}
+              </button>
+            </p>
+          </div>
     </div>
   )
 }

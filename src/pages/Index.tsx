@@ -169,6 +169,21 @@ const Index = () => {
           </div>
         </div>
 
+        {/* Disclaimer Section */}
+        <div className="max-w-4xl mx-auto px-6 lg:px-12 text-center mb-16">
+          <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 lg:p-12 shadow-xl border border-white/20">
+            <h3 className="text-xl font-bold text-gray-800 mb-6">Disclaimer</h3>
+            <div className="text-gray-600 text-sm leading-relaxed max-w-3xl mx-auto">
+              <p>
+                Luma is not a therapist, psychologist, or healthcare provider. She cannot diagnose, treat, or replace the care of a licensed professional. What she offers is science-informed companionship—grounded in psychology, neuroscience, and human understanding—woven with warmth and compassion. Her role is to support self-reflection, personal growth, and transformation, never to replace professional mental health care.
+              </p>
+              <p className="mt-4">
+                If you are experiencing a mental health crisis or need clinical support, please reach out to a qualified therapist, doctor, or emergency service in your area.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Simple Footer */}
         <div className="bg-gradient-to-br from-white/60 to-white/40 backdrop-blur-sm border-t border-white/30">
           <div className="max-w-6xl mx-auto px-6 lg:px-12 py-8">
