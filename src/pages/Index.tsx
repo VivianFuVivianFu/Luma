@@ -56,12 +56,9 @@ const Index = () => {
             <p className="text-blue-100 text-lg mb-6">
               Your opinions matter, please help us make Luma serve you better
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-8 py-4 rounded-full font-semibold text-lg transition-all transform hover:scale-105 shadow-lg">
-                Start Your Journey Today
-              </button>
+            <div className="flex justify-center items-center">
               <a 
-                href="https://tally.so/r/mYPvqP" 
+                href="https://tally.so/r/3y5yNp" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="bg-white/20 backdrop-blur-sm border border-white/30 text-white px-8 py-4 rounded-full font-semibold text-lg transition-all transform hover:scale-105 hover:bg-white/30 shadow-lg"
@@ -69,6 +66,17 @@ const Index = () => {
                 Share Your Feedback
               </a>
             </div>
+          </div>
+
+          {/* Disclaimer Section */}
+          <div className="text-center border-t border-white/20 pt-8 mb-8">
+            <h3 className="text-xl font-semibold text-white mb-4">Disclaimer</h3>
+            <p className="text-blue-100 text-sm mb-6 max-w-4xl mx-auto leading-relaxed">
+              Luma is not a therapist, psychologist, or healthcare provider. She cannot diagnose, treat, or replace the care of a licensed professional. What she offers is science-informed companionship—grounded in psychology, neuroscience, and human understanding—woven with warmth and compassion. Her role is to support self-reflection, personal growth, and transformation, never to replace professional mental health care.
+            </p>
+            <p className="text-blue-200 text-sm mb-6 max-w-3xl mx-auto font-medium">
+              If you are experiencing a mental health crisis or need clinical support, please reach out to a qualified therapist, doctor, or emergency service in your area.
+            </p>
           </div>
 
           {/* Privacy and Data Safety Section */}
