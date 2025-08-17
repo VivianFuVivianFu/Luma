@@ -506,6 +506,9 @@ OUTCOME-FOCUSED GUIDANCE:
 
     } catch (error) {
       console.error('LLaMA 3 70B API Error:', error);
+      console.log('VITE_TOGETHER_API_KEY exists:', !!TOGETHER_API_KEY);
+      console.log('API URL:', TOGETHER_BASE_URL);
+      console.log('Model:', LLAMA_MODEL);
       return this.getFallbackResponse(userMessage);
     }
   }
@@ -548,8 +551,25 @@ OUTCOME-FOCUSED GUIDANCE:
       return "That's wonderful to hear. What do you think is contributing most to this positive feeling?";
     }
 
-    // If API connection issues, be honest
-    return "I'm sorry, I'm having some technical difficulties connecting to my response system right now. Could you try rephrasing what you'd like to talk about?";
+    // Provide contextual fallback responses instead of technical error
+    if (message.includes('bored')) {
+      return "I hear that you're feeling bored. Sometimes boredom can be our mind's way of telling us we're ready for something new or meaningful. What usually brings you a sense of purpose or excitement?";
+    }
+    
+    if (message.includes('unhappy') || message.includes('sad')) {
+      return "I'm really glad you felt comfortable sharing that you're unhappy. It takes courage to acknowledge difficult feelings. What do you think might be contributing to this feeling right now?";
+    }
+    
+    if (message.includes('angry') || message.includes('frustrated')) {
+      return "Thank you for trusting me with your anger. These feelings often have important messages for us. What's been weighing on you that might be connected to this frustration?";
+    }
+    
+    if (message.includes('worried') || message.includes('anxious')) {
+      return "Worry can feel so overwhelming sometimes. I want you to know that feeling anxious doesn't make you weak - it often means you care deeply about something. What's been on your mind lately?";
+    }
+    
+    // Generic empathetic response for unclear messages
+    return "I want to make sure I'm really understanding what you're going through. Sometimes it can be hard to put feelings into words. What feels most important for you to share right now?";
   }
 
 
