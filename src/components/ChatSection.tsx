@@ -159,11 +159,13 @@ const ChatSection = () => {
               className={`max-w-[80%] p-3 rounded-2xl ${
                 message.sender === 'user'
                   ? 'bg-blue-500 text-white ml-4'
-                  : 'bg-white/80 text-gray-800 mr-4 border border-blue-100/50'
+                  : 'bg-white/90 text-gray-900 mr-4 border border-blue-100/50 shadow-sm'
               }`}
             >
               <p className="text-sm leading-relaxed">{message.content}</p>
-              <p className="text-xs opacity-70 mt-1">
+              <p className={`text-xs mt-1 ${
+                message.sender === 'user' ? 'text-blue-100' : 'text-gray-500'
+              }`}>
                 {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </p>
             </div>
@@ -172,7 +174,7 @@ const ChatSection = () => {
 
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-white/80 text-gray-800 p-3 rounded-2xl mr-4 border border-blue-100/50">
+            <div className="bg-white/90 text-gray-900 p-3 rounded-2xl mr-4 border border-blue-100/50 shadow-sm">
               <div className="flex items-center gap-1">
                 <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
                 <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
