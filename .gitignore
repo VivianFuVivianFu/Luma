@@ -56,7 +56,10 @@ tmp/
 temp/
 
 # Ignore large files and folders
-luma-rag/vector_store/index.faiss
+luma-rag/vector_store/
+Rag/vector_store/
+*.faiss
+*.pkl
 luma-rag-env/
 
 # Python virtual environments and packages
@@ -100,3 +103,20 @@ envs/
 
 # BFG JAR file
 bfg.jar
+
+# Android/TWA build artifacts and secrets
+android/
+*.keystore
+*.jks
+*.p8
+*.p12
+app-release.aab
+app-debug.apk
+app-release.apk
+twa-manifest.json
+
+# Bubblewrap generated files
+.bubblewrap/
+
+# Vercel local config
+.vercel
