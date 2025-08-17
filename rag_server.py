@@ -14,6 +14,7 @@ import faiss
 import numpy as np
 from sentence_transformers import SentenceTransformer
 import requests
+from rag_paths import faiss_path_str, faiss_index_file, faiss_metadata_file
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -28,7 +29,7 @@ class RAGSystem:
         self.index = None
         self.documents = None
         self.document_metadata = None
-        self.vector_store_path = "Rag/vector_store"
+        self.vector_store_path = faiss_path_str()
         self.docs_path = "Rag/docs"
 
     def initialize(self):
@@ -41,7 +42,7 @@ class RAGSystem:
             self.model = SentenceTransformer('all-MiniLM-L6-v2')
 
             # Load FAISS index
-            index_path = os.path.join(self.vector_store_path, "index.faiss")
+            index_path = faiss_index_file()
             if os.path.exists(index_path):
                 logger.info(f"Loading FAISS index from {index_path}")
                 self.index = faiss.read_index(index_path)
@@ -50,7 +51,7 @@ class RAGSystem:
                 return False
 
             # Load document metadata
-            metadata_path = os.path.join(self.vector_store_path, "index.pkl")
+            metadata_path = faiss_metadata_file()
             if os.path.exists(metadata_path):
                 logger.info(f"Loading document metadata from {metadata_path}")
                 with open(metadata_path, 'rb') as f:

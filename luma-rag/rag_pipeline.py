@@ -3,6 +3,7 @@
 
 import os
 import dotenv
+from rag_paths import faiss_path_str
 
 # 加载环境变量
 dotenv.load_dotenv()
@@ -35,7 +36,7 @@ def main():
 
         # 设置路径
         DOCS_PATH = "docs"
-        VECTOR_DB_PATH = "vector_store"
+        VECTOR_DB_PATH = faiss_path_str()
 
         print(f"📁 文档路径: {DOCS_PATH}")
         print(f"📁 向量库路径: {VECTOR_DB_PATH}")
@@ -128,16 +129,16 @@ def main():
         print("\n💾 保存向量库...")
         try:
             # 如果目录存在，先删除
-            if os.path.exists(VECTOR_DB_PATH):
+            if os.path.exists(faiss_path_str()):
                 import shutil
-                shutil.rmtree(VECTOR_DB_PATH)
+                shutil.rmtree(faiss_path_str())
                 print("🗑️ 删除旧向量库")
 
-            db.save_local(VECTOR_DB_PATH)
+            db.save_local(faiss_path_str())
             print("✅ 向量库保存成功")
             
             # 验证保存的文件
-            saved_files = os.listdir(VECTOR_DB_PATH)
+            saved_files = os.listdir(faiss_path_str())
             print(f"📁 保存的文件: {saved_files}")
 
         except Exception as e:

@@ -9,6 +9,7 @@ from flask_cors import CORS
 import os
 import time
 import json
+from rag_paths import faiss_path_str
 
 app = Flask(__name__)
 CORS(app)
@@ -19,11 +20,11 @@ try:
     from langchain_community.vectorstores import FAISS
     from langchain_openai import OpenAIEmbeddings
     
-    VECTOR_DB_PATH = "vector_store"
-    if os.path.exists(VECTOR_DB_PATH):
+    VECTOR_DB_PATH = faiss_path_str()
+    if os.path.exists(faiss_path_str()):
         embeddings = OpenAIEmbeddings()
         vectorstore = FAISS.load_local(
-            VECTOR_DB_PATH, 
+            faiss_path_str(), 
             embeddings, 
             allow_dangerous_deserialization=True
         )

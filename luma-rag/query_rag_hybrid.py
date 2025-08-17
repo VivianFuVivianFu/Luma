@@ -9,10 +9,11 @@ from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
 import dotenv
 import re
+from rag_paths import faiss_path_str
 
 dotenv.load_dotenv()
 
-VECTOR_DB_PATH = "vector_store"
+VECTOR_DB_PATH = faiss_path_str()
 
 def detect_language(text):
     """检测文本语言"""
@@ -139,7 +140,7 @@ def create_hybrid_retriever(db, question):
 def load_vectorstore():
     """加载已构建的向量数据库"""
     embeddings = OpenAIEmbeddings()
-    db = FAISS.load_local(VECTOR_DB_PATH, embeddings, allow_dangerous_deserialization=True)
+    db = FAISS.load_local(faiss_path_str(), embeddings, allow_dangerous_deserialization=True)
     return db
 
 def ask_question_hybrid(db, question):

@@ -11,6 +11,7 @@ from typing import List, Dict, Any
 import faiss
 import numpy as np
 from sentence_transformers import SentenceTransformer
+from rag_paths import faiss_path_str, faiss_index_file, faiss_metadata_file
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -98,12 +99,12 @@ def save_vector_store(index, texts: List[str], metadata: List[Dict[str, Any]],
     os.makedirs(vector_store_path, exist_ok=True)
 
     # Save FAISS index
-    index_path = os.path.join(vector_store_path, "index.faiss")
+    index_path = faiss_index_file()
     faiss.write_index(index, index_path)
     logger.info(f"FAISS index saved to {index_path}")
 
     # Save documents and metadata
-    metadata_path = os.path.join(vector_store_path, "index.pkl")
+    metadata_path = faiss_metadata_file()
     data = {
         'documents': texts,
         'metadata': metadata
@@ -117,11 +118,11 @@ def save_vector_store(index, texts: List[str], metadata: List[Dict[str, Any]],
 def main():
     """Main function to build the vector store"""
     docs_path = "Rag/docs"
-    vector_store_path = "Rag/vector_store"
+    vector_store_path = faiss_path_str()
 
     # Check if vector store already exists
-    index_path = os.path.join(vector_store_path, "index.faiss")
-    metadata_path = os.path.join(vector_store_path, "index.pkl")
+    index_path = faiss_index_file()
+    metadata_path = faiss_metadata_file()
 
     if os.path.exists(index_path) and os.path.exists(metadata_path):
         logger.info("Vector store already exists. Skipping build.")

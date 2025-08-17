@@ -13,12 +13,13 @@ from langchain.prompts import PromptTemplate
 import dotenv
 import re
 import hashlib
+from rag_paths import faiss_path_str
 
 # 加载环境变量
 dotenv.load_dotenv()
 
 # 设置路径
-VECTOR_DB_PATH = "vector_store"
+VECTOR_DB_PATH = faiss_path_str()
 CACHE_FILE = "translation_cache.json"
 
 class TranslationCache:
@@ -107,7 +108,7 @@ def translate_text_fast(text, to_language="en"):
 def load_vectorstore():
     """加载已构建的向量数据库"""
     embeddings = OpenAIEmbeddings()
-    db = FAISS.load_local(VECTOR_DB_PATH, embeddings, allow_dangerous_deserialization=True)
+    db = FAISS.load_local(faiss_path_str(), embeddings, allow_dangerous_deserialization=True)
     return db
 
 def create_qa_chain(db):

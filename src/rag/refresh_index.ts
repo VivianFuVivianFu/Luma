@@ -5,15 +5,16 @@
 
 import { FAISS } from '@langchain/community/vectorstores/faiss';
 import { OpenAIEmbeddings } from '@langchain/openai';
-import { TextLoader } from 'langchain/document_loaders/fs/text';
-import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
+import { TextLoader } from '@langchain/community/document_loaders/fs/text';
+import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
 import { Document } from '@langchain/core/documents';
 import { existsSync, readdirSync, copyFileSync } from 'fs';
 import { join } from 'path';
-import { config } from 'dotenv';
 
-// Load environment variables
-config();
+// Load environment variables (debug: local-only dotenv)
+if (!process.env.VERCEL) { 
+  await import('dotenv/config'); 
+}
 
 interface RefreshOptions {
   files?: string[];

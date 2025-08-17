@@ -31,9 +31,10 @@ def test_imports():
 def test_vector_store():
     """Test if vector store exists"""
     import os
+    from rag_paths import faiss_index_file, faiss_metadata_file
 
-    faiss_path = "Rag/vector_store/index.faiss"
-    pkl_path = "Rag/vector_store/index.pkl"
+    faiss_path = faiss_index_file()
+    pkl_path = faiss_metadata_file()
 
     if os.path.exists(faiss_path) and os.path.exists(pkl_path):
         print("✓ Vector store files found")

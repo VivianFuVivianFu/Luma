@@ -8,6 +8,7 @@ from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
+from rag_paths import faiss_path_str
 
 # ✅ 自动加载 .env 中的 key
 load_dotenv()
@@ -18,12 +19,12 @@ together_api_key = os.getenv("TOGETHER_API_KEY")
 client = Together(api_key=together_api_key)
 
 # 设置路径
-VECTOR_DB_PATH = "vector_store"
+VECTOR_DB_PATH = faiss_path_str()
 
 def load_vectorstore():
     """加载已构建的向量数据库"""
     embeddings = OpenAIEmbeddings(openai_api_key=os.getenv("OPENAI_API_KEY"))
-    db = FAISS.load_local(VECTOR_DB_PATH, embeddings, allow_dangerous_deserialization=True)
+    db = FAISS.load_local(faiss_path_str(), embeddings, allow_dangerous_deserialization=True)
     return db
 
 def search_relevant_docs(question: str, k: int = 5):

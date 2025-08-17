@@ -4,6 +4,7 @@
 import os
 import sys
 from dotenv import load_dotenv
+from rag_paths import faiss_path_str
 
 def main():
     print("🔄 重新构建向量数据库...")
@@ -64,7 +65,7 @@ def main():
 
         # 设置路径
         DOCS_PATH = "docs"
-        VECTOR_DB_PATH = "vector_store"
+        VECTOR_DB_PATH = faiss_path_str()
 
         print(f"📁 文档路径: {DOCS_PATH}")
         print(f"📁 向量数据库路径: {VECTOR_DB_PATH}")
@@ -161,25 +162,25 @@ def main():
         print("\n💾 保存向量数据库...")
         try:
             # 如果目录存在，先删除
-            if os.path.exists(VECTOR_DB_PATH):
+            if os.path.exists(faiss_path_str()):
                 import shutil
-                shutil.rmtree(VECTOR_DB_PATH)
+                shutil.rmtree(faiss_path_str())
                 print("🗑️ 删除旧的向量数据库")
             
             # 创建目录
-            os.makedirs(VECTOR_DB_PATH, exist_ok=True)
+            os.makedirs(faiss_path_str(), exist_ok=True)
             
             # 保存数据库
-            db.save_local(VECTOR_DB_PATH)
+            db.save_local(faiss_path_str())
             print("✅ 向量数据库保存成功")
             
             # 验证保存的文件
-            saved_files = os.listdir(VECTOR_DB_PATH)
+            saved_files = os.listdir(faiss_path_str())
             print(f"📁 保存的文件: {saved_files}")
             
             # 验证可以重新加载
             print("\n🔄 验证数据库加载...")
-            test_db = FAISS.load_local(VECTOR_DB_PATH, embeddings, allow_dangerous_deserialization=True)
+            test_db = FAISS.load_local(faiss_path_str(), embeddings, allow_dangerous_deserialization=True)
             test_result = test_db.similarity_search("test", k=1)
             print(f"✅ 数据库验证成功，可以正常加载和查询")
             

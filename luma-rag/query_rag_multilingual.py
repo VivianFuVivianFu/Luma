@@ -9,12 +9,13 @@ from langchain.prompts import PromptTemplate
 from langchain.schema import BaseOutputParser
 import dotenv
 import re
+from rag_paths import faiss_path_str
 
 # 加载环境变量
 dotenv.load_dotenv()
 
 # 设置路径
-VECTOR_DB_PATH = "vector_store"
+VECTOR_DB_PATH = faiss_path_str()
 
 def detect_language(text):
     """检测文本语言（简单检测中英文）"""
@@ -64,7 +65,7 @@ def translate_to_chinese(english_text):
 def load_vectorstore():
     """加载已构建的向量数据库"""
     embeddings = OpenAIEmbeddings()
-    db = FAISS.load_local(VECTOR_DB_PATH, embeddings, allow_dangerous_deserialization=True)
+    db = FAISS.load_local(faiss_path_str(), embeddings, allow_dangerous_deserialization=True)
     return db
 
 def create_qa_chain(db):

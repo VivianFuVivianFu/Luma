@@ -12,6 +12,7 @@ import time
 from dotenv import load_dotenv
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
+from rag_paths import faiss_path_str
 
 # Load environment variables
 load_dotenv()
@@ -20,7 +21,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Configuration
-VECTOR_DB_PATH = "vector_store"
+VECTOR_DB_PATH = faiss_path_str()
 MAX_CONTEXT_LENGTH = 2000
 DEFAULT_K = 5
 
@@ -42,7 +43,7 @@ def initialize_rag():
         # Load vector store
         if os.path.exists(VECTOR_DB_PATH):
             vectorstore = FAISS.load_local(
-                VECTOR_DB_PATH, 
+                faiss_path_str(), 
                 embeddings, 
                 allow_dangerous_deserialization=True
             )

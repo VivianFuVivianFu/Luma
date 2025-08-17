@@ -2,10 +2,8 @@ name: RAG Maintenance Scheduler
 
 on:
   schedule:
-    # Daily evaluation at 02:00 UTC
-    - cron: '0 2 * * *'
-    # Hourly jobs
-    - cron: '0 * * * *'
+    # Daily maintenance at 03:00 UTC
+    - cron: '0 3 * * *'
   workflow_dispatch:
     inputs:
       task:
@@ -25,83 +23,81 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Determine tasks to run
-        id: tasks
+      - name: Setup Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Soft TypeScript check
         run: |
-          if [[ "${{ github.event_name }}" == "schedule" ]]; then
-            if [[ "${{ github.event.schedule }}" == "0 2 * * *" ]]; then
-              echo "run_eval=true" >> $GITHUB_OUTPUT
-              echo "run_jobs=false" >> $GITHUB_OUTPUT
-            else
-              echo "run_eval=false" >> $GITHUB_OUTPUT
-              echo "run_jobs=true" >> $GITHUB_OUTPUT
-            fi
+          echo "🔍 Running TypeScript check..."
+          npx tsc --noEmit --skipLibCheck || {
+            echo "⚠️  TypeScript warnings found, but continuing..."
+            true
+          }
+
+      - name: Check required secrets
+        id: secrets-check
+        run: |
+          echo "🔐 Checking required secrets..."
+          
+          if [[ -z "${{ secrets.OPENAI_API_KEY }}" ]]; then
+            echo "⚠️  OPENAI_API_KEY secret is missing"
+            echo "missing_secrets=true" >> $GITHUB_OUTPUT
+          elif [[ -z "${{ secrets.RESEND_API_KEY }}" ]]; then
+            echo "⚠️  RESEND_API_KEY secret is missing" 
+            echo "missing_secrets=true" >> $GITHUB_OUTPUT
           else
-            # Manual trigger
-            TASK="${{ github.event.inputs.task }}"
-            if [[ "$TASK" == "eval" || "$TASK" == "both" ]]; then
-              echo "run_eval=true" >> $GITHUB_OUTPUT
-            else
-              echo "run_eval=false" >> $GITHUB_OUTPUT
-            fi
-            if [[ "$TASK" == "jobs" || "$TASK" == "both" ]]; then
-              echo "run_jobs=true" >> $GITHUB_OUTPUT
-            else
-              echo "run_jobs=false" >> $GITHUB_OUTPUT
-            fi
+            echo "✅ Required secrets are present"
+            echo "missing_secrets=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Run RAG Evaluation
-        if: steps.tasks.outputs.run_eval == 'true'
+      - name: Exit if secrets missing
+        if: steps.secrets-check.outputs.missing_secrets == 'true'
         run: |
-          echo "🔍 Running RAG Evaluation..."
-          echo "API Base: ${{ secrets.API_BASE }}"
-          echo "Timestamp: $(date -u)"
-          
-          response=$(curl -s -w "\nHTTP_CODE:%{http_code}\nTIME_TOTAL:%{time_total}" \
-            -X POST "${{ secrets.API_BASE }}/api/rag/eval" \
-            -H "Authorization: Bearer ${{ secrets.ADMIN_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            -d '{"source": "github_actions"}')
-          
-          echo "=== RAG Evaluation Response ==="
-          echo "$response"
-          echo "==============================="
-          
-          # Extract HTTP code
-          http_code=$(echo "$response" | grep "HTTP_CODE:" | cut -d: -f2)
-          if [[ "$http_code" -ge 200 && "$http_code" -lt 300 ]]; then
-            echo "✅ RAG Evaluation completed successfully (HTTP $http_code)"
-          else
-            echo "❌ RAG Evaluation failed (HTTP $http_code)"
-            exit 1
-          fi
+          echo "🛑 Required secrets are missing. RAG maintenance cannot run."
+          echo "Please configure OPENAI_API_KEY and RESEND_API_KEY in repository secrets."
+          exit 0
 
-      - name: Run RAG Jobs
-        if: steps.tasks.outputs.run_jobs == 'true'
+      - name: Run RAG evaluation job
+        if: github.event.inputs.task == 'eval' || github.event.inputs.task == 'both' || github.event_name == 'schedule'
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          FAISS_INDEX_DIR: ${{ secrets.FAISS_INDEX_DIR || './luma-rag/vector_store' }}
         run: |
-          echo "⚙️ Running RAG Jobs..."
-          echo "API Base: ${{ secrets.API_BASE }}"
+          echo "🔍 Running RAG evaluation..."
           echo "Timestamp: $(date -u)"
           
-          response=$(curl -s -w "\nHTTP_CODE:%{http_code}\nTIME_TOTAL:%{time_total}" \
-            -X POST "${{ secrets.API_BASE }}/api/rag/jobs/run" \
-            -H "Authorization: Bearer ${{ secrets.ADMIN_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            -d '{"source": "github_actions"}')
-          
-          echo "=== RAG Jobs Response ==="
-          echo "$response"
-          echo "========================="
-          
-          # Extract HTTP code
-          http_code=$(echo "$response" | grep "HTTP_CODE:" | cut -d: -f2)
-          if [[ "$http_code" -ge 200 && "$http_code" -lt 300 ]]; then
-            echo "✅ RAG Jobs completed successfully (HTTP $http_code)"
-          else
-            echo "❌ RAG Jobs failed (HTTP $http_code)"
+          # Run evaluation via ts-node
+          npx ts-node src/rag/eval_loop.ts || {
+            echo "❌ RAG evaluation failed"
             exit 1
-          fi
+          }
+          
+          echo "✅ RAG evaluation completed successfully"
+
+      - name: Run RAG jobs runner
+        if: github.event.inputs.task == 'jobs' || github.event.inputs.task == 'both' || github.event_name == 'schedule'
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          FAISS_INDEX_DIR: ${{ secrets.FAISS_INDEX_DIR || './luma-rag/vector_store' }}
+        run: |
+          echo "⚙️ Running RAG jobs..."
+          echo "Timestamp: $(date -u)"
+          
+          # Run jobs via ts-node
+          npx ts-node src/rag/jobs_runner.ts || {
+            echo "❌ RAG jobs failed"
+            exit 1
+          }
+          
+          echo "✅ RAG jobs completed successfully"
 
       - name: Summary
         if: always()
@@ -109,7 +105,6 @@ jobs:
           echo "📊 RAG Maintenance Summary"
           echo "========================="
           echo "Trigger: ${{ github.event_name }}"
-          echo "Evaluation run: ${{ steps.tasks.outputs.run_eval }}"
-          echo "Jobs run: ${{ steps.tasks.outputs.run_jobs }}"
+          echo "Task: ${{ github.event.inputs.task || 'both (scheduled)' }}"
           echo "Completed at: $(date -u)"
           echo "========================="

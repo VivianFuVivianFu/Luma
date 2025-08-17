@@ -7,6 +7,7 @@ try:
     # 检查环境变量
     import os
     from dotenv import load_dotenv
+    from rag_paths import faiss_path_str
     load_dotenv()
     
     openai_key = os.getenv("OPENAI_API_KEY")
@@ -35,12 +36,12 @@ try:
         print("❌ langchain_community 包未安装")
     
     # 检查向量数据库
-    if os.path.exists("vector_store"):
+    if os.path.exists(faiss_path_str()):
         print("✅ 向量数据库存在")
         
         # 尝试加载
         embeddings = OpenAIEmbeddings()
-        db = FAISS.load_local("vector_store", embeddings, allow_dangerous_deserialization=True)
+        db = FAISS.load_local(faiss_path_str(), embeddings, allow_dangerous_deserialization=True)
         print(f"✅ 向量数据库加载成功，包含 {db.index.ntotal} 个文档块")
         
         # 测试搜索

@@ -3,6 +3,7 @@
 
 import os
 from dotenv import load_dotenv
+from rag_paths import faiss_path_str
 
 print("🔍 诊断向量数据库问题...")
 print("="*50)
@@ -14,7 +15,7 @@ load_dotenv()
 print(f"📁 当前工作目录: {os.getcwd()}")
 
 # 2. 检查向量数据库目录
-vector_db_path = "vector_store"
+vector_db_path = faiss_path_str()
 print(f"📁 向量数据库路径: {vector_db_path}")
 print(f"📁 向量数据库是否存在: {os.path.exists(vector_db_path)}")
 
@@ -52,7 +53,7 @@ try:
         embeddings = OpenAIEmbeddings()
         print("✅ Embeddings 初始化成功")
         
-        db = FAISS.load_local(vector_db_path, embeddings, allow_dangerous_deserialization=True)
+        db = FAISS.load_local(faiss_path_str(), embeddings, allow_dangerous_deserialization=True)
         print(f"✅ 向量数据库加载成功！文档数量: {db.index.ntotal}")
         
         # 测试搜索

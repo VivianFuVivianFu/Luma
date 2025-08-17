@@ -70,7 +70,7 @@ class JobsRunner {
       const refresher = new IndexRefresher();
       
       // Determine refresh strategy based on job reason and payload
-      const { hints = [], metrics = {} } = job.payload || {};
+      const { hints: _hints = [], metrics = {} } = job.payload || {};
       
       if (job.reason === 'low_score' && metrics.lowScoreQueries < 10) {
         // Incremental refresh for minor issues
@@ -116,7 +116,8 @@ class JobsRunner {
       for (const userId of userIds) {
         try {
           const summary = `Knowledge base updated based on your recent queries. You may notice improved search results.`;
-          await sendEmail.notifyKnowledgeUpdate(userId, summary);
+          const userIdStr = typeof userId === 'string' ? userId : String(userId);
+          await sendEmail.notifyKnowledgeUpdate(userIdStr, summary);
         } catch (error) {
           console.warn(`⚠️ Failed to notify user ${userId}:`, error);
         }
@@ -200,8 +201,8 @@ Please investigate and retry if necessary.
   }
 }
 
-// Alternative: Use child_process for isolated job execution
-async function runJobInProcess(job: IndexJob): Promise<void> {
+// Alternative: Use child_process for isolated job execution (currently unused)
+async function _runJobInProcess(job: IndexJob): Promise<void> {
   return new Promise((resolve, reject) => {
     const args = ['src/rag/refresh_index.ts'];
     

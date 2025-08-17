@@ -11,15 +11,23 @@
   },
   "dependencies": {
     "@11labs/react": "^0.1.0",
+    "@langchain/community": "^0.3.51",
+    "@langchain/core": "^0.3.71",
+    "@langchain/openai": "^0.6.7",
+    "@langchain/textsplitters": "^0.1.0",
+    "@radix-ui/react-slider": "^1.3.6",
     "@radix-ui/react-slot": "^1.0.2",
     "@supabase/supabase-js": "^2.53.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
+    "dotenv": "^17.2.1",
+    "langchain": "^0.3.30",
     "lucide-react": "^0.344.0",
     "openai": "^5.12.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.22.0",
+    "resend": "^6.0.1",
     "tailwind-merge": "^2.2.1"
   },
   "devDependencies": {
@@ -36,6 +44,7 @@
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
     "tailwindcss-animate": "^1.0.7",
+    "ts-node": "^10.9.2",
     "typescript": "^5.2.2",
     "vite": "^5.1.4"
   }

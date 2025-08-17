@@ -64,12 +64,12 @@ export async function retrieveAndLog({
     const results = await vectorStore.similaritySearchWithScore(query, topK);
     
     // Extract data
-    const texts = results.map(([doc]) => doc.pageContent);
-    const scores = results.map(([, score]) => score);
-    const ids = results.map(([doc], index) => doc.metadata?.id || `chunk_${index}`);
+    const texts = results.map((result) => result[0].pageContent);
+    const scores = results.map((result) => result[1]);
+    const ids = results.map((result, index: number) => result[0].metadata?.id || `chunk_${index}`);
     
     // Calculate mean score
-    const scoreMean = scores.length > 0 ? scores.reduce((sum, score) => sum + score, 0) / scores.length : 0;
+    const scoreMean = scores.length > 0 ? scores.reduce((sum: number, score: number) => sum + score, 0) / scores.length : 0;
     
     console.log(`📊 Retrieved ${results.length} results, mean score: ${scoreMean.toFixed(3)}`);
     

@@ -117,17 +117,7 @@ const ChatSection = () => {
     conversation.endSession();
   };
 
-  const clearConversation = () => {
-    lumaAI.clearHistory();
-    setMessages([
-      {
-        id: '1',
-        content: "Hi, I'm Luma — your gentle companion. I'm here to support you in self-reflection and transformation with deep understanding and care. What would you like to talk about today?",
-        sender: 'luma',
-        timestamp: new Date()
-      }
-    ]);
-  };
+  // clearConversation function removed as it was unused
 
   return (
     <div className="flex flex-col h-full bg-card rounded-2xl border border-border overflow-hidden">

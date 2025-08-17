@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from together import Together
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
+from rag_paths import faiss_path_str
 
 # --- 配置 ---
 # 加载 .env 文件中的环境变量
@@ -18,7 +19,7 @@ except Exception as e:
     exit()
 
 # 定义向量数据库和嵌入模型的路径
-VECTOR_STORE_PATH = "vector_store"
+VECTOR_STORE_PATH = faiss_path_str()
 EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 
 # --- 核心功能函数 ---
@@ -33,7 +34,7 @@ def search_relevant_docs(query_text: str) -> list[str]:
         
         # 加载本地的 FAISS 索引
         print("🔍 正在加载知识库...")
-        db = FAISS.load_local(VECTOR_STORE_PATH, embeddings, allow_dangerous_deserialization=True)
+        db = FAISS.load_local(faiss_path_str(), embeddings, allow_dangerous_deserialization=True)
         
         # 执行相似性搜索，返回最相关的3个文档
         print(f"📚 正在为 “{query_text}” 检索相关信息...")

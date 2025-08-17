@@ -3,6 +3,7 @@
 
 import os
 from dotenv import load_dotenv
+from rag_paths import faiss_path_str
 
 print("🔄 重新构建向量数据库（兼容版本）...")
 print("="*50)
@@ -24,7 +25,7 @@ try:
 
     # 设置路径
     DOCS_PATH = "docs"
-    VECTOR_DB_PATH = "vector_store"
+    VECTOR_DB_PATH = faiss_path_str()
 
     print(f"📁 文档路径: {DOCS_PATH}")
     print(f"📁 向量数据库路径: {VECTOR_DB_PATH}")
@@ -97,7 +98,7 @@ try:
             shutil.rmtree(VECTOR_DB_PATH)
             print("🗑️ 删除旧的向量数据库")
         
-        db.save_local(VECTOR_DB_PATH)
+        db.save_local(faiss_path_str())
         print("✅ 向量数据库保存成功")
         
         # 验证保存
@@ -106,7 +107,7 @@ try:
         
         # 测试加载
         print("\n🧪 测试重新加载...")
-        db_test = FAISS.load_local(VECTOR_DB_PATH, embeddings, allow_dangerous_deserialization=True)
+        db_test = FAISS.load_local(faiss_path_str(), embeddings, allow_dangerous_deserialization=True)
         test_results = db_test.similarity_search("attachment", k=2)
         print(f"✅ 测试成功，找到 {len(test_results)} 个结果")
         

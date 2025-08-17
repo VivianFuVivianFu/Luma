@@ -1,4 +1,6 @@
-module.exports = {
-  content: ["./src/**/*.{js,ts,jsx,tsx}"],
-  plugins: [require("tailwindcss-animate")],
+export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
 }
