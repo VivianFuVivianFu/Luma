@@ -24,7 +24,7 @@ interface RAGSearchResponse {
 }
 
 class RAGService {
-  private baseUrl = 'http://localhost:5000';
+  private baseUrl = import.meta.env.VITE_RAG_SERVER_URL || 'http://localhost:5000';
   private isServiceAvailable = false;
   private lastAvailabilityCheck = 0;
   private availabilityCheckInterval = 60000; // Check every minute

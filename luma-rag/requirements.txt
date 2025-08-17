@@ -9,3 +9,5 @@ ebooklib
 beautifulsoup4
 PyPDF2
 together
+flask
+flask-cors

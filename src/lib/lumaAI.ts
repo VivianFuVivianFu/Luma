@@ -3,10 +3,11 @@
 // Enhanced with RAG (Retrieval-Augmented Generation) for knowledge-based responses
 // Enhanced with Memory Service for long-term and short-term memory
 
-// RAG service temporarily disabled for deployment
+// RAG service re-enabled
 import { memoryService } from './memoryService';
 import { supabase } from './supabase';
 import { MultiModelSystem } from './multiModelWrapper';
+import { ragService } from './ragService';
 
 // Together AI configuration - Only LLaMA 3 70B
 const TOGETHER_API_KEY = import.meta.env.VITE_TOGETHER_API_KEY || '';
@@ -301,9 +302,20 @@ Safety: Do not provide medical or legal advice. Encourage seeking professional h
         this.userGoal = this.extractCleanGoal(userMessage);
       }
 
-      // RAG context temporarily disabled for deployment
+      // RAG context generation - only for relevant topics
       let ragContext = '';
-      // TODO: Re-enable RAG service after deployment issues are resolved
+      try {
+        if (this.shouldUseRAG(userMessage) && await ragService.isAvailable()) {
+          const ragResponse = await ragService.getContext(userMessage, 1000);
+          if (ragResponse.context && ragResponse.context.trim()) {
+            ragContext = `KNOWLEDGE CONTEXT: ${ragResponse.context}`;
+            console.log('RAG context applied to conversation');
+          }
+        }
+      } catch (error) {
+        console.warn('RAG context generation failed:', error);
+        // Continue without RAG context
+      }
 
       // Save user message to memory if enabled
       if (this.memoryEnabled && this.currentUserId && this.currentSessionId) {
@@ -618,8 +630,24 @@ You deserve immediate, professional support. I'm here with you, but you need spe
     return cleanGoal.trim();
   }
 
-  // RAG logic temporarily disabled for deployment
-  // private shouldUseRAG(message: string): boolean { ... }
+  // RAG logic for determining when to use knowledge context
+  private shouldUseRAG(message: string): boolean {
+    const lowerMessage = message.toLowerCase();
+    
+    // Use RAG for specific topics that benefit from knowledge base
+    const ragTriggers = [
+      'trauma', 'ptsd', 'therapy', 'depression', 'anxiety', 'panic',
+      'attachment', 'meditation', 'mindfulness', 'coping', 'stress',
+      'grief', 'loss', 'healing', 'recovery', 'addiction', 'bipolar',
+      'ocd', 'eating disorder', 'self-harm', 'suicide', 'relationship',
+      'communication', 'boundaries', 'self-esteem', 'confidence',
+      'emotional regulation', 'anger management', 'forgiveness',
+      'psychology', 'neuroscience', 'brain', 'mental health',
+      'counseling', 'therapeutic', 'cognitive', 'behavioral'
+    ];
+    
+    return ragTriggers.some(trigger => lowerMessage.includes(trigger));
+  }
 
   // Update conversation context with key information
   private updateConversationContext(userMessage: string): void {
