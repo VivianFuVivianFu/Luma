@@ -91,10 +91,6 @@ const Index = () => {
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-12 pt-8 lg:pt-16">
         {/* Main Headline */}
         <div className="text-center mb-12 lg:mb-20">
-          <div className="inline-flex items-center space-x-2 bg-white/70 backdrop-blur-sm rounded-full px-6 py-2 mb-6 shadow-sm">
-            <Sparkles className="w-4 h-4 text-indigo-600" />
-            <span className="text-sm font-medium text-gray-700">AI Emotional Companion</span>
-          </div>
           
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
             <span className="bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">You're Not</span>

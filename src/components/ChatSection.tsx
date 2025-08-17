@@ -195,7 +195,7 @@ const ChatSection = () => {
             onChange={(e) => setInputValue(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder={isVoiceConnected ? "Voice chat active - speak or type..." : "Share what's on your mind..."}
-            className="flex-1 bg-white/80 border-blue-200 focus:ring-blue-400 focus:border-blue-400"
+            className="flex-1 bg-white border-blue-200 focus:ring-blue-400 focus:border-blue-400 text-gray-900 placeholder:text-gray-500"
             disabled={isLoading}
           />
           <Button
