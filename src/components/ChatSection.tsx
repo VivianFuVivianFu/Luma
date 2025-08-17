@@ -196,6 +196,13 @@ const ChatSection = () => {
             className="flex-1 bg-input border-border focus:ring-luma-blue focus:border-luma-blue"
             disabled={isLoading}
           />
+          <Button
+            onClick={sendMessage}
+            disabled={!inputValue.trim() || isLoading}
+            className="bg-luma-blue hover:bg-luma-blue-dark text-luma-blue-foreground"
+          >
+            <Send className="w-4 h-4" />
+          </Button>
           <div className="flex items-center gap-2">
             <Button
               onClick={isVoiceConnected ? endVoiceConversation : startVoiceConversation}
@@ -211,13 +218,6 @@ const ChatSection = () => {
             </Button>
             <span className="text-sm text-muted-foreground whitespace-nowrap">Call Luma</span>
           </div>
-          <Button
-            onClick={sendMessage}
-            disabled={!inputValue.trim() || isLoading}
-            className="bg-luma-blue hover:bg-luma-blue-dark text-luma-blue-foreground"
-          >
-            <Send className="w-4 h-4" />
-          </Button>
         </div>
       </div>
     </div>
