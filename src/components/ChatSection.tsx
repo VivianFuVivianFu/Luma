@@ -120,9 +120,9 @@ const ChatSection = () => {
   // clearConversation function removed as it was unused
 
   return (
-    <div className="flex flex-col h-full bg-card rounded-2xl border border-border overflow-hidden">
+    <div className="flex flex-col h-full bg-slate-50/80 rounded-2xl border border-indigo-100 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border bg-secondary/50">
+      <div className="flex items-center justify-between p-4 border-b border-indigo-100/50 bg-white/60">
         <div className="flex items-center gap-3">
           <img
             src={lumaAvatar}
@@ -130,8 +130,8 @@ const ChatSection = () => {
             className="w-8 h-8 rounded-full"
           />
           <div>
-            <h3 className="font-semibold text-card-foreground">Luma</h3>
-            <p className="text-xs text-muted-foreground">
+            <h3 className="font-semibold text-gray-800">Luma</h3>
+            <p className="text-xs text-gray-600">
               {isVoiceConnected ? 'Voice Active' : 'Your AI Companion'}
             </p>
           </div>
@@ -140,7 +140,7 @@ const ChatSection = () => {
           <Button
             variant="ghost"
             size="sm"
-            className="text-luma-blue hover:text-luma-blue-dark"
+            className="text-blue-600 hover:text-blue-700"
             title="Voice Settings"
           >
             <Volume2 className="w-4 h-4" />
@@ -158,8 +158,8 @@ const ChatSection = () => {
             <div
               className={`max-w-[80%] p-3 rounded-2xl ${
                 message.sender === 'user'
-                  ? 'bg-luma-blue text-luma-blue-foreground ml-4'
-                  : 'bg-secondary text-secondary-foreground mr-4'
+                  ? 'bg-blue-500 text-white ml-4'
+                  : 'bg-white/80 text-gray-800 mr-4 border border-blue-100/50'
               }`}
             >
               <p className="text-sm leading-relaxed">{message.content}</p>
@@ -172,11 +172,11 @@ const ChatSection = () => {
 
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-secondary text-secondary-foreground p-3 rounded-2xl mr-4">
+            <div className="bg-white/80 text-gray-800 p-3 rounded-2xl mr-4 border border-blue-100/50">
               <div className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-luma-blue rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-luma-blue rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                <div className="w-2 h-2 bg-luma-blue rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
               </div>
             </div>
           </div>
@@ -186,20 +186,20 @@ const ChatSection = () => {
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t border-border bg-secondary/30">
+      <div className="p-4 border-t border-indigo-100/50 bg-white/50">
         <div className="flex items-center gap-2">
           <Input
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder={isVoiceConnected ? "Voice chat active - speak or type..." : "Share what's on your mind..."}
-            className="flex-1 bg-input border-border focus:ring-luma-blue focus:border-luma-blue"
+            className="flex-1 bg-white/80 border-blue-200 focus:ring-blue-400 focus:border-blue-400"
             disabled={isLoading}
           />
           <Button
             onClick={sendMessage}
             disabled={!inputValue.trim() || isLoading}
-            className="bg-luma-blue hover:bg-luma-blue-dark text-luma-blue-foreground"
+            className="bg-blue-500 hover:bg-blue-600 text-white"
           >
             <Send className="w-4 h-4" />
           </Button>
@@ -216,7 +216,7 @@ const ChatSection = () => {
             >
               {isVoiceConnected ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
             </Button>
-            <span className="text-sm text-muted-foreground whitespace-nowrap">Call Luma</span>
+            <span className="text-sm text-gray-600 whitespace-nowrap">Call Luma</span>
           </div>
         </div>
       </div>

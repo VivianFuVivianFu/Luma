@@ -11,12 +11,12 @@ const VideoSection = () => {
   return (
     <div className="relative w-full h-full flex flex-col">
       {/* Video Container */}
-      <div className="flex-1 relative overflow-hidden rounded-2xl bg-card border border-border">
+      <div className="flex-1 relative overflow-hidden rounded-2xl bg-slate-50/80 border border-blue-100">
         {!isVideoLoaded && (
-          <div className="absolute inset-0 flex items-center justify-center bg-card">
+          <div className="absolute inset-0 flex items-center justify-center bg-slate-50/90">
             <div className="animate-pulse">
-              <div className="w-24 h-24 bg-luma-blue/20 rounded-full flex items-center justify-center">
-                <div className="w-12 h-12 bg-luma-blue rounded-full animate-ping"></div>
+              <div className="w-24 h-24 bg-blue-100/60 rounded-full flex items-center justify-center">
+                <div className="w-12 h-12 bg-blue-400 rounded-full animate-ping"></div>
               </div>
             </div>
           </div>
