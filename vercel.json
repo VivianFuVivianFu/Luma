@@ -1,9 +1,14 @@
 {
   "buildCommand": "NODE_OPTIONS='--max-old-space-size=4096' npm run build",
-  "outputDirectory": "dist",
+  "outputDirectory": "dist", 
   "installCommand": "npm install --legacy-peer-deps",
   "framework": "vite",
   "nodejs": "18.x",
+  "git": {
+    "deploymentEnabled": {
+      "main": true
+    }
+  },
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]
