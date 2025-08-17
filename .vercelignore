@@ -1,8 +1,34 @@
-# Development files only
+# Development and local files
 .env.local
 .env.development
 *.log
 
-# Python files not needed for web app
-*.py
-luma-rag/
+# Large RAG documents and vectors (keep Python scripts for potential future use)
+luma-rag/docs_raw/
+luma-rag/vector_store/
+
+# Test and development Python files (specific exclusions)
+test-*.py
+*-test.py
+test_*.py
+*_test.py
+diagnose-*.py
+clean-*.py
+final-*.py
+qwen-*.py
+
+# Build artifacts and caches
+__pycache__/
+*.pyc
+
+# Development scripts and configs
+*.bat
+manual-setup-commands.txt
+direct-commands.txt
+
+# Documentation files (reduce bundle size)
+*README*.md
+DEPLOYMENT_*.md
+MEMORY_*.md
+MONITORING_*.md
+*.sql
