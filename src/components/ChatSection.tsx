@@ -17,7 +17,7 @@ const ChatSection = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: "Hi, I'm so glad you reached out. I want you to know that you are safe here, and you deserve to be heard and understood. What would you like to explore together today?",
+      content: "Hi, I'm Luma — your AI emotional companion. Thoughtfully designed with empathy, psychology, and neuroscience, I'm here to support your self-reflection and transformation. Wherever you are on your journey, I'll hold a caring and warm space for you. Let's take the next step together.",
       sender: 'luma',
       timestamp: new Date()
     }
@@ -25,6 +25,7 @@ const ChatSection = () => {
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isVoiceConnected, setIsVoiceConnected] = useState(false);
+  const [isFirstUserMessage, setIsFirstUserMessage] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const conversation = useConversation({
@@ -78,10 +79,18 @@ const ChatSection = () => {
     setIsLoading(true);
 
     try {
-      // Use LLaMA 3 70B via Together AI
-      const lumaResponse = await lumaAI.sendMessage(userMessage);
-      addMessage(lumaResponse, 'luma');
-      setIsLoading(false);
+      // Check if this is the user's first message
+      if (isFirstUserMessage) {
+        // Send the special first response
+        addMessage("Hi, I'm so glad you reached out. I want you to know that you are safe here, and you deserve to be heard and understood. What would you like to explore together today?", 'luma');
+        setIsFirstUserMessage(false);
+        setIsLoading(false);
+      } else {
+        // Use LLaMA 3 70B via Together AI for subsequent messages
+        const lumaResponse = await lumaAI.sendMessage(userMessage);
+        addMessage(lumaResponse, 'luma');
+        setIsLoading(false);
+      }
     } catch (error) {
       console.error('Error sending message:', error);
       addMessage("I'm sorry, I'm having trouble connecting right now. Please try again.", 'luma');
