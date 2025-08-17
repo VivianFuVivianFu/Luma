@@ -12,4 +12,10 @@ export default defineConfig({
   },
   assetsInclude: ['**/*.mp4'],
   publicDir: 'public',
+  build: {
+    rollupOptions: {
+      external: [],
+    },
+    chunkSizeWarningLimit: 1600,
+  },
 })

@@ -1,0 +1,10 @@
+{
+  "buildCommand": "npm run build",
+  "framework": "vite",
+  "installCommand": "npm ci --include=optional",
+  "functions": {
+    "supabase/functions/**": {
+      "runtime": "edge"
+    }
+  }
+}
