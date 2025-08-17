@@ -110,6 +110,7 @@ const Index = () => {
             <button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-8 py-4 rounded-full font-semibold text-lg transition-all transform hover:scale-105 shadow-lg">
               Start Your Journey Today
             </button>
+            {/* Force cache invalidation timestamp: 2025-08-17 14:35 */}
           </div>
         </div>
       </div>
