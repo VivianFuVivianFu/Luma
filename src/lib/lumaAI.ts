@@ -568,6 +568,36 @@ OUTCOME-FOCUSED GUIDANCE:
       return "Worry can feel so overwhelming sometimes. I want you to know that feeling anxious doesn't make you weak - it often means you care deeply about something. What's been on your mind lately?";
     }
     
+    // Business and career related topics
+    if (message.includes('business') || message.includes('work') || message.includes('job') || message.includes('career')) {
+      return "I'd love to hear about what's going on with your business. Whether it's challenges, opportunities, or just needing someone to talk through ideas with - I'm here to listen. What aspect of your business is on your mind today?";
+    }
+    
+    // Relationship topics
+    if (message.includes('relationship') || message.includes('partner') || message.includes('boyfriend') || message.includes('girlfriend') || message.includes('marriage')) {
+      return "Relationships can bring such joy and complexity. I'm glad you want to talk about this. What's been happening in your relationship that you'd like to explore together?";
+    }
+    
+    // Family topics
+    if (message.includes('family') || message.includes('parents') || message.includes('mom') || message.includes('dad') || message.includes('kids') || message.includes('children')) {
+      return "Family relationships can be so meaningful and sometimes challenging too. Thank you for trusting me with this. What's been going on with your family that you'd like to talk about?";
+    }
+    
+    // Health and stress topics
+    if (message.includes('stress') || message.includes('overwhelmed') || message.includes('tired') || message.includes('exhausted')) {
+      return "It sounds like you're carrying a lot right now. Stress and overwhelm are your mind and body's way of telling you something important. What's been weighing on you most lately?";
+    }
+    
+    // Goal and life direction topics
+    if (message.includes('goal') || message.includes('future') || message.includes('direction') || message.includes('purpose') || message.includes('meaning')) {
+      return "I love that you're thinking about your goals and direction. It shows such thoughtfulness about your life. What's drawing your attention when you think about your future?";
+    }
+    
+    // General topics that indicate wanting to discuss something specific
+    if (message.includes('talk about') || message.includes('discuss') || message.includes('share') || message.includes('tell you about')) {
+      return "I'm really glad you want to share this with me. I'm here to listen and support you. What would feel most helpful to explore about this topic?";
+    }
+    
     // Generic empathetic response for unclear messages
     return "I want to make sure I'm really understanding what you're going through. Sometimes it can be hard to put feelings into words. What feels most important for you to share right now?";
   }
