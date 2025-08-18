@@ -7,7 +7,7 @@
 import { memoryService } from './memoryService';
 import { supabase } from './supabase';
 import { MultiModelSystem } from './multiModelWrapper';
-import { ragService } from './ragService';
+// RAG service removed for simplified architecture
 
 // Together AI configuration - Only LLaMA 3 70B
 const TOGETHER_API_KEY = import.meta.env.VITE_TOGETHER_API_KEY || '';
@@ -175,9 +175,9 @@ export class LumaAI {
   private currentSessionId: string | null = null;
   private memoryEnabled = false;
   
-  // Multi-model system
-  private multiModelSystem: any = null; // Temporarily disabled
-  private useMultiModel = true; // Flag to enable/disable multi-model system
+  // Multi-model system - DISABLED for simplified architecture
+  private multiModelSystem: any = null;
+  private useMultiModel = false; // Disabled - using only LLaMA + Memory
 
   // Initialize memory system for authenticated users
   async initializeMemory(): Promise<void> {
@@ -249,73 +249,16 @@ Safety: Do not provide medical or legal advice. Encourage seeking professional h
         return this.getCrisisResponse();
       }
 
-      // Try multi-model system first if available and enabled
-      if (this.useMultiModel && this.multiModelSystem) {
-        try {
-          console.log('[LumaAI] Using multi-model system for response generation');
-          const multiModelResult = await this.multiModelSystem.processMessage(userMessage);
-          
-          if (multiModelResult && multiModelResult.response) {
-            // Use the multi-model response but continue with memory storage
-            const assistantMessage = multiModelResult.response;
-            
-            // Save user message to memory if enabled
-            if (this.memoryEnabled && this.currentUserId && this.currentSessionId) {
-              await memoryService.saveMessage(
-                this.currentSessionId, 
-                this.currentUserId, 
-                'user', 
-                userMessage
-              );
-              
-              // Save assistant message to memory if enabled
-              await memoryService.saveMessage(
-                this.currentSessionId, 
-                this.currentUserId, 
-                'assistant', 
-                assistantMessage
-              );
-            }
-            
-            // Add to conversation history for context
-            this.conversationHistory.push({
-              role: 'user',
-              content: userMessage
-            });
-            
-            this.conversationHistory.push({
-              role: 'assistant',
-              content: assistantMessage
-            });
-            
-            console.log(`[LumaAI] Multi-model response via ${multiModelResult.metadata?.model} model`);
-            return assistantMessage;
-          }
-        } catch (error) {
-          console.error('[LumaAI] Multi-model system failed, falling back to LLaMA:', error);
-          // Fall through to original LLaMA system
-        }
-      }
+      // SIMPLIFIED ARCHITECTURE: Skip multi-model system
+      // Using only LLaMA + Memory + improved fallbacks for better conversation flow
 
       // Check if user is stating a goal and clean it up
       if (this.userGoal === null && this.isGoalStatement(userMessage)) {
         this.userGoal = this.extractCleanGoal(userMessage);
       }
 
-      // RAG context generation - only for relevant topics
-      let ragContext = '';
-      try {
-        if (this.shouldUseRAG(userMessage) && await ragService.isAvailable()) {
-          const ragResponse = await ragService.getContext(userMessage, 1000);
-          if (ragResponse.context && ragResponse.context.trim()) {
-            ragContext = `KNOWLEDGE CONTEXT: ${ragResponse.context}`;
-            console.log('RAG context applied to conversation');
-          }
-        }
-      } catch (error) {
-        console.warn('RAG context generation failed:', error);
-        // Continue without RAG context
-      }
+      // RAG DISABLED: Simplified architecture for better conversation flow
+      // Using only LLaMA's built-in knowledge + conversation memory
 
       // Save user message to memory if enabled
       if (this.memoryEnabled && this.currentUserId && this.currentSessionId) {
@@ -382,13 +325,7 @@ OUTCOME-FOCUSED GUIDANCE:
         });
       }
 
-      // Add RAG context if available
-      if (ragContext) {
-        messages.push({
-          role: 'system',
-          content: ragContext
-        });
-      }
+      // RAG context disabled - using simplified LLaMA + Memory architecture
 
       // Call Together AI LLaMA 3 70B model
       const response = await fetch(TOGETHER_BASE_URL, {
@@ -515,6 +452,12 @@ OUTCOME-FOCUSED GUIDANCE:
 
   private getFallbackResponse(userMessage: string): string {
     const message = userMessage.toLowerCase();
+    
+    // Check previous conversation context for better responses
+    const previousMessages = this.conversationHistory
+      .filter(msg => msg.role === 'user')
+      .map(msg => msg.content.toLowerCase())
+      .join(' ');
 
     // If we're stuck in a loop, be honest about it
     if (this.stuckInLoop) {
@@ -568,9 +511,30 @@ OUTCOME-FOCUSED GUIDANCE:
       return "Worry can feel so overwhelming sometimes. I want you to know that feeling anxious doesn't make you weak - it often means you care deeply about something. What's been on your mind lately?";
     }
     
-    // Business and career related topics
-    if (message.includes('business') || message.includes('work') || message.includes('job') || message.includes('career')) {
+    // Distinguish between business owner vs workplace employee issues
+    if (message.includes('my business') || message.includes('business owner') || message.includes('entrepreneur')) {
       return "I'd love to hear about what's going on with your business. Whether it's challenges, opportunities, or just needing someone to talk through ideas with - I'm here to listen. What aspect of your business is on your mind today?";
+    }
+    
+    // Workplace and employee issues - context-aware responses
+    if (message.includes('work') || message.includes('job') || message.includes('workplace') || 
+        message.includes('colleague') || message.includes('boss') || message.includes('manager') ||
+        (message.includes('career') && (message.includes('stuck') || message.includes('progress') || message.includes('difficult')))) {
+      
+      // Context-aware responses based on conversation history
+      if (previousMessages.includes('sad') || previousMessages.includes('feel sad')) {
+        return "I can really hear the sadness in what you're sharing about work. When our workplace affects our emotional well-being like this, it can feel overwhelming. You mentioned your colleagues are difficult - that sounds really challenging to deal with every day. What's been the hardest part about the situation with your colleagues?";
+      }
+      
+      if (message.includes('colleague') && message.includes('difficult')) {
+        return "Difficult colleagues can make work feel so much harder than it needs to be. It sounds like this is affecting not just your daily experience but also how you feel about your career progress. What specific behaviors from your colleagues are making things challenging for you?";
+      }
+      
+      if (message.includes('progress') || message.includes('career')) {
+        return "Feeling stuck in your career can be really frustrating, especially when external factors like difficult relationships are holding you back. It sounds like you're dealing with both interpersonal challenges and concerns about your professional growth. What matters most to you about moving forward in your career?";
+      }
+      
+      return "Work challenges can feel so draining, especially when they affect how we feel about ourselves. I hear that something at work is weighing on you. What's been the most difficult part of your work situation lately?";
     }
     
     // Relationship topics
@@ -680,24 +644,7 @@ You deserve immediate, professional support. I'm here with you, but you need spe
     return cleanGoal.trim();
   }
 
-  // RAG logic for determining when to use knowledge context
-  private shouldUseRAG(message: string): boolean {
-    const lowerMessage = message.toLowerCase();
-    
-    // Use RAG for specific topics that benefit from knowledge base
-    const ragTriggers = [
-      'trauma', 'ptsd', 'therapy', 'depression', 'anxiety', 'panic',
-      'attachment', 'meditation', 'mindfulness', 'coping', 'stress',
-      'grief', 'loss', 'healing', 'recovery', 'addiction', 'bipolar',
-      'ocd', 'eating disorder', 'self-harm', 'suicide', 'relationship',
-      'communication', 'boundaries', 'self-esteem', 'confidence',
-      'emotional regulation', 'anger management', 'forgiveness',
-      'psychology', 'neuroscience', 'brain', 'mental health',
-      'counseling', 'therapeutic', 'cognitive', 'behavioral'
-    ];
-    
-    return ragTriggers.some(trigger => lowerMessage.includes(trigger));
-  }
+  // RAG logic removed for simplified LLaMA + Memory architecture
 
   // Update conversation context with key information
   private updateConversationContext(userMessage: string): void {
