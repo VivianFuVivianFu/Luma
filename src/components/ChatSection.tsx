@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Mic, MicOff, Send, Volume2 } from 'lucide-react';
+import { Mic, MicOff, Send, Maximize, Minimize } from 'lucide-react';
 import { useConversation } from '@11labs/react';
 import { lumaAI } from '@/lib/lumaAI';
 import lumaAvatar from '@/assets/luma-avatar.png';
@@ -17,7 +17,7 @@ const ChatSection = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: "Hi, I'm Luma — your AI emotional companion. Thoughtfully designed with empathy, psychology, and neuroscience, I'm here to support your self-reflection and transformation. Wherever you are on your journey, I'll hold a caring and warm space for you. Let's take the next step together.",
+      content: "Hi, I'm Luma — your AI emotional companion. Thoughtfully designed with empathy, psychology, and neuroscience, I'm here to support your self-reflection and transformation. Wherever you are on your journey, let's take the next step together",
       sender: 'luma',
       timestamp: new Date()
     }
@@ -26,6 +26,7 @@ const ChatSection = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isVoiceConnected, setIsVoiceConnected] = useState(false);
   const [isFirstUserMessage, setIsFirstUserMessage] = useState(true);
+  const [isMaximized, setIsMaximized] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
@@ -132,7 +133,11 @@ const ChatSection = () => {
   // clearConversation function removed as it was unused
 
   return (
-    <div className="flex flex-col h-full bg-slate-50/80 rounded-2xl border border-indigo-100 overflow-hidden">
+    <div className={`flex flex-col bg-slate-50/80 rounded-2xl border border-indigo-100 overflow-hidden ${
+      isMaximized 
+        ? 'fixed inset-4 z-50 h-[calc(100vh-2rem)]' 
+        : 'h-full'
+    }`}>
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-indigo-100/50 bg-white/60">
         <div className="flex items-center gap-3">
@@ -152,10 +157,11 @@ const ChatSection = () => {
           <Button
             variant="ghost"
             size="sm"
+            onClick={() => setIsMaximized(!isMaximized)}
             className="text-blue-600 hover:text-blue-700"
-            title="Voice Settings"
+            title={isMaximized ? 'Minimize Window' : 'Maximize Window'}
           >
-            <Volume2 className="w-4 h-4" />
+            {isMaximized ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
           </Button>
         </div>
       </div>
