@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Mic, MicOff, Send, Maximize, Minimize } from 'lucide-react';
 import { useConversation } from '@11labs/react';
-import { lumaAI } from '@/lib/lumaAI';
+import { claudeAI } from '@/lib/claudeAI';
 import lumaAvatar from '@/assets/luma-avatar.png';
 
 interface Message {
@@ -14,10 +15,20 @@ interface Message {
 }
 
 const ChatSection = () => {
+  // Generate or retrieve persistent anonymous user ID
+  const [userId] = useState(() => {
+    let id = localStorage.getItem('luma_user_id');
+    if (!id) {
+      id = `anon-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+      localStorage.setItem('luma_user_id', id);
+    }
+    return id;
+  });
+
   const [messages, setMessages] = useState<Message[]>([
     {
-      id: '1',
-      content: "Hi, I'm Luma — your AI emotional companion. Thoughtfully designed with empathy, psychology, and neuroscience, I'm here to support your self-reflection and transformation. Wherever you are on your journey, let's take the next step together",
+      id: 'welcome-message',
+      content: "Hi, I'm Luma — your AI emotional companion. Thoughtfully designed with empathy, psychology, and neuroscience, I'm here to support your self-reflection and transformation. Wherever you are on your journey, let's take the next step together.",
       sender: 'luma',
       timestamp: new Date()
     }
@@ -83,20 +94,20 @@ const ChatSection = () => {
     setIsLoading(true);
 
     try {
-      // Check if this is the user's first message
+      console.log('[ChatSection] Sending message via Claude AI service...');
+      // Use Claude via proxy server
+      const reply = await claudeAI.sendMessage(userMessage);
+      console.log('[ChatSection] Received reply:', reply.substring(0, 100));
+
+      addMessage(reply, 'luma');
+      setIsLoading(false);
+      
+      // Remove first message flag since we're using Claude for all responses
       if (isFirstUserMessage) {
-        // Send the special first response
-        addMessage("Hi, I'm so glad you reached out. I want you to know that you are safe here, and you deserve to be heard and understood. What would you like to explore together today?", 'luma');
         setIsFirstUserMessage(false);
-        setIsLoading(false);
-      } else {
-        // Use LLaMA 3 70B via Together AI for subsequent messages
-        const lumaResponse = await lumaAI.sendMessage(userMessage);
-        addMessage(lumaResponse, 'luma');
-        setIsLoading(false);
       }
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('[ChatSection] Error sending message:', error);
       addMessage("I'm sorry, I'm having trouble connecting right now. Please try again.", 'luma');
       setIsLoading(false);
     }
@@ -132,12 +143,21 @@ const ChatSection = () => {
 
   // clearConversation function removed as it was unused
 
-  return (
-    <div className={`flex flex-col bg-slate-50/80 rounded-2xl border border-indigo-100 overflow-hidden ${
-      isMaximized 
-        ? 'fixed inset-4 z-50 h-[calc(100vh-2rem)]' 
-        : 'h-full'
-    }`}>
+  const chatContent = (
+    <>
+      {/* Backdrop overlay for maximized state */}
+      {isMaximized && (
+        <div 
+          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[9998]"
+          onClick={() => setIsMaximized(false)}
+        />
+      )}
+      
+      <div className={`flex flex-col bg-slate-50/80 rounded-2xl border border-indigo-100 overflow-hidden ${
+        isMaximized 
+          ? 'fixed inset-4 z-[9999] h-[calc(100vh-2rem)] w-[calc(100vw-2rem)]' 
+          : 'h-full'
+      }`}>
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-indigo-100/50 bg-white/60">
         <div className="flex items-center gap-3">
@@ -241,7 +261,15 @@ const ChatSection = () => {
         </div>
       </div>
     </div>
+    </>
   );
+
+  // Return portal for maximized state, normal render for minimized
+  if (isMaximized) {
+    return createPortal(chatContent, document.body);
+  }
+  
+  return chatContent;
 };
 
 export default ChatSection;

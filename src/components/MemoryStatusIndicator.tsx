@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { testMemorySystemReadiness } from '../utils/testDbTables';
-import { lumaAI } from '../lib/lumaAI';
+import { claudeAI } from '../lib/claudeAI';
 import { supabase } from '../lib/supabase';
 
 interface MemoryStatus {
@@ -34,8 +34,9 @@ const MemoryStatusIndicator: React.FC = () => {
       const authenticated = !!session?.user;
       
       // Check memory system
-      const sessionInfo = lumaAI.getSessionInfo();
-      const memoryEnabled = lumaAI.isMemoryEnabled();
+      // Claude AI doesn't use persistent memory - conversations are stateless
+      const sessionInfo = { userId: null, sessionId: null, memoryEnabled: false };
+      const memoryEnabled = false;
 
       setStatus({
         dbReady: dbStatus.tablesReady,

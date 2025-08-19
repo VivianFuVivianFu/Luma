@@ -62,7 +62,14 @@
       "Bash(npx vite:*)",
       "Bash(git commit:*)",
       "Bash(git rm:*)",
-      "Bash(git rev-parse:*)"
+      "Bash(git rev-parse:*)",
+      "Bash(mv:*)",
+      "Bash(del:*)",
+      "Bash(npm run qa:suggest:*)",
+      "Bash(API_BASE=http://localhost:8787 npm run qa:eval)",
+      "Bash(npm run qa:eval:*)",
+      "Bash(start http://localhost:5174/test-proxy-connection.html)",
+      "Bash(export FORCE_KILL=true)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

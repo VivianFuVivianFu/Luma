@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { Mic, MicOff, VolumeX } from 'lucide-react';
-import { lumaAI } from '../lib/lumaAI';
+import { claudeAI } from '../lib/claudeAI';
 
 interface SimpleVoiceChatProps {
   onClose?: () => void;
@@ -73,7 +73,7 @@ export default function SimpleVoiceChat({ onClose }: SimpleVoiceChatProps) {
     
     try {
       // Get response from Luma AI
-      const response = await lumaAI.sendMessage(transcript);
+      const response = await claudeAI.sendMessage(transcript);
       
       // Convert response to speech
       await speakResponse(response);

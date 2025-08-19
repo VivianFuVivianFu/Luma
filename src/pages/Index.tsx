@@ -150,7 +150,7 @@ const Index = () => {
               Your Voice Matters
             </h3>
             <p className="text-gray-600 text-lg mb-8 max-w-2xl mx-auto">
-              Help us make Luma even better at supporting you on your healing journey
+              Your perspective is key to Luma's growth. Help us improve by sharing your thoughts on how we can better support you. What's working? What could be better? We're ready to listen.
             </p>
             
             <a 

@@ -1,5 +1,5 @@
 // Browser Test Setup - Makes testing functions available globally
-import { lumaAI } from '../lib/lumaAI';
+import { claudeAI } from '../lib/claudeAI';
 import { memoryService } from '../lib/memoryService';
 import { supabase, sbAdmin } from '../lib/supabase';
 import { logMemorySystemStatus } from './testDbTables';

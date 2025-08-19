@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { memoryService } from '../lib/memoryService';
-import { lumaAI } from '../lib/lumaAI';
+import { claudeAI } from '../lib/claudeAI';
 import { supabase, sbAdmin } from '../lib/supabase';
 import { testMemorySystemReadiness } from '../utils/testDbTables';
 

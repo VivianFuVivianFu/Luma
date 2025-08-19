@@ -5,7 +5,7 @@ import { sbAdmin } from './supabase'
 async function chatCompletion(messages: Array<{role: string, content: string}>, maxTokens: number = 200): Promise<string> {
   const TOGETHER_API_KEY = import.meta.env.VITE_TOGETHER_API_KEY || '';
   const TOGETHER_BASE_URL = 'https://api.together.xyz/v1/chat/completions';
-  const LLAMA_MODEL = 'meta-llama/Llama-3-70b-chat-hf';
+  const LLAMA_MODEL = 'meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo';
 
   try {
     const response = await fetch(TOGETHER_BASE_URL, {
