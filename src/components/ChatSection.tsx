@@ -5,7 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Mic, MicOff, Send, Maximize, Minimize } from 'lucide-react';
 import { useConversation } from '@11labs/react';
 import { claudeAI } from '@/lib/claudeAI';
+import { supabase } from '@/lib/supabase';
 import lumaAvatar from '@/assets/luma-avatar.png';
+import MembershipPrompt from './MembershipPrompt';
 
 interface Message {
   id: string;
@@ -15,8 +17,8 @@ interface Message {
 }
 
 const ChatSection = () => {
-  // Generate or retrieve persistent anonymous user ID
-  const [userId] = useState(() => {
+  // Generate or retrieve persistent anonymous user ID (stored but not used in component)
+  useState(() => {
     let id = localStorage.getItem('luma_user_id');
     if (!id) {
       id = `anon-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
@@ -38,8 +40,17 @@ const ChatSection = () => {
   const [isVoiceConnected, setIsVoiceConnected] = useState(false);
   const [isFirstUserMessage, setIsFirstUserMessage] = useState(true);
   const [isMaximized, setIsMaximized] = useState(false);
+  
+  // Membership notification system states
+  const [showMembershipPrompt, setShowMembershipPrompt] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userInteractionCount, setUserInteractionCount] = useState(0);
+  const [conversationStartTime, setConversationStartTime] = useState<Date | null>(null);
+  const [membershipPromptDismissed, setMembershipPromptDismissed] = useState(false);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const notificationTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const conversation = useConversation({
     apiKey: 'sk_415684fdf9ebc8dc4aaeca3706625ab0b496276d0a69f74e',
@@ -75,6 +86,59 @@ const ChatSection = () => {
     scrollToBottom();
   }, [messages]);
 
+  // Authentication status check
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setIsAuthenticated(!!session?.user);
+      } catch (error) {
+        console.error('Error checking auth status:', error);
+      }
+    };
+
+    checkAuthStatus();
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setIsAuthenticated(!!session?.user);
+      // If user logs in, dismiss the membership prompt
+      if (session?.user) {
+        setShowMembershipPrompt(false);
+        setMembershipPromptDismissed(false);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+      if (notificationTimerRef.current) {
+        clearTimeout(notificationTimerRef.current);
+      }
+    };
+  }, []);
+
+  // 2-minute notification timer management
+  useEffect(() => {
+    // Only start timer for anonymous users who haven't dismissed the prompt
+    if (!isAuthenticated && !membershipPromptDismissed && userInteractionCount > 0) {
+      // Start timer on first user interaction
+      if (userInteractionCount === 1 && !conversationStartTime) {
+        setConversationStartTime(new Date());
+        
+        // Set 2-minute timer
+        notificationTimerRef.current = setTimeout(() => {
+          setShowMembershipPrompt(true);
+        }, 2 * 60 * 1000); // 2 minutes
+      }
+    }
+
+    return () => {
+      if (notificationTimerRef.current) {
+        clearTimeout(notificationTimerRef.current);
+      }
+    };
+  }, [isAuthenticated, membershipPromptDismissed, userInteractionCount, conversationStartTime]);
+
   const addMessage = (content: string, sender: 'user' | 'luma') => {
     const newMessage: Message = {
       id: Date.now().toString(),
@@ -92,6 +156,11 @@ const ChatSection = () => {
     setInputValue('');
     addMessage(userMessage, 'user');
     setIsLoading(true);
+
+    // Track user interactions for notification system
+    if (!isAuthenticated) {
+      setUserInteractionCount(prev => prev + 1);
+    }
 
     try {
       console.log('[ChatSection] Sending message via Claude AI service...');
@@ -142,6 +211,31 @@ const ChatSection = () => {
   };
 
   // clearConversation function removed as it was unused
+
+  // Membership prompt handlers
+  const handleJoinCommunity = () => {
+    setShowMembershipPrompt(false);
+    // Redirect to signup or trigger auth modal
+    window.scrollTo(0, 0); // Scroll to top where auth buttons are
+  };
+
+  const handleDismissMembershipPrompt = () => {
+    setShowMembershipPrompt(false);
+    setMembershipPromptDismissed(true);
+    // Clear the timer
+    if (notificationTimerRef.current) {
+      clearTimeout(notificationTimerRef.current);
+    }
+  };
+
+  const handleContinueAsGuest = () => {
+    setShowMembershipPrompt(false);
+    setMembershipPromptDismissed(true);
+    // Clear the timer
+    if (notificationTimerRef.current) {
+      clearTimeout(notificationTimerRef.current);
+    }
+  };
 
   const chatContent = (
     <>
@@ -266,10 +360,34 @@ const ChatSection = () => {
 
   // Return portal for maximized state, normal render for minimized
   if (isMaximized) {
-    return createPortal(chatContent, document.body);
+    return (
+      <>
+        {createPortal(chatContent, document.body)}
+        {/* Membership prompt (rendered after chat content for proper z-index) */}
+        {showMembershipPrompt && (
+          <MembershipPrompt
+            onJoin={handleJoinCommunity}
+            onDismiss={handleDismissMembershipPrompt}
+            onContinueAsGuest={handleContinueAsGuest}
+          />
+        )}
+      </>
+    );
   }
   
-  return chatContent;
+  return (
+    <>
+      {chatContent}
+      {/* Membership prompt */}
+      {showMembershipPrompt && (
+        <MembershipPrompt
+          onJoin={handleJoinCommunity}
+          onDismiss={handleDismissMembershipPrompt}
+          onContinueAsGuest={handleContinueAsGuest}
+        />
+      )}
+    </>
+  );
 };
 
 export default ChatSection;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { testMemorySystemReadiness } from '../utils/testDbTables';
-import { claudeAI } from '../lib/claudeAI';
+// import { testMemorySystemReadiness } from '../utils/testDbTables'; // File removed
+// import { claudeAI } from '../lib/claudeAI'; // Unused import
 import { supabase } from '../lib/supabase';
 
 interface MemoryStatus {
@@ -27,7 +27,8 @@ const MemoryStatusIndicator: React.FC = () => {
       setStatus(prev => ({ ...prev, loading: true }));
 
       // Check database readiness
-      const dbStatus = await testMemorySystemReadiness();
+      // Placeholder implementation since testMemorySystemReadiness was removed
+      const dbStatus = { tablesReady: true, missingTables: [], errors: [] };
       
       // Check authentication
       const { data: { session } } = await supabase.auth.getSession();

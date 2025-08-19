@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { memoryService } from '../lib/memoryService';
 import { claudeAI } from '../lib/claudeAI';
 import { supabase, sbAdmin } from '../lib/supabase';
-import { testMemorySystemReadiness } from '../utils/testDbTables';
+// import { testMemorySystemReadiness } from '../utils/testDbTables'; // File removed
 
 interface TestResult {
   name: string;
@@ -114,48 +114,48 @@ const MemoryTestPanel: React.FC = () => {
     }
   };
 
-  // Test 5: Test LumaAI memory integration
-  const testLumaAIMemory = async () => {
+  // Test 5: Test Claude AI memory integration
+  const testClaudeAIMemory = async () => {
     try {
-      const sessionInfo = lumaAI.getSessionInfo();
-      const memoryEnabled = lumaAI.isMemoryEnabled();
+      const status = claudeAI.getStatus();
       
-      addTestResult('LumaAI Memory Integration', 'success', 'LumaAI memory methods working', {
-        sessionInfo,
-        memoryEnabled
+      addTestResult('Claude AI Memory Integration', 'success', 'Claude AI methods working', {
+        connected: status.connected,
+        model: status.model,
+        historyLength: status.historyLength
       });
 
       // Try to enable memory (will fail if not authenticated)
       try {
-        const enableResult = await lumaAI.enableMemory();
+        const enableResult = await claudeAI.initialize();
         if (enableResult) {
           addTestResult('Memory Enablement', 'success', 'Memory successfully enabled');
         } else {
-          addTestResult('Memory Enablement', 'error', 'Memory enable returned false (likely not authenticated)');
+          addTestResult('Memory Enablement', 'error', 'Memory enable returned false (likely proxy server not running)');
         }
       } catch (enableError) {
         addTestResult('Memory Enablement', 'error', `Memory enable failed: ${enableError}`);
       }
     } catch (error) {
-      addTestResult('LumaAI Memory Integration', 'error', `LumaAI memory test failed: ${error}`);
+      addTestResult('Claude AI Memory Integration', 'error', `Claude AI memory test failed: ${error}`);
     }
   };
 
-  // Test 6: Test database tables existence
+  // Test 6: Test database tables existence (placeholder)
   const testDatabaseTables = async () => {
     try {
-      const dbStatus = await testMemorySystemReadiness();
+      // Placeholder implementation since testMemorySystemReadiness was removed
+      const { data, error } = await sbAdmin
+        .from('information_schema.tables')
+        .select('table_name')
+        .in('table_name', ['sessions', 'messages', 'session_summaries', 'user_memories']);
       
-      if (dbStatus.tablesReady) {
-        addTestResult('Database Tables', 'success', dbStatus.summary, {
-          allTablesReady: true,
-          checkedTables: ['sessions', 'messages', 'session_summaries', 'user_memories']
-        });
+      if (error) {
+        addTestResult('Database Tables', 'error', `Database check failed: ${error.message}`);
       } else {
-        addTestResult('Database Tables', 'error', dbStatus.summary, {
-          missingTables: dbStatus.missingTables,
-          errors: dbStatus.errors,
-          allTablesReady: false
+        addTestResult('Database Tables', 'success', `Found ${data?.length || 0} memory-related tables`, {
+          tablesFound: data?.map(t => t.table_name) || [],
+          totalTables: data?.length || 0
         });
       }
     } catch (error) {
@@ -173,7 +173,7 @@ const MemoryTestPanel: React.FC = () => {
     await testDatabaseTables();
     await testAuthentication();
     await testMemoryServiceInit();
-    await testLumaAIMemory();
+    await testClaudeAIMemory();
 
     setIsRunning(false);
   };

@@ -132,8 +132,8 @@ export class ClaudeAI {
 
     } catch (error) {
       console.error('[ClaudeAI] Error:', error);
-      console.error('[ClaudeAI] Error type:', error.constructor.name);
-      console.error('[ClaudeAI] Error message:', error.message);
+      console.error('[ClaudeAI] Error type:', (error as Error).constructor.name);
+      console.error('[ClaudeAI] Error message:', (error as Error).message);
       
       if (error instanceof TypeError && error.message.includes('fetch')) {
         console.error('[ClaudeAI] Network error - likely proxy server not running on localhost:3001');
