@@ -32,7 +32,7 @@ const PORT = process.env.PORT || 3001;
 const CONFIG = {
   claude: {
     apiKey: process.env.VITE_CLAUDE_API_KEY,
-    model: 'claude-3-haiku-20240307',
+    model: 'claude-3-5-haiku-20241022',
     maxTokens: 1024,
     temperature: 0.7,
     apiUrl: 'https://api.anthropic.com/v1/messages'
