@@ -52,8 +52,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onAuthSuccess }) => {
               {/* Vertical aspect ratio (9:16 portrait format) */}
               <div className="aspect-[9/16] relative">
                 <video
-                  autoPlay
                   playsInline
+                  controls
+                  preload="metadata"
+                  poster=""
                   className="w-full h-full object-fill rounded-2xl"
                   onEnded={() => setVideoHasPlayed(true)}
                   onError={(e) => console.error('Video failed to load:', e)}
@@ -70,11 +72,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onAuthSuccess }) => {
                   </div>
                 </video>
                 
-                {/* Video overlay with title - repositioned for vertical format */}
-                <div className="absolute bottom-6 left-4 right-4 bg-black/60 text-white px-4 py-3 rounded-lg backdrop-blur-sm text-center">
-                  <p className="text-sm font-medium">Meet Luma</p>
-                  <p className="text-xs text-white/80 mt-1">Your AI Companion</p>
-                </div>
                 
                 {/* Replay button (only shows after video ends) */}
                 {videoHasPlayed && (
