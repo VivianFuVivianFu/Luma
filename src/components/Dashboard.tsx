@@ -251,25 +251,6 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout }) => {
 
         {/* Sidebar */}
         <div className="space-y-6">
-          {/* Quick Stats */}
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
-            <h3 className="font-semibold text-gray-800 mb-4">Your Journey</h3>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Conversations</span>
-                <span className="font-medium text-gray-800">{messages.length}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Time with Luma</span>
-                <span className="font-medium text-gray-800">Active</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Memory Status</span>
-                <span className="text-green-600 font-medium">Connected</span>
-              </div>
-            </div>
-          </div>
-
           {/* Customer Feedback Section */}
           <FeedbackSection />
 
