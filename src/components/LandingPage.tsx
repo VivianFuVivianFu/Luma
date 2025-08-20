@@ -9,7 +9,7 @@ interface LandingPageProps {
 const LandingPage: React.FC<LandingPageProps> = ({ onAuthSuccess }) => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('signup');
-  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [videoHasPlayed, setVideoHasPlayed] = useState(false);
 
   const handleAuth = (mode: 'login' | 'signup') => {
     setAuthMode(mode);
@@ -49,47 +49,51 @@ const LandingPage: React.FC<LandingPageProps> = ({ onAuthSuccess }) => {
         <div className="mb-12">
           <div className="relative max-w-3xl mx-auto">
             <div className="relative bg-white rounded-2xl shadow-2xl overflow-hidden">
-              {!isVideoPlaying ? (
-                <div 
-                  className="relative aspect-video bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center cursor-pointer group"
-                  onClick={() => setIsVideoPlaying(true)}
+              <div className="aspect-video relative">
+                <video
+                  autoPlay
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover rounded-2xl"
+                  onEnded={() => setVideoHasPlayed(true)}
+                  onError={(e) => console.error('Video failed to load:', e)}
                 >
-                  {/* Background pattern */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/50"></div>
-                  <div className="absolute inset-0">
-                    <div className="absolute top-8 left-8 w-24 h-24 bg-blue-200/30 rounded-full blur-xl"></div>
-                    <div className="absolute bottom-12 right-12 w-32 h-32 bg-indigo-200/30 rounded-full blur-2xl"></div>
-                    <div className="absolute top-1/2 left-1/3 w-16 h-16 bg-cyan-200/30 rounded-full blur-lg"></div>
-                  </div>
-                  
-                  <div className="relative z-10 flex flex-col items-center">
-                    <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 border-4 border-blue-100">
-                      <Play className="w-8 h-8 text-blue-600 ml-1" />
+                  <source src="/Video.mp4" type="video/mp4" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-lg border-4 border-blue-100 mb-4">
+                        <Play className="w-8 h-8 text-blue-600 ml-1" />
+                      </div>
+                      <p className="text-gray-700 font-medium">Video not available</p>
+                      <p className="text-sm text-gray-500 mt-2">Please check if Video.mp4 exists in the public folder</p>
                     </div>
-                    <p className="text-gray-700 font-medium mt-4">Watch Luma Introduction</p>
-                    <p className="text-sm text-gray-500 mt-2">Discover how Luma can support your journey</p>
                   </div>
+                </video>
+                
+                {/* Video overlay with title */}
+                <div className="absolute bottom-4 left-4 bg-black/60 text-white px-4 py-2 rounded-lg backdrop-blur-sm">
+                  <p className="text-sm font-medium">Meet Luma - Your AI Companion</p>
                 </div>
-              ) : (
-                <div className="aspect-video relative">
-                  {/* Actual video implementation */}
-                  <iframe
-                    className="w-full h-full rounded-2xl"
-                    src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&rel=0"
-                    title="Luma AI Companion Introduction"
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  ></iframe>
-                  {/* Close video button */}
-                  <button
-                    onClick={() => setIsVideoPlaying(false)}
-                    className="absolute top-4 right-4 w-8 h-8 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/70 transition-colors"
-                  >
-                    ×
-                  </button>
-                </div>
-              )}
+                
+                {/* Replay button (only shows after video ends) */}
+                {videoHasPlayed && (
+                  <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                    <button
+                      onClick={() => {
+                        const video = document.querySelector('video');
+                        if (video) {
+                          video.currentTime = 0;
+                          video.play();
+                          setVideoHasPlayed(false);
+                        }
+                      }}
+                      className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-all duration-300 hover:scale-110"
+                    >
+                      <Play className="w-6 h-6 text-blue-600 ml-1" />
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
