@@ -254,15 +254,8 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
         <div className="space-y-6">
           {/* Customer Feedback Section */}
           <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-6 border border-purple-200">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                <MessageSquare className="w-4 h-4 text-purple-600" />
-              </div>
-              <h3 className="font-semibold text-gray-800">Customer Feedback</h3>
-            </div>
-            
             <p className="text-sm text-gray-600 mb-4 leading-relaxed">
-              How is your experience so far? We value your opinions, and please help us to make Luma serve you better.
+              How has your experience been so far? We value your opinion and would love your help in making Luma even better.
             </p>
 
             {/* Feedback Button */}
