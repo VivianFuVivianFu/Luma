@@ -143,13 +143,20 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout }) => {
                 </div>
               </div>
               
-              <button
-                onClick={() => setShowVoiceCall(true)}
-                className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-200"
-              >
-                <Phone className="w-5 h-5" />
-                <span>Call Luma Now</span>
-              </button>
+              <div className="flex items-center space-x-3">
+                <img 
+                  src="/luma_photo.jpg" 
+                  alt="Luma"
+                  className="w-10 h-10 rounded-full object-cover border-2 border-blue-200"
+                />
+                <button
+                  onClick={() => setShowVoiceCall(true)}
+                  className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-700 text-white font-bold rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-200"
+                >
+                  <Phone className="w-5 h-5" />
+                  <span>Call Luma Now</span>
+                </button>
+              </div>
             </div>
 
             {/* Messages Area */}
