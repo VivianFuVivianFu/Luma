@@ -126,6 +126,21 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout }) => {
         </div>
       </header>
 
+      {/* Privacy Policy Bar */}
+      <div className="bg-blue-600 text-white shadow-lg">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <button 
+            onClick={() => window.open('/privacy-policy', '_blank')}
+            className="w-full text-center hover:bg-blue-700 transition-colors rounded-lg px-4 py-2"
+          >
+            <div className="flex items-center justify-center space-x-2">
+              <span className="text-lg font-semibold">🔒 Data Privacy & Safety Terms</span>
+              <span className="text-sm opacity-90">- Click to view our comprehensive privacy policy</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
       <div className="max-w-7xl mx-auto px-6 py-8 grid lg:grid-cols-3 gap-8">
         {/* Main Chat Area */}
         <div className="lg:col-span-2">
@@ -174,7 +189,9 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout }) => {
                         : 'bg-gray-100 text-gray-800'
                     }`}
                   >
-                    <p className="text-sm leading-relaxed text-gray-700">{message.content}</p>
+                    <p className={`text-sm leading-relaxed ${
+                      message.sender === 'user' ? 'text-white' : 'text-gray-700'
+                    }`}>{message.content}</p>
                     <p className={`text-xs mt-1 ${
                       message.sender === 'user' ? 'text-blue-100' : 'text-gray-500'
                     }`}>
@@ -222,16 +239,6 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout }) => {
                   className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
                   <Send className="w-4 h-4" />
-                </button>
-              </div>
-              
-              {/* Privacy Policy Link */}
-              <div className="mt-4 text-center">
-                <button 
-                  onClick={() => window.open('/privacy-policy', '_blank')}
-                  className="text-sm text-blue-600 hover:text-blue-800 underline transition-colors"
-                >
-                  Data Privacy & Safety Terms
                 </button>
               </div>
             </div>
