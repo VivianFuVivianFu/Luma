@@ -233,10 +233,10 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout }) => {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Customer Feedback Section */}
-          <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-2xl p-6 border border-orange-200">
+          <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-6 border border-purple-200">
             <div className="flex items-center space-x-3 mb-4">
-              <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                <MessageSquare className="w-4 h-4 text-orange-600" />
+              <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                <MessageSquare className="w-4 h-4 text-purple-600" />
               </div>
               <h3 className="font-semibold text-gray-800">Customer Feedback</h3>
             </div>
@@ -248,7 +248,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout }) => {
             {/* Feedback Button */}
             <button
               onClick={() => setFeedbackForm(!feedbackForm)}
-              className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium"
+              className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
             >
               <MessageSquare className="w-4 h-4" />
               <span>Customer Feedback</span>
