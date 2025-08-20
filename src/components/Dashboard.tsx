@@ -9,6 +9,7 @@ import CommunitySection from './CommunitySection';
 interface DashboardProps {
   userEmail: string;
   onLogout: () => void;
+  onBackToHome: () => void;
 }
 
 interface Message {
@@ -18,7 +19,7 @@ interface Message {
   timestamp: Date;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout }) => {
+const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -130,6 +131,12 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout }) => {
             <span className="text-sm text-gray-600 hidden sm:inline">
               Welcome, {userEmail.split('@')[0]}
             </span>
+            <button
+              onClick={onBackToHome}
+              className="flex items-center space-x-2 px-4 py-2 text-blue-600 hover:text-blue-800 transition-colors font-medium"
+            >
+              <span>Back to Home</span>
+            </button>
             <button
               onClick={handleLogout}
               className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"

@@ -7,6 +7,7 @@ const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userEmail, setUserEmail] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const [showDashboard, setShowDashboard] = useState(false);
 
   useEffect(() => {
     // Check for existing session
@@ -16,6 +17,7 @@ const Index = () => {
         if (session?.user) {
           setIsAuthenticated(true);
           setUserEmail(session.user.email || '');
+          setShowDashboard(true);
         }
       } catch (error) {
         console.error('Error checking session:', error);
@@ -32,9 +34,11 @@ const Index = () => {
         if (session?.user) {
           setIsAuthenticated(true);
           setUserEmail(session.user.email || '');
+          setShowDashboard(true);
         } else {
           setIsAuthenticated(false);
           setUserEmail('');
+          setShowDashboard(false);
         }
         setLoading(false);
       }
@@ -44,12 +48,17 @@ const Index = () => {
   }, []);
 
   const handleAuthSuccess = () => {
-    // Auth state will be updated by the listener
+    setShowDashboard(true);
   };
 
   const handleLogout = () => {
     setIsAuthenticated(false);
     setUserEmail('');
+    setShowDashboard(false);
+  };
+
+  const handleBackToHome = () => {
+    setShowDashboard(false);
   };
 
   if (loading) {
@@ -65,10 +74,14 @@ const Index = () => {
 
   return (
     <>
-      {!isAuthenticated ? (
+      {!isAuthenticated || !showDashboard ? (
         <LandingPage onAuthSuccess={handleAuthSuccess} />
       ) : (
-        <Dashboard userEmail={userEmail} onLogout={handleLogout} />
+        <Dashboard 
+          userEmail={userEmail} 
+          onLogout={handleLogout}
+          onBackToHome={handleBackToHome}
+        />
       )}
     </>
   );
