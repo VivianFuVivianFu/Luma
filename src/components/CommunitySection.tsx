@@ -52,12 +52,6 @@ const CommunitySection: React.FC = () => {
         <span>Notify Me When Available</span>
       </button>
 
-      {/* Beta Info */}
-      <div className="mt-4 p-3 bg-white/60 rounded-lg border border-purple-200">
-        <p className="text-xs text-purple-600 text-center">
-          Be among the first to experience our community features when it launches.
-        </p>
-      </div>
     </div>
   );
 };
