@@ -3,7 +3,6 @@ import { Send, Phone, Heart, LogOut, MessageSquare } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { claudeAI } from '../lib/claudeAI';
 import VoiceCallWidget from './VoiceCallWidget';
-import FeedbackSection from './FeedbackSection';
 import CommunitySection from './CommunitySection';
 
 interface DashboardProps {
@@ -25,7 +24,6 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
   const [isTyping, setIsTyping] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showVoiceCall, setShowVoiceCall] = useState(false);
-  const [feedbackForm, setFeedbackForm] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -119,7 +117,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
             </div>
             <div className="flex items-center space-x-3">
               <img 
-                src="/brain-backfround.jpg" 
+                src="/icons/Logo.png" 
                 alt="Logo"
                 className="w-8 h-8 rounded-lg object-cover"
               />
@@ -269,16 +267,13 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
 
             {/* Feedback Button */}
             <button
-              onClick={() => setFeedbackForm(!feedbackForm)}
+              onClick={() => window.open('https://tally.so/r/3y5yNp', '_blank')}
               className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
             >
               <MessageSquare className="w-4 h-4" />
               <span>Customer Feedback</span>
             </button>
           </div>
-
-          {/* Feedback Form */}
-          {feedbackForm && <FeedbackSection />}
 
           {/* Community Section */}
           <CommunitySection />
