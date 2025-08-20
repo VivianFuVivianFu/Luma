@@ -5,7 +5,6 @@ import { claudeAI } from '../lib/claudeAI';
 import VoiceCallWidget from './VoiceCallWidget';
 import FeedbackSection from './FeedbackSection';
 import CommunitySection from './CommunitySection';
-import PrivacySection from './PrivacySection';
 
 interface DashboardProps {
   userEmail: string;
@@ -133,9 +132,11 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout }) => {
             {/* Chat Header */}
             <div className="p-6 border-b border-gray-200 flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
-                  <MessageCircle className="w-5 h-5 text-white" />
-                </div>
+                <img 
+                  src="/luma_photo.jpg" 
+                  alt="Luma"
+                  className="w-10 h-10 rounded-full object-cover border-2 border-blue-200"
+                />
                 <div>
                   <h2 className="font-semibold text-gray-800">Chat with Luma</h2>
                   <p className="text-sm text-gray-600">Your intelligent AI companion</p>
@@ -144,10 +145,10 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout }) => {
               
               <button
                 onClick={() => setShowVoiceCall(true)}
-                className="flex items-center space-x-2 px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
+                className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-200"
               >
-                <Phone className="w-4 h-4" />
-                <span>Call Luma</span>
+                <Phone className="w-5 h-5" />
+                <span>Call Luma Now</span>
               </button>
             </div>
 
@@ -170,6 +171,13 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout }) => {
                   key={message.id}
                   className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
+                  {message.sender === 'luma' && (
+                    <img 
+                      src="/luma_photo.jpg" 
+                      alt="Luma"
+                      className="w-8 h-8 rounded-full object-cover border border-gray-200 mr-2 mt-1 flex-shrink-0"
+                    />
+                  )}
                   <div
                     className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${
                       message.sender === 'user'
@@ -177,7 +185,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout }) => {
                         : 'bg-gray-100 text-gray-800'
                     }`}
                   >
-                    <p className="text-sm leading-relaxed">{message.content}</p>
+                    <p className="text-sm leading-relaxed text-gray-700">{message.content}</p>
                     <p className={`text-xs mt-1 ${
                       message.sender === 'user' ? 'text-blue-100' : 'text-gray-500'
                     }`}>
@@ -189,11 +197,16 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout }) => {
 
               {isTyping && (
                 <div className="flex justify-start">
+                  <img 
+                    src="/luma_photo.jpg" 
+                    alt="Luma"
+                    className="w-8 h-8 rounded-full object-cover border border-gray-200 mr-2 mt-1 flex-shrink-0"
+                  />
                   <div className="max-w-xs px-4 py-3 bg-gray-100 rounded-2xl">
                     <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                      <div className="w-2 h-2 bg-gray-600 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-gray-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                      <div className="w-2 h-2 bg-gray-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                     </div>
                   </div>
                 </div>
@@ -210,7 +223,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout }) => {
                   onChange={(e) => setInputMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder="Type your message here..."
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-gray-800 bg-white placeholder-gray-500"
                   rows={1}
                   style={{ minHeight: '44px' }}
                 />
@@ -220,6 +233,16 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout }) => {
                   className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
                   <Send className="w-4 h-4" />
+                </button>
+              </div>
+              
+              {/* Privacy Policy Link */}
+              <div className="mt-4 text-center">
+                <button 
+                  onClick={() => window.open('/privacy-policy', '_blank')}
+                  className="text-sm text-blue-600 hover:text-blue-800 underline transition-colors"
+                >
+                  Data Privacy & Safety Terms
                 </button>
               </div>
             </div>
@@ -252,9 +275,6 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout }) => {
 
           {/* Community Section */}
           <CommunitySection />
-
-          {/* Privacy Section */}
-          <PrivacySection />
         </div>
       </div>
 
