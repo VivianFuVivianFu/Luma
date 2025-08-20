@@ -22,7 +22,7 @@ export class ClaudeAI {
   constructor() {
     this.config = {
       apiKey: import.meta.env.VITE_CLAUDE_API_KEY || '',
-      model: 'claude-3-haiku-20240307', // Claude Haiku for fast responses
+      model: 'claude-3-5-haiku-20241022', // Claude 3.5 Haiku for improved performance
       maxTokens: 1024,
       temperature: 0.7
     };
@@ -33,22 +33,55 @@ export class ClaudeAI {
    */
   async initialize(): Promise<boolean> {
     try {
-      // Test proxy connection
-      console.log('[ClaudeAI] Testing proxy server connection...');
-      const response = await fetch('http://localhost:3001/health');
+      const backendUrl = this.getBackendUrl();
       
-      if (response.ok) {
-        console.log('[ClaudeAI] Proxy server connection successful');
+      if (backendUrl === '') {
+        // Direct API mode - just check if we have API key
+        if (!this.config.apiKey) {
+          console.error('[ClaudeAI] Claude API key not configured');
+          return false;
+        }
+        console.log('[ClaudeAI] Direct API mode initialized');
         this.isInitialized = true;
         return true;
       } else {
-        console.error('[ClaudeAI] Proxy server not responding');
-        return false;
+        // Proxy mode - test backend connection
+        console.log(`[ClaudeAI] Testing backend connection: ${backendUrl}/health`);
+        const response = await fetch(`${backendUrl}/health`);
+        
+        if (response.ok) {
+          console.log('[ClaudeAI] Backend connection successful');
+          this.isInitialized = true;
+          return true;
+        } else {
+          console.error('[ClaudeAI] Backend not responding');
+          return false;
+        }
       }
     } catch (error) {
-      console.error('[ClaudeAI] Failed to connect to proxy server:', error);
+      console.error('[ClaudeAI] Failed to initialize:', error);
       return false;
     }
+  }
+
+  /**
+   * Get backend URL based on environment
+   */
+  private getBackendUrl(): string {
+    // Check for environment-specific backend URL
+    const envBackendUrl = import.meta.env.VITE_BACKEND_URL;
+    if (envBackendUrl) {
+      return envBackendUrl;
+    }
+    
+    // Production fallback - use direct Claude API
+    if (import.meta.env.PROD) {
+      console.log('[ClaudeAI] Production mode - using direct API calls');
+      return '';  // Empty string indicates direct API mode
+    }
+    
+    // Development default
+    return 'http://localhost:3001';
   }
 
   /**
@@ -58,13 +91,8 @@ export class ClaudeAI {
     try {
       console.log(`[ClaudeAI] Sending message to Claude: "${userMessage.substring(0, 50)}..."`);
 
-      if (!this.isInitialized) {
-        const initialized = await this.initialize();
-        if (!initialized) {
-          throw new Error('Claude API not initialized');
-        }
-      }
-
+      const backendUrl = this.getBackendUrl();
+      
       // Add user message to history
       this.conversationHistory.push({
         role: 'user',
@@ -72,49 +100,15 @@ export class ClaudeAI {
         timestamp: new Date()
       });
 
-      // Prepare conversation history for the proxy
-      const history = this.conversationHistory.slice(0, -1).map(msg => ({
-        role: msg.role,
-        content: msg.content
-      }));
+      let reply: string;
 
-      console.log('[ClaudeAI] Making request to proxy server...');
-
-      const response = await fetch('http://localhost:3001/api/bilingual-therapeutic-chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          userId: 'user-' + Date.now(), // Generate a temporary user ID
-          message: userMessage,
-          history: history
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        console.error('[ClaudeAI] Proxy error:', response.status, errorData);
-        throw new Error(`Proxy server error: ${response.status} ${errorData.error || 'Unknown error'}`);
+      if (backendUrl === '') {
+        // Direct Claude API mode for production
+        reply = await this.sendDirectClaudeRequest(userMessage);
+      } else {
+        // Proxy server mode for development
+        reply = await this.sendProxyRequest(userMessage, backendUrl);
       }
-
-      const data = await response.json();
-      
-      if (!data.reply) {
-        console.error('[ClaudeAI] Invalid response format from bilingual backend:', data);
-        throw new Error('Invalid response from bilingual therapeutic backend');
-      }
-
-      const reply = data.reply;
-      
-      // Log additional metadata from bilingual backend
-      if (data.metadata) {
-        console.log(`[ClaudeAI] Language detected: ${data.language}`);
-        console.log(`[ClaudeAI] Dynamic params: ${JSON.stringify(data.metadata.dynamicParams)}`);
-        console.log(`[ClaudeAI] Processing time: ${data.metadata.processingTime}ms`);
-      }
-      
-      console.log(`[ClaudeAI] Claude response: "${reply.substring(0, 100)}..."`);
 
       // Add Claude's response to history
       this.conversationHistory.push({
@@ -135,13 +129,109 @@ export class ClaudeAI {
       console.error('[ClaudeAI] Error type:', (error as Error).constructor.name);
       console.error('[ClaudeAI] Error message:', (error as Error).message);
       
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        console.error('[ClaudeAI] Network error - likely proxy server not running on localhost:3001');
-        console.error('[ClaudeAI] Make sure to run: npm run dev:full');
-      }
-      
       return this.getFallbackResponse(userMessage);
     }
+  }
+
+  /**
+   * Send request through proxy server (development)
+   */
+  private async sendProxyRequest(userMessage: string, backendUrl: string): Promise<string> {
+    // Prepare conversation history for the proxy
+    const history = this.conversationHistory.slice(0, -1).map(msg => ({
+      role: msg.role,
+      content: msg.content
+    }));
+
+    console.log('[ClaudeAI] Making request to proxy server...');
+
+    const response = await fetch(`${backendUrl}/api/bilingual-therapeutic-chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        userId: 'user-' + Date.now(),
+        message: userMessage,
+        history: history
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+      console.error('[ClaudeAI] Proxy error:', response.status, errorData);
+      throw new Error(`Proxy server error: ${response.status} ${errorData.error || 'Unknown error'}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data.reply) {
+      console.error('[ClaudeAI] Invalid response format from bilingual backend:', data);
+      throw new Error('Invalid response from bilingual therapeutic backend');
+    }
+
+    // Log additional metadata from bilingual backend
+    if (data.metadata) {
+      console.log(`[ClaudeAI] Language detected: ${data.language}`);
+      console.log(`[ClaudeAI] Dynamic params: ${JSON.stringify(data.metadata.dynamicParams)}`);
+      console.log(`[ClaudeAI] Processing time: ${data.metadata.processingTime}ms`);
+    }
+    
+    console.log(`[ClaudeAI] Claude response: "${data.reply.substring(0, 100)}..."`);
+    return data.reply;
+  }
+
+  /**
+   * Send direct request to Claude API (production)
+   */
+  private async sendDirectClaudeRequest(userMessage: string): Promise<string> {
+    console.log('[ClaudeAI] Making direct Claude API request...');
+    
+    // Create simple therapeutic system prompt for direct API
+    const systemPrompt = `You are Luma, an AI emotional companion. Provide warm, empathetic support with brief responses (2-3 sentences max). Focus on validation and understanding.`;
+    
+    // Prepare messages for Claude API
+    const messages = [
+      {
+        role: 'user' as const,
+        content: userMessage
+      }
+    ];
+
+    const requestBody = {
+      model: this.config.model,
+      max_tokens: 100, // Keep responses concise
+      temperature: 0.7,
+      system: systemPrompt,
+      messages: messages
+    };
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': this.config.apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[ClaudeAI] Direct API error: ${response.status} ${errorText}`);
+      throw new Error(`Claude API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data.content || !data.content[0] || !data.content[0].text) {
+      throw new Error('Invalid response format from Claude API');
+    }
+
+    const reply = data.content[0].text.trim();
+    console.log(`[ClaudeAI] Direct API response: "${reply.substring(0, 100)}..."`);
+    
+    return reply;
   }
 
   /**
