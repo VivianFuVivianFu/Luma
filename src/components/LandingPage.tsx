@@ -47,32 +47,33 @@ const LandingPage: React.FC<LandingPageProps> = ({ onAuthSuccess }) => {
 
         {/* Video Section */}
         <div className="mb-12">
-          <div className="relative max-w-3xl mx-auto">
+          <div className="relative max-w-xs mx-auto">
             <div className="relative bg-white rounded-2xl shadow-2xl overflow-hidden">
-              <div className="aspect-video relative">
+              {/* Vertical aspect ratio (9:16 portrait format) */}
+              <div className="aspect-[9/16] relative">
                 <video
                   autoPlay
-                  muted
                   playsInline
-                  className="w-full h-full object-cover rounded-2xl"
+                  className="w-full h-full object-fill rounded-2xl"
                   onEnded={() => setVideoHasPlayed(true)}
                   onError={(e) => console.error('Video failed to load:', e)}
                 >
                   <source src="/Video.mp4" type="video/mp4" />
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-lg border-4 border-blue-100 mb-4">
-                        <Play className="w-8 h-8 text-blue-600 ml-1" />
+                    <div className="text-center px-6">
+                      <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg border-4 border-blue-100 mb-4 mx-auto">
+                        <Play className="w-6 h-6 text-blue-600 ml-1" />
                       </div>
-                      <p className="text-gray-700 font-medium">Video not available</p>
-                      <p className="text-sm text-gray-500 mt-2">Please check if Video.mp4 exists in the public folder</p>
+                      <p className="text-gray-700 font-medium text-sm">Video not available</p>
+                      <p className="text-xs text-gray-500 mt-2">Please check if Video.mp4 exists in the public folder</p>
                     </div>
                   </div>
                 </video>
                 
-                {/* Video overlay with title */}
-                <div className="absolute bottom-4 left-4 bg-black/60 text-white px-4 py-2 rounded-lg backdrop-blur-sm">
-                  <p className="text-sm font-medium">Meet Luma - Your AI Companion</p>
+                {/* Video overlay with title - repositioned for vertical format */}
+                <div className="absolute bottom-6 left-4 right-4 bg-black/60 text-white px-4 py-3 rounded-lg backdrop-blur-sm text-center">
+                  <p className="text-sm font-medium">Meet Luma</p>
+                  <p className="text-xs text-white/80 mt-1">Your AI Companion</p>
                 </div>
                 
                 {/* Replay button (only shows after video ends) */}
@@ -94,6 +95,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ onAuthSuccess }) => {
                   </div>
                 )}
               </div>
+            </div>
+            
+            {/* Optional caption below video */}
+            <div className="text-center mt-4">
+              <p className="text-sm text-gray-600">
+                Watch Luma introduce herself and discover how she can support your journey
+              </p>
             </div>
           </div>
         </div>
