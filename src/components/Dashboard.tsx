@@ -97,7 +97,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout }) => {
   };
 
   return (
-    <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -126,8 +126,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout }) => {
         </div>
       </header>
 
-      <div className="h-full overflow-y-auto">
-        <div className="max-w-7xl mx-auto px-6 py-8 grid lg:grid-cols-3 gap-8">
+      <div className="max-w-7xl mx-auto px-6 py-8 grid lg:grid-cols-3 gap-8">
         {/* Main Chat Area */}
         <div className="lg:col-span-2">
           <div className="bg-white rounded-2xl shadow-xl border border-gray-200 h-[600px] flex flex-col">
@@ -260,7 +259,6 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout }) => {
 
           {/* Community Section */}
           <CommunitySection />
-        </div>
         </div>
       </div>
 

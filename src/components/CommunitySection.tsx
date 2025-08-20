@@ -55,7 +55,7 @@ const CommunitySection: React.FC = () => {
       {/* Beta Info */}
       <div className="mt-4 p-3 bg-white/60 rounded-lg border border-purple-200">
         <p className="text-xs text-purple-600 text-center">
-          Be among the first to experience our community features when they launch in early 2025.
+          Be among the first to experience our community features when it launches.
         </p>
       </div>
     </div>
