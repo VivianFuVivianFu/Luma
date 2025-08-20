@@ -24,6 +24,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout }) => {
   const [isTyping, setIsTyping] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showVoiceCall, setShowVoiceCall] = useState(false);
+  const [feedbackForm, setFeedbackForm] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -96,7 +97,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -125,7 +126,8 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout }) => {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-6 py-8 grid lg:grid-cols-3 gap-8">
+      <div className="h-full overflow-y-auto">
+        <div className="max-w-7xl mx-auto px-6 py-8 grid lg:grid-cols-3 gap-8">
         {/* Main Chat Area */}
         <div className="lg:col-span-2">
           <div className="bg-white rounded-2xl shadow-xl border border-gray-200 h-[600px] flex flex-col">
@@ -139,7 +141,6 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout }) => {
                 />
                 <div>
                   <h2 className="font-semibold text-gray-800">Chat with Luma</h2>
-                  <p className="text-sm text-gray-600">Your intelligent AI companion</p>
                 </div>
               </div>
               
@@ -154,17 +155,6 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout }) => {
 
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-6 space-y-4">
-              {messages.length === 0 && (
-                <div className="text-center py-8">
-                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Heart className="w-8 h-8 text-blue-600" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2">Welcome to Luma</h3>
-                  <p className="text-gray-600 max-w-sm mx-auto">
-                    I'm here to listen and support you. Share what's on your mind, and I'll remember our conversation for personalized support.
-                  </p>
-                </div>
-              )}
 
               {messages.map((message) => (
                 <div
@@ -251,11 +241,26 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout }) => {
 
         {/* Sidebar */}
         <div className="space-y-6">
-          {/* Customer Feedback Section */}
-          <FeedbackSection />
+          {/* Customer Feedback Link */}
+          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
+            <div className="text-center">
+              <h3 className="font-semibold text-gray-800 mb-2">Share Your Feedback</h3>
+              <p className="text-sm text-gray-600 mb-4">Help us improve your experience with Luma</p>
+              <button
+                onClick={() => setFeedbackForm(!feedbackForm)}
+                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+              >
+                Give Feedback
+              </button>
+            </div>
+          </div>
+
+          {/* Feedback Form */}
+          {feedbackForm && <FeedbackSection />}
 
           {/* Community Section */}
           <CommunitySection />
+        </div>
         </div>
       </div>
 
