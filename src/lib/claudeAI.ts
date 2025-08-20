@@ -35,7 +35,12 @@ export class ClaudeAI {
     try {
       const backendUrl = this.getBackendUrl();
       
-      if (backendUrl === '') {
+      if (backendUrl === '/api/chat') {
+        // Vercel Edge Function mode - always available
+        console.log('[ClaudeAI] Vercel Edge Function mode initialized');
+        this.isInitialized = true;
+        return true;
+      } else if (backendUrl === '') {
         // Direct API mode - just check if we have API key
         if (!this.config.apiKey) {
           console.error('[ClaudeAI] Claude API key not configured');
@@ -74,10 +79,10 @@ export class ClaudeAI {
       return envBackendUrl;
     }
     
-    // Production fallback - use direct Claude API
+    // Production mode - use Vercel Edge Function
     if (import.meta.env.PROD) {
-      console.log('[ClaudeAI] Production mode - using direct API calls');
-      return '';  // Empty string indicates direct API mode
+      console.log('[ClaudeAI] Production mode - using Vercel Edge Function');
+      return '/api/chat';  // Vercel Edge Function endpoint
     }
     
     // Development default
@@ -102,8 +107,11 @@ export class ClaudeAI {
 
       let reply: string;
 
-      if (backendUrl === '') {
-        // Direct Claude API mode for production
+      if (backendUrl === '/api/chat') {
+        // Vercel Edge Function mode for production
+        reply = await this.sendVercelRequest(userMessage);
+      } else if (backendUrl === '') {
+        // Direct Claude API mode (fallback)
         reply = await this.sendDirectClaudeRequest(userMessage);
       } else {
         // Proxy server mode for development
@@ -131,6 +139,52 @@ export class ClaudeAI {
       
       return this.getFallbackResponse(userMessage);
     }
+  }
+
+  /**
+   * Send request through Vercel Edge Function (production)
+   */
+  private async sendVercelRequest(userMessage: string): Promise<string> {
+    // Prepare conversation history
+    const history = this.conversationHistory.slice(0, -1).map(msg => ({
+      role: msg.role,
+      content: msg.content
+    }));
+
+    console.log('[ClaudeAI] Making request to Vercel Edge Function...');
+
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message: userMessage,
+        history: history
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+      console.error('[ClaudeAI] Vercel Edge Function error:', response.status, errorData);
+      throw new Error(`Vercel Edge Function error: ${response.status} ${errorData.error || 'Unknown error'}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data.reply) {
+      console.error('[ClaudeAI] Invalid response format from Vercel Edge Function:', data);
+      throw new Error('Invalid response from Vercel Edge Function');
+    }
+
+    // Log if fallback was used
+    if (data.fallback) {
+      console.warn('[ClaudeAI] Fallback response used due to API issues');
+    } else {
+      console.log(`[ClaudeAI] Vercel Edge Function response: "${data.reply.substring(0, 100)}..."`);
+    }
+    
+    return data.reply;
   }
 
   /**
