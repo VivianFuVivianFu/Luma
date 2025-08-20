@@ -11,8 +11,13 @@ const CommunitySection: React.FC = () => {
         <h3 className="font-semibold text-gray-800">Join Our Community</h3>
       </div>
       
+      {/* Coming Soon Badge */}
+      <div className="inline-flex items-center space-x-2 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium mb-4">
+        <span>Coming Soon...</span>
+      </div>
+      
       <p className="text-sm text-gray-600 mb-4 leading-relaxed">
-        Connect with others on their mental health journey. Share experiences, support each other, and grow together in a safe, moderated environment.
+        Connect with others on your journey. Share experiences, support one another, and grow together in a safe, thriving environment.
       </p>
 
       {/* Preview Features */}
