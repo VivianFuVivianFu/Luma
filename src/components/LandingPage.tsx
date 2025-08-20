@@ -164,6 +164,19 @@ const LandingPage: React.FC<LandingPageProps> = ({ onAuthSuccess }) => {
           </div>
         </div>
 
+        {/* Privacy Policy Bar */}
+        <div className="mt-8 bg-blue-600 text-white shadow-lg rounded-2xl overflow-hidden">
+          <button 
+            onClick={() => window.open('/privacy-policy', '_blank')}
+            className="w-full text-center hover:bg-blue-700 transition-colors px-6 py-4"
+          >
+            <div className="flex items-center justify-center space-x-2">
+              <span className="text-lg font-semibold">🔒 Data Privacy & Safety Terms</span>
+              <span className="text-sm opacity-90">- Click to view our comprehensive privacy policy</span>
+            </div>
+          </button>
+        </div>
+
       </div>
 
       {/* Auth Modal */}

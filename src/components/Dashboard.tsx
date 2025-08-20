@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Phone, Heart, LogOut } from 'lucide-react';
+import { Send, Phone, Heart, LogOut, MessageSquare } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { claudeAI } from '../lib/claudeAI';
 import VoiceCallWidget from './VoiceCallWidget';
@@ -126,21 +126,6 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout }) => {
         </div>
       </header>
 
-      {/* Privacy Policy Bar */}
-      <div className="bg-blue-600 text-white shadow-lg">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <button 
-            onClick={() => window.open('/privacy-policy', '_blank')}
-            className="w-full text-center hover:bg-blue-700 transition-colors rounded-lg px-4 py-2"
-          >
-            <div className="flex items-center justify-center space-x-2">
-              <span className="text-lg font-semibold">🔒 Data Privacy & Safety Terms</span>
-              <span className="text-sm opacity-90">- Click to view our comprehensive privacy policy</span>
-            </div>
-          </button>
-        </div>
-      </div>
-
       <div className="max-w-7xl mx-auto px-6 py-8 grid lg:grid-cols-3 gap-8">
         {/* Main Chat Area */}
         <div className="lg:col-span-2">
@@ -247,18 +232,27 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout }) => {
 
         {/* Sidebar */}
         <div className="space-y-6">
-          {/* Customer Feedback Link */}
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
-            <div className="text-center">
-              <h3 className="font-semibold text-gray-800 mb-2">Share Your Feedback</h3>
-              <p className="text-sm text-gray-600 mb-4">Help us improve your experience with Luma</p>
-              <button
-                onClick={() => setFeedbackForm(!feedbackForm)}
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-              >
-                Give Feedback
-              </button>
+          {/* Customer Feedback Section */}
+          <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-2xl p-6 border border-orange-200">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                <MessageSquare className="w-4 h-4 text-orange-600" />
+              </div>
+              <h3 className="font-semibold text-gray-800">Customer Feedback</h3>
             </div>
+            
+            <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+              How is your experience so far? We value your opinions, and please help us to make Luma serve you better.
+            </p>
+
+            {/* Feedback Button */}
+            <button
+              onClick={() => setFeedbackForm(!feedbackForm)}
+              className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium"
+            >
+              <MessageSquare className="w-4 h-4" />
+              <span>Customer Feedback</span>
+            </button>
           </div>
 
           {/* Feedback Form */}
