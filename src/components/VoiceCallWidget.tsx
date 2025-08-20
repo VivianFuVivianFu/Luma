@@ -5,10 +5,11 @@ import { Slider } from '@/components/ui/slider';
 // import { supabase } from '@/lib/supabase';
 
 type Props = {
-  agentId: string;
+  agentId?: string;
+  onClose: () => void;
 };
 
-export default function VoiceCallWidget({ agentId }: Props) {
+export default function VoiceCallWidget({ agentId = 'default', onClose }: Props) {
   const conversation = useConversation({
     onError: (e) => console.error('ElevenLabs error:', e),
   });
@@ -88,15 +89,23 @@ export default function VoiceCallWidget({ agentId }: Props) {
     <section className="bg-white/95 backdrop-blur-sm text-gray-800 rounded-2xl p-6 border border-white/20 shadow-lg">
       <header className="flex items-center justify-between mb-6">
         <h3 className="text-xl font-semibold text-gray-800" style={{fontFamily: 'Gowun Dodum, sans-serif'}}>Voice Chat with Luma</h3>
-        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-          status === 'connected' 
-            ? 'bg-green-100 text-green-800' 
-            : 'bg-gray-100 text-gray-600'
-        }`}>
-          {status === 'connected' 
-            ? (isSpeaking ? 'Luma speaking…' : 'Listening…') 
-            : 'Disconnected'}
-        </span>
+        <div className="flex items-center gap-3">
+          <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+            status === 'connected' 
+              ? 'bg-green-100 text-green-800' 
+              : 'bg-gray-100 text-gray-600'
+          }`}>
+            {status === 'connected' 
+              ? (isSpeaking ? 'Luma speaking…' : 'Listening…') 
+              : 'Disconnected'}
+          </span>
+          <button 
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            ✕
+          </button>
+        </div>
       </header>
 
       <div className="flex items-center gap-4 mb-6">
