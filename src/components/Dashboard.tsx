@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Phone, Heart, LogOut, MessageCircle } from 'lucide-react';
+import { Send, Phone, Heart, LogOut } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { claudeAI } from '../lib/claudeAI';
 import VoiceCallWidget from './VoiceCallWidget';
