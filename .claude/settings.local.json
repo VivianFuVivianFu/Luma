@@ -69,7 +69,8 @@
       "Bash(API_BASE=http://localhost:8787 npm run qa:eval)",
       "Bash(npm run qa:eval:*)",
       "Bash(start http://localhost:5174/test-proxy-connection.html)",
-      "Bash(export FORCE_KILL=true)"
+      "Bash(export FORCE_KILL=true)",
+      "Bash(git remote get-url:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
