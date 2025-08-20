@@ -1,68 +1,37 @@
-name: Memory System Maintenance
+# DISABLED: Legacy RAG Maintenance Scheduler
+# This workflow has been disabled due to architecture change to simplified Claude + Memory system
+# RAG system was removed in commit ab64d7e6 - no maintenance required for new architecture
+
+name: "[DISABLED] Legacy RAG Maintenance"
 
 on:
-  schedule:
-    # Daily maintenance at 03:00 UTC (disabled - new simplified architecture)
-    # - cron: '0 3 * * *'
+  # All triggers disabled - new architecture doesn't require maintenance
+  # schedule:
+  #   - cron: '0 3 * * *'
   workflow_dispatch:
     inputs:
       task:
-        description: 'Task to run (health-check only - RAG system removed)'
+        description: 'DISABLED - RAG system removed, no maintenance needed'
         required: false
-        default: 'health-check'
+        default: 'disabled'
         type: choice
         options:
-          - health-check
+          - disabled
 
 jobs:
-  memory-maintenance:
+  disabled-workflow:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js 18
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: TypeScript build check
+      - name: Workflow Disabled Notice
         run: |
-          echo "🔍 Running TypeScript build check..."
-          npm run build || {
-            echo "❌ TypeScript build failed"
-            exit 1
-          }
-          echo "✅ TypeScript build successful"
-
-      - name: Memory System Health Check
-        if: github.event.inputs.task == 'health-check'
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.VITE_SUPABASE_SERVICE_ROLE_KEY }}
-          VITE_CLAUDE_API_KEY: ${{ secrets.VITE_CLAUDE_API_KEY }}
-          VITE_TOGETHER_API_KEY: ${{ secrets.VITE_TOGETHER_API_KEY }}
-        run: |
-          echo "🧠 Running Memory System Health Check..."
-          echo "Timestamp: $(date -u)"
-          echo "Architecture: Claude 3.5 Haiku + Memory System (RAG system removed)"
-          echo "Status: ✅ New simplified architecture - no maintenance required"
-          echo "Memory System: Supabase-based with dual-tier support"
-          echo "AI Model: claude-3-5-haiku-20241022"
-          echo "✅ Health check completed - system operational"
-
-      - name: Summary
-        if: always()
-        run: |
-          echo "📊 Memory System Maintenance Summary"
-          echo "===================================="
-          echo "Architecture: Simplified Claude + Memory (RAG removed)"
-          echo "Trigger: ${{ github.event_name }}"
-          echo "Task: ${{ github.event.inputs.task || 'health-check' }}"
-          echo "Status: ✅ No maintenance required for new architecture"
-          echo "Completed at: $(date -u)"
-          echo "===================================="
+          echo "🚫 This workflow has been DISABLED"
+          echo "=================================="
+          echo "Reason: RAG system was removed in architectural simplification"
+          echo "New Architecture: Claude 3.5 Haiku + Supabase Memory System"
+          echo "Maintenance: No longer required - simplified system is self-sufficient"
+          echo "Date Disabled: August 20, 2025"
+          echo "Related Commit: ab64d7e6 (RAG removal) + 1679537a (workflow fix)"
+          echo ""
+          echo "✅ New system is operational and requires no scheduled maintenance"
+          echo "=================================="
+          exit 0
