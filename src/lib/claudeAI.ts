@@ -1,5 +1,7 @@
 // Direct Claude 4.0 Integration - No backend dependencies
-// Pure frontend Claude API integration
+// Pure frontend Claude API integration with authentication requirement
+
+import { supabase } from './supabase';
 
 export interface ConversationMessage {
   role: 'user' | 'assistant';
@@ -90,12 +92,25 @@ export class ClaudeAI {
   }
 
   /**
+   * Get authenticated user ID
+   */
+  private async getAuthenticatedUserId(): Promise<string> {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user?.id) {
+      throw new Error('User must be authenticated to use chat functionality');
+    }
+    return session.user.id;
+  }
+
+  /**
    * Send message to Claude and get response
    */
   async sendMessage(userMessage: string): Promise<string> {
     try {
       console.log(`[ClaudeAI] Sending message to Claude: "${userMessage.substring(0, 50)}..."`);
 
+      // Ensure user is authenticated
+      const userId = await this.getAuthenticatedUserId();
       const backendUrl = this.getBackendUrl();
       
       // Add user message to history
@@ -115,7 +130,7 @@ export class ClaudeAI {
         reply = await this.sendDirectClaudeRequest(userMessage);
       } else {
         // Proxy server mode for development
-        reply = await this.sendProxyRequest(userMessage, backendUrl);
+        reply = await this.sendProxyRequest(userMessage, backendUrl, userId);
       }
 
       // Add Claude's response to history
@@ -145,6 +160,12 @@ export class ClaudeAI {
    * Send request through Vercel Edge Function (production)
    */
   private async sendVercelRequest(userMessage: string): Promise<string> {
+    // Get authentication token
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      throw new Error('Authentication required for Vercel Edge Function');
+    }
+
     // Prepare conversation history
     const history = this.conversationHistory.slice(0, -1).map(msg => ({
       role: msg.role,
@@ -156,7 +177,8 @@ export class ClaudeAI {
     const response = await fetch('/api/chat', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`
       },
       body: JSON.stringify({
         message: userMessage,
@@ -190,7 +212,7 @@ export class ClaudeAI {
   /**
    * Send request through proxy server (development)
    */
-  private async sendProxyRequest(userMessage: string, backendUrl: string): Promise<string> {
+  private async sendProxyRequest(userMessage: string, backendUrl: string, userId: string): Promise<string> {
     // Prepare conversation history for the proxy
     const history = this.conversationHistory.slice(0, -1).map(msg => ({
       role: msg.role,
@@ -205,7 +227,7 @@ export class ClaudeAI {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        userId: 'user-' + Date.now(),
+        userId: userId,
         message: userMessage,
         history: history
       })

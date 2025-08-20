@@ -23,6 +23,15 @@ export default async function handler(req: Request) {
   }
 
   try {
+    // Get user from request headers (Supabase auth)
+    const authorization = req.headers.get('authorization');
+    if (!authorization) {
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { message, history = [] }: ChatRequest = await req.json();
 
     if (!message || typeof message !== 'string') {

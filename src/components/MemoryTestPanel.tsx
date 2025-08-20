@@ -97,8 +97,15 @@ const MemoryTestPanel: React.FC = () => {
   // Test 4: Test memory service initialization
   const testMemoryServiceInit = async () => {
     try {
+      // Get authenticated user ID for testing
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) {
+        addTestResult('Memory Service Init', 'error', 'Authentication required for memory testing');
+        return;
+      }
+      
       // Test basic memory service methods
-      const testUserId = 'test-user-' + Date.now();
+      const testUserId = session.user.id;
       const sessionId = memoryService.generateSessionId(testUserId);
       
       if (sessionId && sessionId.includes(testUserId)) {

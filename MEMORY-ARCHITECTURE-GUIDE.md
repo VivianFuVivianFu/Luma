@@ -30,9 +30,9 @@ The Luma therapeutic chatbot implements a sophisticated **three-tier memory syst
 
 ## 👤 **User Classification & Memory Behavior**
 
-### 🔒 **Registered Users (Authenticated)**
+### 🔒 **Authenticated Users (Registration Required)**
 ```
-User Journey: Registration → Authentication → Persistent Memory
+User Journey: Registration → Authentication → Full Memory Access
 ├── User ID: Supabase Auth UUID
 ├── Memory Persistence: Full 3-tier system
 ├── Session Tracking: Database-backed sessions
@@ -46,39 +46,22 @@ User Journey: Registration → Authentication → Persistent Memory
 - ✅ **Session History**: Access to previous conversation sessions
 - ✅ **Privacy Controls**: RLS (Row Level Security) policies
 - ✅ **Memory Management**: Users can view/delete their memories
-
-### 🔓 **Non-Registered Users (Anonymous)**
-```
-User Journey: Visit → Temporary ID → Session-Only Memory
-├── User ID: Generated temporary ID (user-{timestamp})
-├── Memory Persistence: Tier 1 + Limited Tier 2
-├── Session Tracking: Browser-session only
-└── Cross-Device Sync: None
-```
-
-**Memory Features:**
-- ✅ **Immediate Context**: Full conversation awareness
-- ⚠️ **Session Memory**: Lost on browser close/refresh
-- ❌ **Long-Term Memory**: Not preserved
-- ❌ **Cross-Device**: No synchronization
-- ✅ **Privacy**: No permanent data storage
-- ✅ **Quick Start**: No registration required
+- ✅ **Authentication Required**: Secure access to all features
 
 ---
 
 ## 🔄 **Memory Workflow & Processing Logic**
 
-### **Phase 1: User Identification & Memory Loading**
+### **Phase 1: User Authentication & Memory Loading**
 
 ```javascript
-// 1. User Classification
-if (userAuthenticated) {
-  userId = supabase.auth.user.id;  // Persistent UUID
-  memoryMode = "FULL_PERSISTENCE";
-} else {
-  userId = 'user-' + Date.now();   // Temporary ID
-  memoryMode = "SESSION_ONLY";
+// 1. User Authentication Check
+const { data: { session } } = await supabase.auth.getSession();
+if (!session?.user?.id) {
+  throw new Error('Authentication required for chat functionality');
 }
+userId = session.user.id;  // Persistent UUID
+memoryMode = "FULL_PERSISTENCE";
 
 // 2. Memory Context Loading
 const memoryContext = await supabaseMemory.getMemory(userId, userMessage);
@@ -110,15 +93,10 @@ memoryExtraction → sessionSummaryUpdate → longTermMemoryStorage
 ### **Phase 3: Memory Storage & Analysis**
 
 ```javascript
-// 4. Memory Analysis & Storage
-if (authenticated) {
-  // Full memory processing
-  await memoryService.extractLongMemories(userId, sessionId);
-  await memoryService.updateSummary(sessionId);
-} else {
-  // Session-only memory
-  sessionStorage.setItem(`luma_session_${userId}`, summary);
-}
+// 4. Memory Analysis & Storage (All users are authenticated)
+// Full memory processing for all users
+await memoryService.extractLongMemories(userId, sessionId);
+await memoryService.updateSummary(sessionId);
 ```
 
 ---
@@ -186,12 +164,13 @@ CREATE POLICY "Users access own memories" ON user_memories
   FOR ALL USING (auth.uid()::text = user_id);
 ```
 
-### **Privacy Tiers**
+### **Privacy Model**
 
 | User Type | Data Collection | Storage Duration | Privacy Level |
 |-----------|----------------|------------------|---------------|
-| **Anonymous** | Minimal (session only) | Browser session | 🔒 **Maximum** |
-| **Registered** | Full therapeutic data | Permanent (user controlled) | 🔐 **User Controlled** |
+| **Authenticated** | Full therapeutic data | Permanent (user controlled) | 🔐 **User Controlled** |
+
+**Note**: All users must register and authenticate to access chat and voice features.
 
 ---
 
@@ -229,21 +208,9 @@ Avoid diagnoses. Focus on supportive context.
 
 ## 🌊 **User Journey & Memory Experience**
 
-### **Anonymous User Journey**
+### **Authenticated User Journey**  
 ```
-1. Visit Site → 2. Start Chat → 3. Immediate Context Only
-   ↓
-4. Extended Chat → 5. Session Summary → 6. Browser Close = Memory Lost
-```
-
-**Experience:**
-- 🟢 **Quick Start**: No barriers to entry
-- 🟡 **Session Continuity**: Within single browser session
-- 🔴 **No Persistence**: Memory lost on page refresh/close
-
-### **Registered User Journey**  
-```
-1. Register/Login → 2. Persistent User ID → 3. Full Memory System
+1. Register/Login → 2. Authentication → 3. Full Memory System Access
    ↓
 4. Session Memory → 5. Long-term Insights → 6. Cross-Device Sync
    ↓
@@ -251,10 +218,12 @@ Avoid diagnoses. Focus on supportive context.
 ```
 
 **Experience:**
+- 🟢 **Secure Access**: Authentication required for all features
 - 🟢 **Full Persistence**: All conversations remembered
 - 🟢 **Deep Personalization**: AI learns and adapts over time
 - 🟢 **Therapeutic Continuity**: Builds on previous insights
 - 🟢 **Privacy Control**: User manages their own memory data
+- 🟢 **Cross-Device Sync**: Seamless experience across devices
 
 ---
 
@@ -309,9 +278,14 @@ await supabaseMemory.saveMemory(userId, sessionSummary);
 
 ### **Frontend Memory Integration**
 ```typescript
-// src/lib/claudeAI.ts - Line 89
+// src/lib/claudeAI.ts - Authentication-based user ID
+const { data: { session } } = await supabase.auth.getSession();
+if (!session?.user?.id) {
+  throw new Error('Authentication required for chat functionality');
+}
+
 body: JSON.stringify({
-  userId: 'user-' + Date.now(), // Temporary ID for anonymous users
+  userId: session.user.id, // Authenticated user UUID
   message: userMessage,
   history: conversationHistory
 })
@@ -342,12 +316,13 @@ const CONFIG = {
 
 ## 📝 **Summary**
 
-The Luma memory system provides a **flexible, privacy-conscious architecture** that serves both anonymous and registered users effectively:
+The Luma memory system provides a **secure, authentication-based architecture** that serves all users with full memory capabilities:
 
-- **Anonymous Users**: Get immediate therapeutic support without compromising privacy
-- **Registered Users**: Benefit from deep, persistent therapeutic relationships with full memory continuity
-- **Hybrid Architecture**: Seamless transition from anonymous to registered without data loss
+- **Authenticated Users**: All users receive deep, persistent therapeutic relationships with full memory continuity
+- **Secure Architecture**: Authentication required for all chat and voice features
+- **Cross-Device Sync**: Seamless experience across all user devices
 - **Bilingual Support**: Memory system works identically for Chinese and English users
 - **Therapeutic Focus**: Memory processing specifically designed for mental health conversations
+- **Privacy Controls**: Users maintain full control over their memory data
 
-This design ensures that **every user gets value** regardless of their privacy preferences while providing **maximum therapeutic benefit** for those who choose to register and persist their data.
+This design ensures that **every user receives maximum therapeutic benefit** through persistent memory while maintaining the highest security standards through required authentication.

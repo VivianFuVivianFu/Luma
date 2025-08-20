@@ -231,9 +231,9 @@ export class MemoryService {
     }
   }
 
-  // Get or create session ID for a user
+  // Get or create session ID for an authenticated user
   generateSessionId(userId: string): string {
-    // Generate a unique session ID based on date and user
+    // Generate a unique session ID based on date and authenticated user UUID
     const now = new Date();
     const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
     const randomStr = Math.random().toString(36).substring(2, 8);
