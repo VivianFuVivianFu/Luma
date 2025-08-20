@@ -116,9 +116,13 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout }) => {
                 </div>
               </video>
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-gray-800">Luma</h1>
-              <p className="text-sm text-gray-600">You're not Alone</p>
+            <div className="flex items-center space-x-3">
+              <img 
+                src="/brain-backfround.jpg" 
+                alt="Logo"
+                className="w-8 h-8 rounded-lg object-cover"
+              />
+              <p className="text-xl font-bold text-gray-800">You're not Alone</p>
             </div>
           </div>
           
@@ -143,15 +147,8 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout }) => {
           <div className="bg-white rounded-2xl shadow-xl border border-gray-200 h-[600px] flex flex-col">
             {/* Chat Header */}
             <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <img 
-                  src="/luma_photo.jpg" 
-                  alt="Luma"
-                  className="w-10 h-10 rounded-full object-cover border-2 border-blue-200"
-                />
-                <div>
-                  <h2 className="font-semibold text-gray-800">Chat with Luma</h2>
-                </div>
+              <div>
+                <h2 className="font-semibold text-gray-800">Chat with Luma</h2>
               </div>
               
               <div className="flex items-center space-x-3">
