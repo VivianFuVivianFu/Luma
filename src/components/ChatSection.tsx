@@ -40,6 +40,9 @@ const ChatSection = () => {
   const [isVoiceConnected, setIsVoiceConnected] = useState(false);
   const [isFirstUserMessage, setIsFirstUserMessage] = useState(true);
   const [isMaximized, setIsMaximized] = useState(false);
+  const [userHasScrolled, setUserHasScrolled] = useState(false);
+  const [shouldAutoFocus, setShouldAutoFocus] = useState(true);
+  const [lastTapTime, setLastTapTime] = useState(0);
   
   // Membership notification system states
   const [showMembershipPrompt, setShowMembershipPrompt] = useState(false);
@@ -51,6 +54,8 @@ const ChatSection = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const notificationTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const autoFocusTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const conversation = useConversation({
     apiKey: 'sk_415684fdf9ebc8dc4aaeca3706625ab0b496276d0a69f74e',
@@ -72,19 +77,160 @@ const ChatSection = () => {
     onError: (error) => {
       console.error('Voice conversation error:', error);
       setIsVoiceConnected(false);
-      addMessage("Sorry, there was an error with the voice conversation. Please try again.", "luma");
+      addMessage("Sorry, there was an error with the voice conversation. Please check your microphone settings and try again.", "luma");
     },
   });
 
-  const scrollToBottom = () => {
+  const scrollToBottom = (smooth = false) => {
     if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      if (smooth) {
+        messagesContainerRef.current.scrollTo({
+          top: messagesContainerRef.current.scrollHeight,
+          behavior: 'smooth'
+        });
+      } else {
+        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      }
+    }
+  };
+
+  // Enhanced mobile scroll handling
+  const scrollToBottomMobile = () => {
+    // Only auto-scroll if user hasn't manually scrolled or if auto-focus is enabled
+    if (!userHasScrolled || shouldAutoFocus) {
+      // Immediate scroll
+      scrollToBottom();
+      
+      // Delayed scroll for mobile keyboard adjustment
+      setTimeout(() => {
+        scrollToBottom(true);
+      }, 100);
+      
+      // Additional delayed scroll for slower devices
+      setTimeout(() => {
+        scrollToBottom(true);
+      }, 300);
+    }
+  };
+
+  // Auto-focus chat window on mobile
+  const autoFocusChatWindow = () => {
+    if (window.innerWidth <= 768 && shouldAutoFocus && chatContainerRef.current && !userHasScrolled) {
+      // Only auto-focus if the user hasn't interacted with the page yet
+      const hasInteracted = document.querySelector('input:focus') || document.querySelector('textarea:focus');
+      
+      if (!hasInteracted) {
+        chatContainerRef.current.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center' // Changed from 'start' to 'center' for better positioning
+        });
+        
+        // After focusing on chat, auto-scroll to bottom
+        setTimeout(() => {
+          if (!userHasScrolled) {
+            scrollToBottomMobile();
+          }
+        }, 500);
+      }
+    }
+  };
+
+  // Track user manual scrolling
+  const handleUserScroll = (e: Event) => {
+    const target = e.target as HTMLElement;
+    
+    // Only consider it user scrolling if it's the main document or body, not the chat container
+    if (target === document.documentElement || target === document.body) {
+      // Check if scroll is significant enough to be considered intentional
+      const scrollPosition = window.scrollY || document.documentElement.scrollTop;
+      
+      // Only trigger if user scrolled more than 50px
+      if (Math.abs(scrollPosition) > 50) {
+        setUserHasScrolled(true);
+        setShouldAutoFocus(false);
+        
+        // Reset auto-focus after 8 seconds of no scrolling (increased time)
+        if (autoFocusTimeoutRef.current) {
+          clearTimeout(autoFocusTimeoutRef.current);
+        }
+        autoFocusTimeoutRef.current = setTimeout(() => {
+          setShouldAutoFocus(true);
+          setUserHasScrolled(false);
+        }, 8000);
+      }
     }
   };
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (!userHasScrolled || shouldAutoFocus) {
+      scrollToBottomMobile();
+    }
+  }, [messages, userHasScrolled, shouldAutoFocus]);
+
+  // Handle input focus for mobile keyboard
+  const handleInputFocus = () => {
+    // Disable auto-focus when user is actively using the input
+    setUserHasScrolled(true);
+    setShouldAutoFocus(false);
+    
+    // On mobile, only scroll within the chat container, not the whole page
+    if (window.innerWidth <= 768) {
+      // Prevent page-level scrolling by focusing only on chat messages
+      setTimeout(() => {
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
+      }, 300); // Wait for keyboard animation
+    }
+  };
+
+  // Handle input blur to re-enable auto-focus after a delay
+  const handleInputBlur = () => {
+    // Re-enable auto-focus after user stops using the input
+    setTimeout(() => {
+      setShouldAutoFocus(true);
+      // Don't immediately reset userHasScrolled to give user control
+    }, 2000); // Wait 2 seconds after blur
+  };
+
+  // Handle window resize (for mobile keyboard show/hide)
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth <= 768) {
+        setTimeout(() => {
+          scrollToBottomMobile();
+        }, 100);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Auto-focus chat window on mount for mobile
+  useEffect(() => {
+    // Auto-focus chat window after component mounts
+    const timer = setTimeout(() => {
+      autoFocusChatWindow();
+    }, 1000); // Wait 1 second for the page to fully load
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Add scroll event listeners to track user manual scrolling
+  useEffect(() => {
+    // Only listen to document-level scrolling, not chat container scrolling
+    document.addEventListener('scroll', handleUserScroll, { passive: true });
+    window.addEventListener('scroll', handleUserScroll, { passive: true });
+
+    return () => {
+      document.removeEventListener('scroll', handleUserScroll);
+      window.removeEventListener('scroll', handleUserScroll);
+      if (autoFocusTimeoutRef.current) {
+        clearTimeout(autoFocusTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Authentication status check
   useEffect(() => {
@@ -157,6 +303,13 @@ const ChatSection = () => {
     addMessage(userMessage, 'user');
     setIsLoading(true);
 
+    // Force scroll after user message on mobile
+    if (window.innerWidth <= 768) {
+      setTimeout(() => {
+        scrollToBottomMobile();
+      }, 50);
+    }
+
     // Track user interactions for notification system
     if (!isAuthenticated) {
       setUserInteractionCount(prev => prev + 1);
@@ -200,7 +353,7 @@ const ChatSection = () => {
 
     } catch (error) {
       console.error('Error starting voice conversation:', error);
-      addMessage("Sorry, I couldn't start the voice conversation. Please try again later.", "luma");
+      addMessage("Sorry, I couldn't start the voice conversation. Please check your microphone settings and try again.", "luma");
     } finally {
       setIsLoading(false);
     }
@@ -237,6 +390,50 @@ const ChatSection = () => {
     }
   };
 
+  // Enhanced maximize/minimize functionality
+  const handleMaximizeToggle = () => {
+    const newMaximizedState = !isMaximized;
+    setIsMaximized(newMaximizedState);
+    
+    // Reset scroll behavior when maximizing/minimizing
+    setUserHasScrolled(false);
+    setShouldAutoFocus(true);
+    
+    // Auto-scroll to bottom after state change
+    setTimeout(() => {
+      scrollToBottomMobile();
+    }, 100);
+    
+    // For mobile devices, ensure proper focus
+    if (window.innerWidth <= 768) {
+      setTimeout(() => {
+        if (newMaximizedState) {
+          // When maximizing on mobile, scroll to top of chat
+          if (chatContainerRef.current) {
+            chatContainerRef.current.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'start' 
+            });
+          }
+        }
+        scrollToBottomMobile();
+      }, 300);
+    }
+  };
+
+  // Handle double tap to maximize on mobile
+  const handleHeaderDoubleTap = () => {
+    const currentTime = new Date().getTime();
+    const tapLength = currentTime - lastTapTime;
+    
+    if (tapLength < 500 && tapLength > 0) {
+      // Double tap detected
+      handleMaximizeToggle();
+    }
+    
+    setLastTapTime(currentTime);
+  };
+
   const chatContent = (
     <>
       {/* Backdrop overlay for maximized state */}
@@ -247,13 +444,20 @@ const ChatSection = () => {
         />
       )}
       
-      <div className={`flex flex-col bg-slate-50/80 rounded-2xl border border-indigo-100 overflow-hidden ${
-        isMaximized 
-          ? 'fixed inset-4 z-[9999] h-[calc(100vh-2rem)] w-[calc(100vw-2rem)]' 
-          : 'h-full'
-      }`}>
+      <div 
+        ref={chatContainerRef}
+        className={`flex flex-col bg-slate-50/80 rounded-2xl border border-indigo-100 overflow-hidden ${
+          isMaximized 
+            ? 'fixed inset-0 z-[9999] h-screen w-screen rounded-none' 
+            : 'h-full'
+        }`}
+      >
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-indigo-100/50 bg-white/60">
+      <div 
+        className="flex items-center justify-between p-4 border-b border-indigo-100/50 bg-white/60 select-none"
+        onClick={handleHeaderDoubleTap}
+        style={{ WebkitTapHighlightColor: 'transparent' }}
+      >
         <div className="flex items-center gap-3">
           <img
             src={lumaAvatar}
@@ -261,9 +465,16 @@ const ChatSection = () => {
             className="w-8 h-8 rounded-full"
           />
           <div>
-            <h3 className="font-semibold text-gray-800">Luma</h3>
+            <h3 className="font-semibold text-gray-800">
+              Luma
+              {isMaximized && (
+                <span className="ml-2 text-xs text-blue-600 font-normal">
+                  • Full Screen
+                </span>
+              )}
+            </h3>
             <p className="text-xs text-gray-600">
-              {isVoiceConnected ? 'Voice Active' : 'Your AI Companion'}
+              {isVoiceConnected ? 'Voice Active' : window.innerWidth <= 768 ? 'Double-tap header to maximize' : 'Your AI Companion'}
             </p>
           </div>
         </div>
@@ -271,9 +482,13 @@ const ChatSection = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setIsMaximized(!isMaximized)}
-            className="text-blue-600 hover:text-blue-700"
-            title={isMaximized ? 'Minimize Window' : 'Maximize Window'}
+            onClick={handleMaximizeToggle}
+            className={`transition-all duration-200 hover:scale-105 ${
+              isMaximized 
+                ? 'text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100' 
+                : 'text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100'
+            }`}
+            title={isMaximized ? 'Exit Full Screen' : 'Enter Full Screen'}
           >
             {isMaximized ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
           </Button>
@@ -326,6 +541,8 @@ const ChatSection = () => {
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyPress={handleKeyPress}
+            onFocus={handleInputFocus}
+            onBlur={handleInputBlur}
             placeholder={isVoiceConnected ? "Voice chat active - speak or type..." : "Share what's on your mind..."}
             className="flex-1 bg-white border-blue-200 focus:ring-blue-400 focus:border-blue-400 text-gray-900 placeholder:text-gray-500"
             disabled={isLoading}

@@ -2,15 +2,14 @@ import { useCallback, useMemo, useState } from 'react';
 import { useConversation } from '@11labs/react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-// import { supabase } from '@/lib/supabase';
 
 type Props = {
   agentId?: string;
 };
 
-export default function VoiceCallWidget({ agentId = 'default' }: Props) {
+export default function VoiceCallWidget({ agentId }: Props) {
   const conversation = useConversation({
-    onError: (e) => console.error('ElevenLabs error:', e),
+    onError: (e) => console.error('Voice error:', e),
   });
 
   const { status, isSpeaking } = conversation;
@@ -24,45 +23,24 @@ export default function VoiceCallWidget({ agentId = 'default' }: Props) {
       // Request microphone permission
       await navigator.mediaDevices.getUserMedia({ audio: true });
 
-      // Check if we have a proper agent ID
-      if (!agentId || agentId.trim() === '') {
-        throw new Error('ElevenLabs Agent ID is not configured. Please set VITE_ELEVENLABS_AGENT_ID in your environment variables.');
+      // Use the agent ID from props or environment
+      const finalAgentId = agentId || import.meta.env.VITE_ELEVENLABS_AGENT_ID;
+      
+      if (!finalAgentId) {
+        throw new Error('Voice agent configuration is missing. Please check your settings.');
       }
 
-      // Get API key from environment
-      const elevenlabsApiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
-      if (!elevenlabsApiKey) {
-        throw new Error('ElevenLabs API key not found. Please set VITE_ELEVENLABS_API_KEY in your environment variables.');
-      }
-
-      // Get signed URL for ElevenLabs WebSocket connection
-      const response = await fetch(`https://api.elevenlabs.io/v1/convai/conversation/get_signed_url?agent_id=${agentId}`, {
-        method: 'GET',
-        headers: {
-          'xi-api-key': elevenlabsApiKey,
-        }
+      // Start the conversation using the same approach as ChatSection
+      await conversation.startSession({
+        agentId: finalAgentId,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(`Failed to get signed URL: ${response.status} ${response.statusText}. ${errorData.detail || ''}`);
-      }
-
-      const data = await response.json();
-      const signedUrl = data.signed_url;
-
-      if (!signedUrl) {
-        throw new Error('No signed URL received from ElevenLabs API');
-      }
-
-      // Start the conversation with ElevenLabs
-      await conversation.startSession({ signedUrl });
+      
       await conversation.setVolume({ volume });
       
     } catch (err) {
       console.error('Voice call error:', err);
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      alert(`Failed to start voice chat: ${errorMessage}\n\nPlease check:\n1. VITE_ELEVENLABS_AGENT_ID is set correctly\n2. VITE_ELEVENLABS_API_KEY is valid\n3. Your microphone is accessible`);
+      alert(`Failed to start voice chat: ${errorMessage}\n\nPlease check:\n1. Your voice settings are configured correctly\n2. Your microphone is accessible\n3. Try refreshing the page`);
     }
   }, [agentId, conversation, volume]);
 
