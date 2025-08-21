@@ -78,19 +78,6 @@ const ChatSection = () => {
     },
   });
 
-  const scrollToBottom = (smooth = false) => {
-    if (messagesContainerRef.current) {
-      if (smooth) {
-        messagesContainerRef.current.scrollTo({
-          top: messagesContainerRef.current.scrollHeight,
-          behavior: 'smooth'
-        });
-      } else {
-        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-      }
-    }
-  };
-
   // Simple scroll to bottom for chat messages only
   const scrollToBottomChat = () => {
     if (messagesContainerRef.current) {
