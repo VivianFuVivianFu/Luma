@@ -6,7 +6,6 @@ import { Slider } from '@/components/ui/slider';
 
 type Props = {
   agentId?: string;
-  onClose?: () => void;
 };
 
 export default function VoiceCallWidget({ agentId = 'default' }: Props) {

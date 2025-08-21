@@ -202,7 +202,6 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
           {/* Voice Chat Widget */}
           <VoiceCallWidget 
             agentId={import.meta.env.VITE_ELEVENLABS_AGENT_ID}
-            onClose={() => {}} 
           />
           
           <div className="bg-white rounded-2xl shadow-xl border border-gray-200 h-[500px] sm:h-[600px] flex flex-col">
