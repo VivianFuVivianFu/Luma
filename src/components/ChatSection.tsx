@@ -40,8 +40,6 @@ const ChatSection = () => {
   const [isVoiceConnected, setIsVoiceConnected] = useState(false);
   const [isFirstUserMessage, setIsFirstUserMessage] = useState(true);
   const [isMaximized, setIsMaximized] = useState(false);
-  const [userHasScrolled, setUserHasScrolled] = useState(false);
-  const [shouldAutoFocus, setShouldAutoFocus] = useState(true);
   const [lastTapTime, setLastTapTime] = useState(0);
   
   // Membership notification system states
@@ -55,7 +53,6 @@ const ChatSection = () => {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const notificationTimerRef = useRef<NodeJS.Timeout | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  const autoFocusTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const conversation = useConversation({
     apiKey: 'sk_415684fdf9ebc8dc4aaeca3706625ab0b496276d0a69f74e',
@@ -94,142 +91,42 @@ const ChatSection = () => {
     }
   };
 
-  // Enhanced mobile scroll handling
-  const scrollToBottomMobile = () => {
-    // Only auto-scroll if user hasn't manually scrolled or if auto-focus is enabled
-    if (!userHasScrolled || shouldAutoFocus) {
-      // Immediate scroll
-      scrollToBottom();
-      
-      // Delayed scroll for mobile keyboard adjustment
-      setTimeout(() => {
-        scrollToBottom(true);
-      }, 100);
-      
-      // Additional delayed scroll for slower devices
-      setTimeout(() => {
-        scrollToBottom(true);
-      }, 300);
-    }
-  };
-
-  // Auto-focus chat window on mobile
-  const autoFocusChatWindow = () => {
-    if (window.innerWidth <= 768 && shouldAutoFocus && chatContainerRef.current && !userHasScrolled) {
-      // Only auto-focus if the user hasn't interacted with the page yet
-      const hasInteracted = document.querySelector('input:focus') || document.querySelector('textarea:focus');
-      
-      if (!hasInteracted) {
-        chatContainerRef.current.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'center' // Changed from 'start' to 'center' for better positioning
-        });
-        
-        // After focusing on chat, auto-scroll to bottom
-        setTimeout(() => {
-          if (!userHasScrolled) {
-            scrollToBottomMobile();
-          }
-        }, 500);
-      }
-    }
-  };
-
-  // Track user manual scrolling
-  const handleUserScroll = (e: Event) => {
-    const target = e.target as HTMLElement;
-    
-    // Only consider it user scrolling if it's the main document or body, not the chat container
-    if (target === document.documentElement || target === document.body) {
-      // Check if scroll is significant enough to be considered intentional
-      const scrollPosition = window.scrollY || document.documentElement.scrollTop;
-      
-      // Only trigger if user scrolled more than 50px
-      if (Math.abs(scrollPosition) > 50) {
-        setUserHasScrolled(true);
-        setShouldAutoFocus(false);
-        
-        // Reset auto-focus after 8 seconds of no scrolling (increased time)
-        if (autoFocusTimeoutRef.current) {
-          clearTimeout(autoFocusTimeoutRef.current);
-        }
-        autoFocusTimeoutRef.current = setTimeout(() => {
-          setShouldAutoFocus(true);
-          setUserHasScrolled(false);
-        }, 8000);
-      }
+  // Simple scroll to bottom for chat messages only
+  const scrollToBottomChat = () => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }
   };
 
   useEffect(() => {
-    if (!userHasScrolled || shouldAutoFocus) {
-      scrollToBottomMobile();
-    }
-  }, [messages, userHasScrolled, shouldAutoFocus]);
+    // Only auto-scroll within the chat messages container, never the page
+    scrollToBottomChat();
+  }, [messages]);
 
   // Handle input focus for mobile keyboard
   const handleInputFocus = () => {
-    // Disable auto-focus when user is actively using the input
-    setUserHasScrolled(true);
-    setShouldAutoFocus(false);
-    
-    // On mobile, only scroll within the chat container, not the whole page
-    if (window.innerWidth <= 768) {
-      // Prevent page-level scrolling by focusing only on chat messages
-      setTimeout(() => {
-        if (messagesContainerRef.current) {
-          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-        }
-      }, 300); // Wait for keyboard animation
-    }
+    // Only scroll within the chat messages container, never the page
+    setTimeout(() => {
+      scrollToBottomChat();
+    }, 300);
   };
 
-  // Handle input blur to re-enable auto-focus after a delay
+  // Handle input blur - simplified
   const handleInputBlur = () => {
-    // Re-enable auto-focus after user stops using the input
-    setTimeout(() => {
-      setShouldAutoFocus(true);
-      // Don't immediately reset userHasScrolled to give user control
-    }, 2000); // Wait 2 seconds after blur
+    // No special action needed on blur
   };
 
   // Handle window resize (for mobile keyboard show/hide)
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth <= 768) {
-        setTimeout(() => {
-          scrollToBottomMobile();
-        }, 100);
-      }
+      // Only scroll within chat container on resize
+      setTimeout(() => {
+        scrollToBottomChat();
+      }, 100);
     };
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // Auto-focus chat window on mount for mobile
-  useEffect(() => {
-    // Auto-focus chat window after component mounts
-    const timer = setTimeout(() => {
-      autoFocusChatWindow();
-    }, 1000); // Wait 1 second for the page to fully load
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Add scroll event listeners to track user manual scrolling
-  useEffect(() => {
-    // Only listen to document-level scrolling, not chat container scrolling
-    document.addEventListener('scroll', handleUserScroll, { passive: true });
-    window.addEventListener('scroll', handleUserScroll, { passive: true });
-
-    return () => {
-      document.removeEventListener('scroll', handleUserScroll);
-      window.removeEventListener('scroll', handleUserScroll);
-      if (autoFocusTimeoutRef.current) {
-        clearTimeout(autoFocusTimeoutRef.current);
-      }
-    };
   }, []);
 
   // Authentication status check
@@ -303,12 +200,10 @@ const ChatSection = () => {
     addMessage(userMessage, 'user');
     setIsLoading(true);
 
-    // Force scroll after user message on mobile
-    if (window.innerWidth <= 768) {
-      setTimeout(() => {
-        scrollToBottomMobile();
-      }, 50);
-    }
+    // Auto-scroll only within chat container after sending message
+    setTimeout(() => {
+      scrollToBottomChat();
+    }, 50);
 
     // Track user interactions for notification system
     if (!isAuthenticated) {
@@ -390,35 +285,14 @@ const ChatSection = () => {
     }
   };
 
-  // Enhanced maximize/minimize functionality
+  // Simple maximize/minimize functionality
   const handleMaximizeToggle = () => {
-    const newMaximizedState = !isMaximized;
-    setIsMaximized(newMaximizedState);
+    setIsMaximized(!isMaximized);
     
-    // Reset scroll behavior when maximizing/minimizing
-    setUserHasScrolled(false);
-    setShouldAutoFocus(true);
-    
-    // Auto-scroll to bottom after state change
+    // Only scroll within chat container after toggle
     setTimeout(() => {
-      scrollToBottomMobile();
+      scrollToBottomChat();
     }, 100);
-    
-    // For mobile devices, ensure proper focus
-    if (window.innerWidth <= 768) {
-      setTimeout(() => {
-        if (newMaximizedState) {
-          // When maximizing on mobile, scroll to top of chat
-          if (chatContainerRef.current) {
-            chatContainerRef.current.scrollIntoView({ 
-              behavior: 'smooth', 
-              block: 'start' 
-            });
-          }
-        }
-        scrollToBottomMobile();
-      }, 300);
-    }
   };
 
   // Handle double tap to maximize on mobile
@@ -446,10 +320,10 @@ const ChatSection = () => {
       
       <div 
         ref={chatContainerRef}
-        className={`flex flex-col bg-slate-50/80 rounded-2xl border border-indigo-100 overflow-hidden ${
+        className={`flex flex-col bg-slate-50/80 border border-indigo-100 overflow-hidden ${
           isMaximized 
-            ? 'fixed inset-0 z-[9999] h-screen w-screen rounded-none' 
-            : 'h-full'
+            ? 'fixed inset-0 z-[9999] h-screen w-screen rounded-none bg-white' 
+            : 'h-full rounded-2xl'
         }`}
       >
       {/* Header */}
@@ -474,7 +348,7 @@ const ChatSection = () => {
               )}
             </h3>
             <p className="text-xs text-gray-600">
-              {isVoiceConnected ? 'Voice Active' : window.innerWidth <= 768 ? 'Double-tap header to maximize' : 'Your AI Companion'}
+              {isVoiceConnected ? 'Voice Active' : 'Your AI Companion'}
             </p>
           </div>
         </div>
@@ -496,7 +370,10 @@ const ChatSection = () => {
       </div>
 
       {/* Messages */}
-      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div 
+        ref={messagesContainerRef} 
+        className="flex-1 overflow-y-auto p-4 space-y-4 chat-scrollbar"
+      >
         {messages.map((message) => (
           <div
             key={message.id}
