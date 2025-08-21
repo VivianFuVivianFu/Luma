@@ -9,7 +9,7 @@ type Props = {
   onClose?: () => void;
 };
 
-export default function VoiceCallWidget({ agentId = 'default', onClose }: Props) {
+export default function VoiceCallWidget({ agentId = 'default' }: Props) {
   const conversation = useConversation({
     onError: (e) => console.error('ElevenLabs error:', e),
   });
