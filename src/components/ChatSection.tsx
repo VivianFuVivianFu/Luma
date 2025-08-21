@@ -81,7 +81,10 @@ const ChatSection = () => {
   // Simple scroll to bottom for chat messages only
   const scrollToBottomChat = () => {
     if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
     }
   };
 
@@ -92,10 +95,19 @@ const ChatSection = () => {
 
   // Handle input focus for mobile keyboard
   const handleInputFocus = () => {
-    // Only scroll within the chat messages container, never the page
-    setTimeout(() => {
-      scrollToBottomChat();
-    }, 300);
+    // Focus on the chat window when user clicks typing area
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start',
+        inline: 'nearest'
+      });
+      
+      // Then scroll to bottom of chat messages
+      setTimeout(() => {
+        scrollToBottomChat();
+      }, 300);
+    }
   };
 
   // Handle input blur - simplified
@@ -103,13 +115,16 @@ const ChatSection = () => {
     // No special action needed on blur
   };
 
+  // Prevent unwanted page scrolling on mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    // Allow normal touch behavior within chat
+    e.stopPropagation();
+  };
+
   // Handle window resize (for mobile keyboard show/hide)
   useEffect(() => {
     const handleResize = () => {
-      // Only scroll within chat container on resize
-      setTimeout(() => {
-        scrollToBottomChat();
-      }, 100);
+      // Do nothing - let user control their view
     };
 
     window.addEventListener('resize', handleResize);
@@ -187,10 +202,7 @@ const ChatSection = () => {
     addMessage(userMessage, 'user');
     setIsLoading(true);
 
-    // Auto-scroll only within chat container after sending message
-    setTimeout(() => {
-      scrollToBottomChat();
-    }, 50);
+    // Let the useEffect handle chat scrolling naturally
 
     // Track user interactions for notification system
     if (!isAuthenticated) {
@@ -275,11 +287,7 @@ const ChatSection = () => {
   // Simple maximize/minimize functionality
   const handleMaximizeToggle = () => {
     setIsMaximized(!isMaximized);
-    
-    // Only scroll within chat container after toggle
-    setTimeout(() => {
-      scrollToBottomChat();
-    }, 100);
+    // No automatic scrolling - let user control their view
   };
 
   // Handle double tap to maximize on mobile
@@ -312,6 +320,7 @@ const ChatSection = () => {
             ? 'fixed inset-0 z-[9999] h-screen w-screen rounded-none bg-white' 
             : 'h-full rounded-2xl'
         }`}
+        onTouchStart={handleTouchStart}
       >
       {/* Header */}
       <div 
@@ -400,7 +409,7 @@ const ChatSection = () => {
 
       {/* Input */}
       <div className="p-4 border-t border-indigo-100/50 bg-white/50">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" onClick={handleInputFocus}>
           <Input
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
