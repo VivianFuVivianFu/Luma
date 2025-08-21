@@ -2,7 +2,7 @@ import Index from '@/pages/Index'
 import DiagnosticsPage from '@/components/DiagnosticsPage'
 
 function App() {
-  // Simple URL-based routing for diagnostics
+  // Simple URL-based routing
   const currentPath = window.location.pathname;
   
   if (currentPath === '/diagnostics') {

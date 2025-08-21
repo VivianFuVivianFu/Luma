@@ -3,42 +3,42 @@ import { Users, Bell, ArrowRight } from 'lucide-react';
 
 const CommunitySection: React.FC = () => {
   return (
-    <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-6 border border-purple-200">
-      <div className="flex items-center space-x-3 mb-4">
-        <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-          <Users className="w-4 h-4 text-purple-600" />
+    <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-4 sm:p-6 border border-purple-200">
+      <div className="flex items-center space-x-2 sm:space-x-3 mb-3 sm:mb-4">
+        <div className="w-6 h-6 sm:w-8 sm:h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+          <Users className="w-3 h-3 sm:w-4 sm:h-4 text-purple-600" />
         </div>
-        <h3 className="font-semibold text-gray-800">Join Our Community</h3>
+        <h3 className="font-semibold text-gray-800 text-sm sm:text-base">Join Our Community</h3>
       </div>
       
       {/* Coming Soon Badge */}
-      <div className="inline-flex items-center space-x-2 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium mb-4">
+      <div className="inline-flex items-center space-x-2 px-2 sm:px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium mb-3 sm:mb-4">
         <span>Coming Soon...</span>
       </div>
       
-      <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+      <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4 leading-relaxed">
         Connect with others on your journey. Share experiences, support one another, and grow together in a safe, thriving environment.
       </p>
 
       {/* Preview Features */}
-      <div className="space-y-3 mb-4">
-        <div className="flex items-center space-x-3">
-          <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center">
-            <Users className="w-3 h-3 text-purple-600" />
+      <div className="space-y-2 sm:space-y-3">
+        <div className="flex items-center space-x-2 sm:space-x-3">
+          <div className="w-5 h-5 sm:w-6 sm:h-6 bg-purple-100 rounded-full flex items-center justify-center">
+            <Users className="w-2 h-2 sm:w-3 sm:h-3 text-purple-600" />
           </div>
-          <span className="text-sm text-gray-700">Peer support groups</span>
+          <span className="text-xs sm:text-sm text-gray-700">Peer support groups</span>
         </div>
-        <div className="flex items-center space-x-3">
-          <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center">
-            <Bell className="w-3 h-3 text-purple-600" />
+        <div className="flex items-center space-x-2 sm:space-x-3">
+          <div className="w-5 h-5 sm:w-6 sm:h-6 bg-purple-100 rounded-full flex items-center justify-center">
+            <Bell className="w-2 h-2 sm:w-3 sm:h-3 text-purple-600" />
           </div>
-          <span className="text-sm text-gray-700">Wellness challenges</span>
+          <span className="text-xs sm:text-sm text-gray-700">Wellness challenges</span>
         </div>
-        <div className="flex items-center space-x-3">
-          <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center">
-            <ArrowRight className="w-3 h-3 text-purple-600" />
+        <div className="flex items-center space-x-2 sm:space-x-3">
+          <div className="w-5 h-5 sm:w-6 sm:h-6 bg-purple-100 rounded-full flex items-center justify-center">
+            <ArrowRight className="w-2 h-2 sm:w-3 sm:h-3 text-purple-600" />
           </div>
-          <span className="text-sm text-gray-700">Expert-led sessions</span>
+          <span className="text-xs sm:text-sm text-gray-700">Expert-led sessions</span>
         </div>
       </div>
     </div>

@@ -31,16 +31,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ onAuthSuccess }) => {
       </nav>
 
       {/* Main Content */}
-      <div className="relative z-20 max-w-4xl mx-auto px-6 pt-12 pb-20">
+      <div className="relative z-20 max-w-4xl mx-auto px-4 sm:px-6 pt-8 sm:pt-12 pb-16 sm:pb-20">
         {/* Header Section */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl lg:text-6xl font-bold text-gray-800 mb-6 leading-tight">
+        <div className="text-center mb-8 sm:mb-12">
+          <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold text-gray-800 mb-4 sm:mb-6 leading-tight">
             Meet Luma — Your Empowering{' '}
             <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
               AI Companion
             </span>
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed px-2">
             Thoughtfully designed with empathy and psychology, Luma listens, supports, and helps you heal—walking beside you as a trusted friend on your journey of growth and transformation.
           </p>
         </div>
@@ -104,35 +104,35 @@ const LandingPage: React.FC<LandingPageProps> = ({ onAuthSuccess }) => {
         </div>
 
         {/* Authentication Buttons */}
-        <div className="text-center mb-16">
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-md mx-auto">
+        <div className="text-center mb-12 sm:mb-16">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center max-w-sm sm:max-w-md mx-auto px-4">
             <button
               onClick={() => handleAuth('signup')}
-              className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+              className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 text-sm sm:text-base"
             >
               Get Started Free
             </button>
             <button
               onClick={() => handleAuth('login')}
-              className="w-full sm:w-auto px-8 py-4 bg-white text-gray-700 font-semibold rounded-xl border-2 border-gray-200 hover:border-gray-300 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+              className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-white text-gray-700 font-semibold rounded-xl border-2 border-gray-200 hover:border-gray-300 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 text-sm sm:text-base"
             >
               Sign In
             </button>
           </div>
-          <p className="text-sm text-gray-500 mt-4">
+          <p className="text-xs sm:text-sm text-gray-500 mt-3 sm:mt-4 px-4">
             No credit card required • Voice & text chat
           </p>
         </div>
 
         {/* Disclaimer Section */}
-        <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-gray-200">
-          <div className="flex items-start space-x-4">
-            <div className="flex-shrink-0 w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
-              <Shield className="w-4 h-4 text-amber-600" />
+        <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg border border-gray-200">
+          <div className="flex items-start space-x-3 sm:space-x-4">
+            <div className="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 bg-amber-100 rounded-full flex items-center justify-center">
+              <Shield className="w-3 h-3 sm:w-4 sm:h-4 text-amber-600" />
             </div>
             <div>
-              <h3 className="font-semibold text-gray-800 mb-3">Important Disclaimer</h3>
-              <div className="space-y-3 text-sm text-gray-600 leading-relaxed">
+              <h3 className="font-semibold text-gray-800 mb-2 sm:mb-3 text-sm sm:text-base">Important Disclaimer</h3>
+              <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm text-gray-600 leading-relaxed">
                 <p>
                   <strong>Luma is an AI companion designed for emotional support and conversation.</strong> 
                   While our advanced AI can provide helpful insights and a listening ear, please remember:
@@ -167,7 +167,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onAuthSuccess }) => {
         {/* Privacy Policy Bar */}
         <div className="mt-8 bg-blue-600 text-white shadow-lg rounded-2xl overflow-hidden">
           <button 
-            onClick={() => window.open('/privacy-policy', '_blank')}
+            onClick={() => window.open('/privacy-policy.html', '_blank')}
             className="w-full text-center hover:bg-blue-700 transition-colors px-6 py-4"
           >
             <div className="flex items-center justify-center space-x-2">
