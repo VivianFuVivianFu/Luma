@@ -23,7 +23,6 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [showVoiceCall, setShowVoiceCall] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -199,29 +198,22 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
 
       <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-8 grid lg:grid-cols-3 gap-4 sm:gap-8">
         {/* Main Chat Area */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-4">
+          {/* Voice Chat Widget */}
+          <VoiceCallWidget 
+            agentId={import.meta.env.VITE_ELEVENLABS_AGENT_ID}
+            onClose={() => {}} 
+          />
+          
           <div className="bg-white rounded-2xl shadow-xl border border-gray-200 h-[500px] sm:h-[600px] flex flex-col">
             {/* Chat Header */}
-            <div className="p-3 sm:p-6 border-b border-gray-200 flex items-center justify-between">
-              <div>
-                <h2 className="font-semibold text-gray-800 text-sm sm:text-base">Chat with Luma</h2>
-              </div>
-              
-              <div className="flex items-center space-x-2 sm:space-x-3">
-                <img 
-                  src="/luma_photo.jpg" 
-                  alt="Luma"
-                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-blue-200"
-                />
-                <button
-                  onClick={() => setShowVoiceCall(true)}
-                  className="flex items-center space-x-1 sm:space-x-2 px-3 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-500 to-blue-700 text-white font-bold rounded-lg sm:rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-200 text-xs sm:text-sm"
-                >
-                  <Phone className="w-3 h-3 sm:w-5 sm:h-5" />
-                  <span className="hidden sm:inline">Call Luma Now</span>
-                  <span className="sm:hidden">Call</span>
-                </button>
-              </div>
+            <div className="p-3 sm:p-6 border-b border-gray-200 flex items-center space-x-2 sm:space-x-3">
+              <img 
+                src="/luma_photo.jpg" 
+                alt="Luma"
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-blue-200"
+              />
+              <h2 className="font-semibold text-gray-800 text-sm sm:text-base">Chat with Luma</h2>
             </div>
 
             {/* Messages Area */}
@@ -341,13 +333,6 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
         </div>
       </div>
 
-      {/* Voice Call Widget */}
-      {showVoiceCall && (
-        <VoiceCallWidget 
-          agentId={import.meta.env.VITE_ELEVENLABS_AGENT_ID}
-          onClose={() => setShowVoiceCall(false)} 
-        />
-      )}
     </div>
   );
 };

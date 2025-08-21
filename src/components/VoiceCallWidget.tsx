@@ -99,12 +99,6 @@ export default function VoiceCallWidget({ agentId = 'default', onClose }: Props)
               ? (isSpeaking ? 'Luma speaking…' : 'Listening…') 
               : 'Disconnected'}
           </span>
-          <button 
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            ✕
-          </button>
         </div>
       </header>
 
