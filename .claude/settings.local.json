@@ -71,7 +71,8 @@
       "Bash(start http://localhost:5174/test-proxy-connection.html)",
       "Bash(export FORCE_KILL=true)",
       "Bash(git remote get-url:*)",
-      "Bash(npm audit:*)"
+      "Bash(npm audit:*)",
+      "Bash(npm cache clean:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
