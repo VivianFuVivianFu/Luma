@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Shield } from 'lucide-react';
 import AuthModal from './AuthModal';
-import ChatSection from './ChatSection';
 import { supabase } from '../lib/supabase';
 
 interface LandingPageProps {
@@ -127,34 +126,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onAuthSuccess }) => {
           </div>
         </div>
 
-        {/* Try Luma Now Section - Only for Anonymous Users */}
-        {!isAuthenticated && (
-          <div className="mb-8 sm:mb-12">
-            <div className="text-center mb-6">
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">
-                Try Luma Now
-              </h2>
-              <p className="text-gray-600 max-w-xl mx-auto px-4">
-                Experience Luma's supportive conversation instantly — no registration required.
-              </p>
-            </div>
-            
-            {/* Chat Interface for Anonymous Users */}
-            <div className="max-w-2xl mx-auto px-4">
-              <div className="rounded-2xl overflow-hidden shadow-2xl bg-white border border-gray-200" style={{height: '500px'}}>
-                <ChatSection />
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Authentication Buttons - Show different content based on auth status */}
         <div className="text-center mb-12 sm:mb-16">
           {!isAuthenticated ? (
             <>
-              <div className="text-center mb-4">
-                <p className="text-gray-600 text-sm sm:text-base">
-                  Want to save your conversations and unlock more features?
+              <div className="text-center mb-6">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-4">
+                  Ready to Start Your Journey?
+                </h2>
+                <p className="text-gray-600 text-sm sm:text-base max-w-2xl mx-auto px-4">
+                  Sign up or log in to access Luma's full experience - personalized chat conversations, voice calling, community features, and more.
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center max-w-sm sm:max-w-md mx-auto px-4">
@@ -172,7 +154,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onAuthSuccess }) => {
                 </button>
               </div>
               <p className="text-xs sm:text-sm text-gray-500 mt-3 sm:mt-4 px-4">
-                No credit card required • Save conversations • Advanced features
+                No credit card required • Access chat, voice calls & community
               </p>
             </>
           ) : (
