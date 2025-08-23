@@ -389,6 +389,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
                       • Full Screen
                     </span>
                   )}
+                  <span className="ml-2 text-xs text-green-600 font-normal">v2.1</span>
                 </h2>
               </div>
               <div className="flex items-center gap-2">
