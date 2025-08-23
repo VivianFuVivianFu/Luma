@@ -371,7 +371,17 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
             }`}
             style={{
               minHeight: isChatMaximized ? '100vh' : 'auto',
-              maxHeight: isChatMaximized ? '100vh' : '600px'
+              maxHeight: isChatMaximized ? '100vh' : '600px',
+              ...(isChatMaximized && {
+                display: 'flex',
+                flexDirection: 'column',
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                zIndex: 9999
+              })
             }}
           >
             {/* Chat Header */}
@@ -389,7 +399,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
                       • Full Screen
                     </span>
                   )}
-                  <span className="ml-2 text-xs text-green-600 font-normal">v2.1</span>
+                  <span className="ml-2 text-xs text-green-600 font-normal">v2.2</span>
                 </h2>
               </div>
               <div className="flex items-center gap-2">
@@ -463,10 +473,10 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
 
             {/* Input Area */}
             <div 
-              className={`input-container-dashboard p-3 sm:p-6 border-t border-gray-200 transition-all duration-300 ${
+              className={`input-container-dashboard border-t border-gray-200 transition-all duration-300 ${
                 isChatMaximized 
-                  ? 'bg-white border-t border-slate-200 shadow-lg focus-within:fixed focus-within:bottom-0 focus-within:left-0 focus-within:right-0 focus-within:z-[10001]' 
-                  : 'focus-within:fixed focus-within:bottom-0 focus-within:left-0 focus-within:right-0 focus-within:z-[10000] focus-within:bg-white focus-within:border-t focus-within:border-slate-200 focus-within:shadow-lg'
+                  ? 'flex-shrink-0 bg-white border-slate-200 shadow-lg p-4' 
+                  : 'p-3 sm:p-6 focus-within:fixed focus-within:bottom-0 focus-within:left-0 focus-within:right-0 focus-within:z-[10000] focus-within:bg-white focus-within:border-t focus-within:border-slate-200 focus-within:shadow-lg'
               }`}
               onClick={() => {
                 // Only scroll messages within chat container, never scroll the page
