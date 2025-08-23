@@ -7,7 +7,7 @@ import CommunitySection from './CommunitySection';
 
 interface DashboardProps {
   userEmail: string;
-  onLogout: () => void;
+  onLogout: () => void | Promise<void>;
   onBackToHome: () => void;
 }
 
