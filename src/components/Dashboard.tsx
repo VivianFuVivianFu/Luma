@@ -59,6 +59,31 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
     setIsChatMaximized(!isChatMaximized);
   };
 
+  // Prevent body scroll when chat is maximized
+  useEffect(() => {
+    if (isChatMaximized) {
+      // Prevent body scroll on maximized mode
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.height = '100%';
+    } else {
+      // Restore body scroll
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
+    }
+
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
+    };
+  }, [isChatMaximized]);
+
   // Enhanced message watching with chat window focus
   useEffect(() => {
     if (messages.length > 0) {
@@ -329,6 +354,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
             <div
               className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[9998]"
               onClick={() => setIsChatMaximized(false)}
+              style={{ touchAction: 'none' }}
             />
           )}
 
@@ -381,7 +407,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4">
+            <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4 chat-scrollbar">
 
               {messages.map((message) => (
                 <div
@@ -438,7 +464,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
             <div 
               className={`input-container-dashboard p-3 sm:p-6 border-t border-gray-200 transition-all duration-300 ${
                 isChatMaximized 
-                  ? 'focus-within:fixed focus-within:bottom-0 focus-within:left-0 focus-within:right-0 focus-within:z-[10001] focus-within:bg-white focus-within:border-t focus-within:border-slate-200 focus-within:shadow-lg' 
+                  ? 'bg-white border-t border-slate-200 shadow-lg focus-within:fixed focus-within:bottom-0 focus-within:left-0 focus-within:right-0 focus-within:z-[10001]' 
                   : 'focus-within:fixed focus-within:bottom-0 focus-within:left-0 focus-within:right-0 focus-within:z-[10000] focus-within:bg-white focus-within:border-t focus-within:border-slate-200 focus-within:shadow-lg'
               }`}
               onClick={() => {
