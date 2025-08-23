@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Heart, LogOut, MessageSquare } from 'lucide-react';
+import { Send, Heart, LogOut, MessageSquare, Maximize, Minimize } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { claudeAI } from '../lib/claudeAI';
 import VoiceCallWidget from './VoiceCallWidget';
@@ -25,6 +25,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
   const [isLoading, setIsLoading] = useState(false);
   const [isUserChatting, setIsUserChatting] = useState(false);
   const [shouldMaintainFocus, setShouldMaintainFocus] = useState(false);
+  const [isChatMaximized, setIsChatMaximized] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -51,6 +52,11 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
     
     // Consider chat "in focus" if its center is in the top 70% of viewport
     return chatCenterY >= 0 && chatCenterY <= windowHeight * 0.7;
+  };
+
+  // Handle chat maximize/minimize functionality
+  const handleChatMaximizeToggle = () => {
+    setIsChatMaximized(!isChatMaximized);
   };
 
   // Enhanced message watching with chat window focus
@@ -318,22 +324,60 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
             agentId={import.meta.env.VITE_ELEVENLABS_AGENT_ID}
           />
 
+          {/* Backdrop overlay for maximized chat */}
+          {isChatMaximized && (
+            <div
+              className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[9998]"
+              onClick={() => setIsChatMaximized(false)}
+            />
+          )}
+
           <div 
             ref={chatContainerRef} 
-            className={`bg-white rounded-2xl shadow-xl border transition-all duration-300 h-[500px] sm:h-[600px] flex flex-col ${
-              isUserChatting || shouldMaintainFocus 
-                ? 'border-blue-300 shadow-2xl ring-2 ring-blue-100' 
-                : 'border-gray-200'
+            className={`bg-white shadow-xl border transition-all duration-300 flex flex-col ${
+              isChatMaximized
+                ? 'fixed inset-0 z-[9999] h-screen w-screen rounded-none border-gray-200'
+                : `rounded-2xl h-[500px] sm:h-[600px] ${
+                    isUserChatting || shouldMaintainFocus 
+                      ? 'border-blue-300 shadow-2xl ring-2 ring-blue-100' 
+                      : 'border-gray-200'
+                  }`
             }`}
+            style={{
+              minHeight: isChatMaximized ? '100vh' : 'auto',
+              maxHeight: isChatMaximized ? '100vh' : '600px'
+            }}
           >
             {/* Chat Header */}
-            <div className="p-3 sm:p-6 border-b border-gray-200 flex items-center space-x-2 sm:space-x-3">
-              <img
-                src="/luma_photo.jpg"
-                alt="Luma"
-                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-blue-200"
-              />
-              <h2 className="font-semibold text-gray-800 text-sm sm:text-base">Chat with Luma</h2>
+            <div className="p-3 sm:p-6 border-b border-gray-200 flex items-center justify-between">
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <img
+                  src="/luma_photo.jpg"
+                  alt="Luma"
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-blue-200"
+                />
+                <h2 className="font-semibold text-gray-800 text-sm sm:text-base">
+                  Chat with Luma
+                  {isChatMaximized && (
+                    <span className="ml-2 text-xs text-blue-600 font-normal">
+                      • Full Screen
+                    </span>
+                  )}
+                </h2>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleChatMaximizeToggle}
+                  className={`p-2 rounded-lg transition-all duration-200 hover:scale-105 ${
+                    isChatMaximized
+                      ? 'text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100'
+                      : 'text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100'
+                  }`}
+                  title={isChatMaximized ? 'Exit Full Screen' : 'Enter Full Screen'}
+                >
+                  {isChatMaximized ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             {/* Messages Area */}
