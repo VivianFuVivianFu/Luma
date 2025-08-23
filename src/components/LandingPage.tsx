@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Play, Shield } from 'lucide-react';
 import AuthModal from './AuthModal';
 import ChatSection from './ChatSection';
+import { supabase } from '../lib/supabase';
 
 interface LandingPageProps {
   onAuthSuccess: () => void;
@@ -11,6 +12,28 @@ const LandingPage: React.FC<LandingPageProps> = ({ onAuthSuccess }) => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('signup');
   const [videoHasPlayed, setVideoHasPlayed] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setIsAuthenticated(!!session?.user);
+      } catch (error) {
+        console.error('Error checking auth:', error);
+      }
+    };
+
+    checkAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setIsAuthenticated(!!session?.user);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleAuth = (mode: 'login' | 'signup') => {
     setAuthMode(mode);
@@ -104,49 +127,70 @@ const LandingPage: React.FC<LandingPageProps> = ({ onAuthSuccess }) => {
           </div>
         </div>
 
-        {/* Try Luma Now Section */}
-        <div className="mb-8 sm:mb-12">
-          <div className="text-center mb-6">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">
-              Try Luma Now
-            </h2>
-            <p className="text-gray-600 max-w-xl mx-auto px-4">
-              Experience Luma's supportive conversation instantly — no registration required.
-            </p>
-          </div>
-          
-          {/* Chat Interface for Anonymous Users */}
-          <div className="max-w-2xl mx-auto px-4">
-            <div className="rounded-2xl overflow-hidden shadow-2xl bg-white border border-gray-200" style={{height: '500px'}}>
-              <ChatSection />
+        {/* Try Luma Now Section - Only for Anonymous Users */}
+        {!isAuthenticated && (
+          <div className="mb-8 sm:mb-12">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">
+                Try Luma Now
+              </h2>
+              <p className="text-gray-600 max-w-xl mx-auto px-4">
+                Experience Luma's supportive conversation instantly — no registration required.
+              </p>
+            </div>
+            
+            {/* Chat Interface for Anonymous Users */}
+            <div className="max-w-2xl mx-auto px-4">
+              <div className="rounded-2xl overflow-hidden shadow-2xl bg-white border border-gray-200" style={{height: '500px'}}>
+                <ChatSection />
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Authentication Buttons */}
+        {/* Authentication Buttons - Show different content based on auth status */}
         <div className="text-center mb-12 sm:mb-16">
-          <div className="text-center mb-4">
-            <p className="text-gray-600 text-sm sm:text-base">
-              Want to save your conversations and unlock more features?
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center max-w-sm sm:max-w-md mx-auto px-4">
-            <button
-              onClick={() => handleAuth('signup')}
-              className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 text-sm sm:text-base"
-            >
-              Get Started Free
-            </button>
-            <button
-              onClick={() => handleAuth('login')}
-              className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-white text-gray-700 font-semibold rounded-xl border-2 border-gray-200 hover:border-gray-300 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 text-sm sm:text-base"
-            >
-              Sign In
-            </button>
-          </div>
-          <p className="text-xs sm:text-sm text-gray-500 mt-3 sm:mt-4 px-4">
-            No credit card required • Save conversations • Advanced features
-          </p>
+          {!isAuthenticated ? (
+            <>
+              <div className="text-center mb-4">
+                <p className="text-gray-600 text-sm sm:text-base">
+                  Want to save your conversations and unlock more features?
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center max-w-sm sm:max-w-md mx-auto px-4">
+                <button
+                  onClick={() => handleAuth('signup')}
+                  className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 text-sm sm:text-base"
+                >
+                  Get Started Free
+                </button>
+                <button
+                  onClick={() => handleAuth('login')}
+                  className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-white text-gray-700 font-semibold rounded-xl border-2 border-gray-200 hover:border-gray-300 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 text-sm sm:text-base"
+                >
+                  Sign In
+                </button>
+              </div>
+              <p className="text-xs sm:text-sm text-gray-500 mt-3 sm:mt-4 px-4">
+                No credit card required • Save conversations • Advanced features
+              </p>
+            </>
+          ) : (
+            <div className="text-center">
+              <h3 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-4">
+                Welcome back! 
+              </h3>
+              <p className="text-gray-600 text-sm sm:text-base mb-6">
+                You're signed in and ready to access your full Luma experience.
+              </p>
+              <button
+                onClick={onAuthSuccess}
+                className="px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 text-sm sm:text-base"
+              >
+                Go to Dashboard
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Disclaimer Section */}
