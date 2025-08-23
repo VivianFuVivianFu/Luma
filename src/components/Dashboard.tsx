@@ -33,25 +33,12 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Enhanced scroll to chat window with focus maintenance
+  // Enhanced scroll within chat container only - no page scrolling
   const scrollToChatWindow = () => {
-    if (chatContainerRef.current) {
-      const rect = chatContainerRef.current.getBoundingClientRect();
-      const isFullyVisible = rect.top >= 0 && rect.bottom <= window.innerHeight;
-      
-      if (!isFullyVisible || shouldMaintainFocus) {
-        chatContainerRef.current.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'center',
-          inline: 'nearest'
-        });
-      }
-      
-      // Always scroll messages to bottom after ensuring chat is visible
-      setTimeout(() => {
-        scrollToBottom();
-      }, 300);
-    }
+    // Only scroll within the chat messages container, never scroll the page
+    setTimeout(() => {
+      scrollToBottom();
+    }, 100);
   };
 
   // Check if chat window is in focus
