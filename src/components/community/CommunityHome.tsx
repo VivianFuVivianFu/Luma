@@ -48,6 +48,10 @@ const CommunityHome: React.FC<CommunityHomeProps> = () => {
         getUserCategoryMemberships()
       ]);
       
+      console.log('Categories loaded:', categoriesData?.length || 0, categoriesData);
+      console.log('Posts loaded:', postsData?.length || 0);
+      console.log('Memberships loaded:', membershipsData?.length || 0);
+      
       setCategories(categoriesData);
       setRecentPosts(postsData);
       setUserMemberships(membershipsData);
@@ -126,14 +130,24 @@ const CommunityHome: React.FC<CommunityHomeProps> = () => {
               </h2>
               
               <div className="space-y-3">
-                {categories.map((category) => (
-                  <CategoryCard
-                    key={category.id}
-                    category={category}
-                    isJoined={userMemberships.includes(category.id)}
-                    onMembershipChange={loadCommunityData}
-                  />
-                ))}
+                {categories.length === 0 && !loading ? (
+                  <div className="text-center p-6">
+                    <Users className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500 mb-3">No categories found</p>
+                    <p className="text-xs text-gray-400">
+                      Please ensure the database has been set up with default categories.
+                    </p>
+                  </div>
+                ) : (
+                  categories.map((category) => (
+                    <CategoryCard
+                      key={category.id}
+                      category={category}
+                      isJoined={userMemberships.includes(category.id)}
+                      onMembershipChange={loadCommunityData}
+                    />
+                  ))
+                )}
               </div>
             </div>
 
