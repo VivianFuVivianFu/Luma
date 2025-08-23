@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Play, Shield } from 'lucide-react';
 import AuthModal from './AuthModal';
+import ChatSection from './ChatSection';
 
 interface LandingPageProps {
   onAuthSuccess: () => void;
@@ -103,8 +104,32 @@ const LandingPage: React.FC<LandingPageProps> = ({ onAuthSuccess }) => {
           </div>
         </div>
 
+        {/* Try Luma Now Section */}
+        <div className="mb-8 sm:mb-12">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">
+              Try Luma Now
+            </h2>
+            <p className="text-gray-600 max-w-xl mx-auto px-4">
+              Experience Luma's supportive conversation instantly — no registration required.
+            </p>
+          </div>
+          
+          {/* Chat Interface for Anonymous Users */}
+          <div className="max-w-2xl mx-auto px-4">
+            <div className="rounded-2xl overflow-hidden shadow-2xl bg-white border border-gray-200" style={{height: '500px'}}>
+              <ChatSection />
+            </div>
+          </div>
+        </div>
+
         {/* Authentication Buttons */}
         <div className="text-center mb-12 sm:mb-16">
+          <div className="text-center mb-4">
+            <p className="text-gray-600 text-sm sm:text-base">
+              Want to save your conversations and unlock more features?
+            </p>
+          </div>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center max-w-sm sm:max-w-md mx-auto px-4">
             <button
               onClick={() => handleAuth('signup')}
@@ -120,7 +145,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onAuthSuccess }) => {
             </button>
           </div>
           <p className="text-xs sm:text-sm text-gray-500 mt-3 sm:mt-4 px-4">
-            No credit card required • Voice & text chat
+            No credit card required • Save conversations • Advanced features
           </p>
         </div>
 

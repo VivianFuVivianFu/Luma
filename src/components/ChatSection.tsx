@@ -94,26 +94,6 @@ const ChatSection = () => {
     }
   };
 
-  // Enhanced scroll to chat window with focus maintenance
-  const scrollToChatWindow = () => {
-    if (chatContainerRef.current) {
-      const rect = chatContainerRef.current.getBoundingClientRect();
-      const isFullyVisible = rect.top >= 0 && rect.bottom <= window.innerHeight;
-      
-      if (!isFullyVisible || shouldMaintainFocus) {
-        chatContainerRef.current.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'center',
-          inline: 'nearest'
-        });
-      }
-      
-      // Always scroll messages to bottom after ensuring chat is visible
-      setTimeout(() => {
-        scrollToBottomChat();
-      }, 300);
-    }
-  };
 
 
   useEffect(() => {
@@ -121,28 +101,23 @@ const ChatSection = () => {
     scrollToBottomChat();
   }, [messages]);
 
-  // Scroll page to top when component loads
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
+  // Component loads - no page scrolling needed for embedded chat
 
   // Handle input focus for mobile keyboard
   const handleInputFocus = () => {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
     if (isMobile && chatContainerRef.current) {
-      // Scroll to the top of the chat component for mobile
-      chatContainerRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-        inline: 'nearest'
-      });
-
-      // Add fixed positioning class for mobile input
+      // Don't scroll the page - just add fixed positioning class for mobile input
       const inputContainer = chatContainerRef.current.querySelector('.input-container');
       if (inputContainer) {
         inputContainer.classList.add('mobile-input-focused');
       }
+      
+      // Only scroll within the chat messages container, not the entire page
+      setTimeout(() => {
+        scrollToBottomChat();
+      }, 100);
     } else {
       // Desktop behavior - just scroll chat to bottom
       setTimeout(() => {
@@ -281,9 +256,9 @@ const ChatSection = () => {
     setIsUserChatting(true);
     setShouldMaintainFocus(true);
 
-    // Ensure chat window is visible and scroll to show new message
+    // Scroll to show new message within chat container only
     setTimeout(() => {
-      scrollToChatWindow();
+      scrollToBottomChat();
     }, 100);
 
     // Track user interactions for notification system
@@ -422,9 +397,10 @@ const ChatSection = () => {
         }`}
         onTouchStart={handleTouchStart}
         style={{
-          // Ensure proper mobile viewport handling
+          // Ensure proper mobile viewport handling and prevent page scrolling
           minHeight: isMaximized ? '100vh' : 'auto',
-          maxHeight: isMaximized ? '100vh' : 'calc(100vh - 2rem)'
+          maxHeight: isMaximized ? '100vh' : '500px',
+          overflowY: 'hidden' // Prevent the chat container itself from scrolling the page
         }}
       >
       {/* Header */}

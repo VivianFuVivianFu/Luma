@@ -97,6 +97,13 @@
         padding: 16px !important;
       }
       
+      /* Prevent page scroll when mobile input is focused */
+      body:has(.mobile-input-focused) {
+        position: fixed !important;
+        width: 100% !important;
+        overflow: hidden !important;
+      }
+      
       /* Ensure input stays visible above keyboard */
       @media (max-height: 600px) {
         .input-container.mobile-input-focused, .input-container-dashboard.mobile-input-focused {
