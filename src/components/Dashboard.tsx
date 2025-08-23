@@ -436,8 +436,17 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
 
             {/* Input Area */}
             <div 
-              className="input-container-dashboard p-3 sm:p-6 border-t border-gray-200 transition-all duration-300 focus-within:fixed focus-within:bottom-0 focus-within:left-0 focus-within:right-0 focus-within:z-[10000] focus-within:bg-white focus-within:border-t focus-within:border-slate-200 focus-within:shadow-lg"
-              onClick={scrollToChatWindow}
+              className={`input-container-dashboard p-3 sm:p-6 border-t border-gray-200 transition-all duration-300 ${
+                isChatMaximized 
+                  ? 'focus-within:fixed focus-within:bottom-0 focus-within:left-0 focus-within:right-0 focus-within:z-[10001] focus-within:bg-white focus-within:border-t focus-within:border-slate-200 focus-within:shadow-lg' 
+                  : 'focus-within:fixed focus-within:bottom-0 focus-within:left-0 focus-within:right-0 focus-within:z-[10000] focus-within:bg-white focus-within:border-t focus-within:border-slate-200 focus-within:shadow-lg'
+              }`}
+              onClick={() => {
+                // Only scroll messages within chat container, never scroll the page
+                setTimeout(() => {
+                  scrollToBottom();
+                }, 100);
+              }}
             >
               <div className="flex space-x-2 sm:space-x-3">
                 <textarea
@@ -475,19 +484,20 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
                     
                     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
                     
+                    setIsUserChatting(true);
+                    setShouldMaintainFocus(true);
+                    
                     if (isMobile && chatContainerRef.current) {
-                      // Scroll to the top of the chat component for mobile
-                      chatContainerRef.current.scrollIntoView({ 
-                        behavior: 'smooth', 
-                        block: 'start',
-                        inline: 'nearest'
-                      });
-                      
-                      // Add fixed positioning class for mobile input
+                      // Don't scroll the page - just add mobile input styling and scroll messages
                       const inputContainer = chatContainerRef.current.querySelector('.input-container-dashboard');
                       if (inputContainer) {
                         inputContainer.classList.add('mobile-input-focused');
                       }
+                      
+                      // Scroll messages within chat container only
+                      setTimeout(() => {
+                        scrollToBottom();
+                      }, 100);
                     } else {
                       // Desktop behavior - scroll to bottom of messages
                       setTimeout(() => {
@@ -502,6 +512,14 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
                     }
                     
                     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                    
+                    // Gradually release focus maintenance
+                    setTimeout(() => {
+                      setIsUserChatting(false);
+                      setTimeout(() => {
+                        setShouldMaintainFocus(false);
+                      }, 1000);
+                    }, 500);
                     
                     if (isMobile && chatContainerRef.current) {
                       // Remove fixed positioning class when input loses focus
