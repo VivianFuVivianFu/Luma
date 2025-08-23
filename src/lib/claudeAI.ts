@@ -109,9 +109,13 @@ export class ClaudeAI {
     try {
       console.log(`[ClaudeAI] Sending message to Claude: "${userMessage.substring(0, 50)}..."`);
 
-      // Ensure user is authenticated
-      const userId = await this.getAuthenticatedUserId();
       const backendUrl = this.getBackendUrl();
+      
+      // Only require authentication for proxy mode, not for production Vercel Edge Functions
+      let userId = '';
+      if (backendUrl !== '/api/chat' && backendUrl !== '') {
+        userId = await this.getAuthenticatedUserId();
+      }
       
       // Add user message to history
       this.conversationHistory.push({
@@ -160,11 +164,9 @@ export class ClaudeAI {
    * Send request through Vercel Edge Function (production)
    */
   private async sendVercelRequest(userMessage: string): Promise<string> {
-    // Get authentication token
+    // Get authentication token (optional for anonymous users)
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.access_token) {
-      throw new Error('Authentication required for Vercel Edge Function');
-    }
+    const isAuthenticated = !!session?.access_token;
 
     // Prepare conversation history
     const history = this.conversationHistory.slice(0, -1).map(msg => ({
@@ -172,14 +174,20 @@ export class ClaudeAI {
       content: msg.content
     }));
 
-    console.log('[ClaudeAI] Making request to Vercel Edge Function...');
+    console.log(`[ClaudeAI] Making request to Vercel Edge Function as ${isAuthenticated ? 'authenticated' : 'anonymous'} user...`);
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json'
+    };
+
+    // Add authentication if available
+    if (isAuthenticated) {
+      headers['Authorization'] = `Bearer ${session.access_token}`;
+    }
 
     const response = await fetch('/api/chat', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`
-      },
+      headers,
       body: JSON.stringify({
         message: userMessage,
         history: history

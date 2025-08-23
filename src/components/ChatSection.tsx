@@ -41,14 +41,16 @@ const ChatSection = () => {
   const [isFirstUserMessage, setIsFirstUserMessage] = useState(true);
   const [isMaximized, setIsMaximized] = useState(false);
   const [lastTapTime, setLastTapTime] = useState(0);
-  
+  const [isUserChatting, setIsUserChatting] = useState(false);
+  const [shouldMaintainFocus, setShouldMaintainFocus] = useState(false);
+
   // Membership notification system states
   const [showMembershipPrompt, setShowMembershipPrompt] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userInteractionCount, setUserInteractionCount] = useState(0);
   const [conversationStartTime, setConversationStartTime] = useState<Date | null>(null);
   const [membershipPromptDismissed, setMembershipPromptDismissed] = useState(false);
-  
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const notificationTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -78,41 +80,88 @@ const ChatSection = () => {
     },
   });
 
-  // Simple scroll to bottom for chat messages only
+  // Enhanced scroll to bottom for chat messages only
   const scrollToBottomChat = () => {
     if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTo({
-        top: messagesContainerRef.current.scrollHeight,
-        behavior: 'smooth'
+      const container = messagesContainerRef.current;
+      // Use requestAnimationFrame for smoother scrolling on mobile
+      requestAnimationFrame(() => {
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: 'smooth'
+        });
       });
     }
   };
 
-  useEffect(() => {
-    // Only auto-scroll within the chat messages container, never the page
-    scrollToBottomChat();
-  }, [messages]);
-
-  // Handle input focus for mobile keyboard
-  const handleInputFocus = () => {
-    // Focus on the chat window when user clicks typing area
+  // Enhanced scroll to chat window with focus maintenance
+  const scrollToChatWindow = () => {
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'start',
-        inline: 'nearest'
-      });
+      const rect = chatContainerRef.current.getBoundingClientRect();
+      const isFullyVisible = rect.top >= 0 && rect.bottom <= window.innerHeight;
       
-      // Then scroll to bottom of chat messages
+      if (!isFullyVisible || shouldMaintainFocus) {
+        chatContainerRef.current.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center',
+          inline: 'nearest'
+        });
+      }
+      
+      // Always scroll messages to bottom after ensuring chat is visible
       setTimeout(() => {
         scrollToBottomChat();
       }, 300);
     }
   };
 
-  // Handle input blur - simplified
+
+  useEffect(() => {
+    // Only auto-scroll within the chat messages container, never the page
+    scrollToBottomChat();
+  }, [messages]);
+
+  // Scroll page to top when component loads
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  // Handle input focus for mobile keyboard
+  const handleInputFocus = () => {
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    if (isMobile && chatContainerRef.current) {
+      // Scroll to the top of the chat component for mobile
+      chatContainerRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+        inline: 'nearest'
+      });
+
+      // Add fixed positioning class for mobile input
+      const inputContainer = chatContainerRef.current.querySelector('.input-container');
+      if (inputContainer) {
+        inputContainer.classList.add('mobile-input-focused');
+      }
+    } else {
+      // Desktop behavior - just scroll chat to bottom
+      setTimeout(() => {
+        scrollToBottomChat();
+      }, 100);
+    }
+  };
+
+  // Handle input blur - remove mobile fixed positioning
   const handleInputBlur = () => {
-    // No special action needed on blur
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    if (isMobile && chatContainerRef.current) {
+      // Remove fixed positioning class when input loses focus
+      const inputContainer = chatContainerRef.current.querySelector('.input-container');
+      if (inputContainer) {
+        inputContainer.classList.remove('mobile-input-focused');
+      }
+    }
   };
 
   // Prevent unwanted page scrolling on mobile
@@ -124,7 +173,30 @@ const ChatSection = () => {
   // Handle window resize (for mobile keyboard show/hide)
   useEffect(() => {
     const handleResize = () => {
-      // Do nothing - let user control their view
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+      if (isMobile) {
+        // Check if keyboard is likely open (viewport height reduced significantly)
+        const isKeyboardOpen = window.innerHeight < window.screen.height * 0.75;
+
+        if (isKeyboardOpen) {
+          // Keyboard is open - ensure fixed input positioning is active
+          if (chatContainerRef.current) {
+            const inputContainer = chatContainerRef.current.querySelector('.input-container');
+            if (inputContainer && document.activeElement?.tagName === 'INPUT') {
+              inputContainer.classList.add('mobile-input-focused');
+            }
+          }
+        } else {
+          // Keyboard is closed - remove fixed positioning
+          if (chatContainerRef.current) {
+            const inputContainer = chatContainerRef.current.querySelector('.input-container');
+            if (inputContainer) {
+              inputContainer.classList.remove('mobile-input-focused');
+            }
+          }
+        }
+      }
     };
 
     window.addEventListener('resize', handleResize);
@@ -146,11 +218,16 @@ const ChatSection = () => {
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      const wasAuthenticated = isAuthenticated;
       setIsAuthenticated(!!session?.user);
-      // If user logs in, dismiss the membership prompt
+      // If user logs in, dismiss the membership prompt and scroll to top
       if (session?.user) {
         setShowMembershipPrompt(false);
         setMembershipPromptDismissed(false);
+        // Scroll to top after successful sign in
+        if (!wasAuthenticated) {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
       }
     });
 
@@ -169,7 +246,7 @@ const ChatSection = () => {
       // Start timer on first user interaction
       if (userInteractionCount === 1 && !conversationStartTime) {
         setConversationStartTime(new Date());
-        
+
         // Set 2-minute timer
         notificationTimerRef.current = setTimeout(() => {
           setShowMembershipPrompt(true);
@@ -201,8 +278,13 @@ const ChatSection = () => {
     setInputValue('');
     addMessage(userMessage, 'user');
     setIsLoading(true);
+    setIsUserChatting(true);
+    setShouldMaintainFocus(true);
 
-    // Let the useEffect handle chat scrolling naturally
+    // Ensure chat window is visible and scroll to show new message
+    setTimeout(() => {
+      scrollToChatWindow();
+    }, 100);
 
     // Track user interactions for notification system
     if (!isAuthenticated) {
@@ -217,15 +299,31 @@ const ChatSection = () => {
 
       addMessage(reply, 'luma');
       setIsLoading(false);
-      
+
       // Remove first message flag since we're using Claude for all responses
       if (isFirstUserMessage) {
         setIsFirstUserMessage(false);
       }
+      
+      // Gradually release focus maintenance after conversation
+      setTimeout(() => {
+        setIsUserChatting(false);
+        setTimeout(() => {
+          setShouldMaintainFocus(false);
+        }, 2000); // Keep focus for 2 more seconds after conversation ends
+      }, 1000);
     } catch (error) {
       console.error('[ChatSection] Error sending message:', error);
       addMessage("I'm sorry, I'm having trouble connecting right now. Please try again.", 'luma');
       setIsLoading(false);
+      
+      // Gradually release focus maintenance after error
+      setTimeout(() => {
+        setIsUserChatting(false);
+        setTimeout(() => {
+          setShouldMaintainFocus(false);
+        }, 2000);
+      }, 1000);
     }
   };
 
@@ -294,12 +392,12 @@ const ChatSection = () => {
   const handleHeaderDoubleTap = () => {
     const currentTime = new Date().getTime();
     const tapLength = currentTime - lastTapTime;
-    
+
     if (tapLength < 500 && tapLength > 0) {
       // Double tap detected
       handleMaximizeToggle();
     }
-    
+
     setLastTapTime(currentTime);
   };
 
@@ -307,23 +405,30 @@ const ChatSection = () => {
     <>
       {/* Backdrop overlay for maximized state */}
       {isMaximized && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[9998]"
           onClick={() => setIsMaximized(false)}
         />
       )}
-      
-      <div 
+
+      <div
         ref={chatContainerRef}
-        className={`flex flex-col bg-slate-50/80 border border-indigo-100 overflow-hidden ${
-          isMaximized 
-            ? 'fixed inset-0 z-[9999] h-screen w-screen rounded-none bg-white' 
-            : 'h-full rounded-2xl'
+        className={`flex flex-col bg-slate-50/80 border overflow-hidden transition-all duration-300 ${
+          isMaximized
+            ? 'fixed inset-0 z-[9999] h-screen w-screen rounded-none bg-white border-gray-200'
+            : isUserChatting || shouldMaintainFocus
+              ? 'h-full rounded-2xl border-blue-300 shadow-2xl ring-2 ring-blue-100'
+              : 'h-full rounded-2xl border-indigo-100'
         }`}
         onTouchStart={handleTouchStart}
+        style={{
+          // Ensure proper mobile viewport handling
+          minHeight: isMaximized ? '100vh' : 'auto',
+          maxHeight: isMaximized ? '100vh' : 'calc(100vh - 2rem)'
+        }}
       >
       {/* Header */}
-      <div 
+      <div
         className="flex items-center justify-between p-4 border-b border-indigo-100/50 bg-white/60 select-none"
         onClick={handleHeaderDoubleTap}
         style={{ WebkitTapHighlightColor: 'transparent' }}
@@ -354,8 +459,8 @@ const ChatSection = () => {
             size="sm"
             onClick={handleMaximizeToggle}
             className={`transition-all duration-200 hover:scale-105 ${
-              isMaximized 
-                ? 'text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100' 
+              isMaximized
+                ? 'text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100'
                 : 'text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100'
             }`}
             title={isMaximized ? 'Exit Full Screen' : 'Enter Full Screen'}
@@ -366,8 +471,8 @@ const ChatSection = () => {
       </div>
 
       {/* Messages */}
-      <div 
-        ref={messagesContainerRef} 
+      <div
+        ref={messagesContainerRef}
         className="flex-1 overflow-y-auto p-4 space-y-4 chat-scrollbar"
       >
         {messages.map((message) => (
@@ -408,8 +513,8 @@ const ChatSection = () => {
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t border-indigo-100/50 bg-white/50">
-        <div className="flex items-center gap-2" onClick={handleInputFocus}>
+      <div className="input-container p-4 border-t border-indigo-100/50 bg-white/50 transition-all duration-300 focus-within:fixed focus-within:bottom-0 focus-within:left-0 focus-within:right-0 focus-within:z-[10000] focus-within:bg-white focus-within:border-t focus-within:border-slate-200 focus-within:shadow-lg">
+        <div className="flex items-center gap-2">
           <Input
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
@@ -419,6 +524,7 @@ const ChatSection = () => {
             placeholder={isVoiceConnected ? "Voice chat active - speak or type..." : "Share what's on your mind..."}
             className="flex-1 bg-white border-blue-200 focus:ring-blue-400 focus:border-blue-400 text-gray-900 placeholder:text-gray-500"
             disabled={isLoading}
+            style={{ fontSize: '16px' }} // Prevents zoom on iOS
           />
           <Button
             onClick={sendMessage}
@@ -464,7 +570,7 @@ const ChatSection = () => {
       </>
     );
   }
-  
+
   return (
     <>
       {chatContent}

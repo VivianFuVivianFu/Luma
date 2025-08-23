@@ -23,15 +23,73 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isUserChatting, setIsUserChatting] = useState(false);
+  const [shouldMaintainFocus, setShouldMaintainFocus] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Enhanced scroll to chat window with focus maintenance
+  const scrollToChatWindow = () => {
+    if (chatContainerRef.current) {
+      const rect = chatContainerRef.current.getBoundingClientRect();
+      const isFullyVisible = rect.top >= 0 && rect.bottom <= window.innerHeight;
+      
+      if (!isFullyVisible || shouldMaintainFocus) {
+        chatContainerRef.current.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center',
+          inline: 'nearest'
+        });
+      }
+      
+      // Always scroll messages to bottom after ensuring chat is visible
+      setTimeout(() => {
+        scrollToBottom();
+      }, 300);
+    }
+  };
+
+  // Check if chat window is in focus
+  const isChatWindowInFocus = () => {
+    if (!chatContainerRef.current) return false;
+    
+    const rect = chatContainerRef.current.getBoundingClientRect();
+    const windowHeight = window.innerHeight;
+    const chatCenterY = rect.top + rect.height / 2;
+    
+    // Consider chat "in focus" if its center is in the top 70% of viewport
+    return chatCenterY >= 0 && chatCenterY <= windowHeight * 0.7;
+  };
+
+  // Enhanced message watching with chat window focus
   useEffect(() => {
-    scrollToBottom();
+    if (messages.length > 0) {
+      // On mobile, ensure chat window is always visible when messages change
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
+      if (isMobile) {
+        // For mobile: scroll to chat window to keep it in view
+        setTimeout(() => {
+          scrollToChatWindow();
+        }, 100);
+      } else {
+        // For desktop: just scroll messages to bottom
+        setTimeout(() => {
+          scrollToBottom();
+        }, 100);
+      }
+    }
   }, [messages]);
+
+  // Scroll page to top when component loads
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   // Prevent viewport scaling on mobile when input is focused
   useEffect(() => {
@@ -39,7 +97,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
       // Prevent zoom on mobile when focusing input
       if (window.innerWidth <= 768) {
         document.querySelector('meta[name=viewport]')?.setAttribute(
-          'content', 
+          'content',
           'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'
         );
       }
@@ -49,7 +107,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
       // Re-enable zoom when input loses focus
       if (window.innerWidth <= 768) {
         document.querySelector('meta[name=viewport]')?.setAttribute(
-          'content', 
+          'content',
           'width=device-width, initial-scale=1.0'
         );
       }
@@ -69,6 +127,66 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
     };
   }, []);
 
+  // Handle window resize (for mobile keyboard show/hide)
+  useEffect(() => {
+    const handleResize = () => {
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
+      if (isMobile) {
+        // Check if keyboard is likely open (viewport height reduced significantly)
+        const isKeyboardOpen = window.innerHeight < window.screen.height * 0.75;
+        
+        if (isKeyboardOpen) {
+          // Keyboard is open - ensure fixed input positioning is active
+          if (chatContainerRef.current) {
+            const inputContainer = chatContainerRef.current.querySelector('.input-container-dashboard');
+            if (inputContainer && document.activeElement?.tagName === 'TEXTAREA') {
+              inputContainer.classList.add('mobile-input-focused');
+            }
+          }
+        } else {
+          // Keyboard is closed - remove fixed positioning
+          if (chatContainerRef.current) {
+            const inputContainer = chatContainerRef.current.querySelector('.input-container-dashboard');
+            if (inputContainer) {
+              inputContainer.classList.remove('mobile-input-focused');
+            }
+          }
+        }
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Monitor scroll to maintain chat focus when user is actively chatting
+  useEffect(() => {
+    const handleScroll = () => {
+      if (isUserChatting || shouldMaintainFocus) {
+        // Clear existing timeout
+        if (scrollTimeoutRef.current) {
+          clearTimeout(scrollTimeoutRef.current);
+        }
+        
+        // Set timeout to check and maintain focus
+        scrollTimeoutRef.current = setTimeout(() => {
+          if (!isChatWindowInFocus() && (isUserChatting || shouldMaintainFocus)) {
+            scrollToChatWindow();
+          }
+        }, 500);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, [isUserChatting, shouldMaintainFocus]);
+
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return;
 
@@ -83,17 +201,19 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
     setInputMessage('');
     setIsTyping(true);
     setIsLoading(true);
+    setIsUserChatting(true);
+    setShouldMaintainFocus(true);
 
-    // Force scroll to bottom after sending message
+    // Ensure chat window is visible and scroll to show new message
     setTimeout(() => {
-      scrollToBottom();
+      scrollToChatWindow();
     }, 100);
 
     try {
       const response = await claudeAI.sendMessage(inputMessage.trim());
-      
+
       setIsTyping(false);
-      
+
       const lumaMessage: Message = {
         id: (Date.now() + 1).toString(),
         content: response,
@@ -102,15 +222,15 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
       };
 
       setMessages(prev => [...prev, lumaMessage]);
-      
-      // Force scroll to bottom after AI response
+
+      // Ensure chat window stays visible and scroll to show AI response
       setTimeout(() => {
-        scrollToBottom();
+        scrollToChatWindow();
       }, 100);
     } catch (error) {
       console.error('Error sending message:', error);
       setIsTyping(false);
-      
+
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         content: "I'm having trouble connecting right now. Please try again in a moment.",
@@ -119,13 +239,20 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
       };
 
       setMessages(prev => [...prev, errorMessage]);
-      
-      // Force scroll to bottom after error message
+
+      // Ensure chat window stays visible and scroll to show error message
       setTimeout(() => {
-        scrollToBottom();
+        scrollToChatWindow();
       }, 100);
     } finally {
       setIsLoading(false);
+      // Gradually release focus maintenance after conversation
+      setTimeout(() => {
+        setIsUserChatting(false);
+        setTimeout(() => {
+          setShouldMaintainFocus(false);
+        }, 2000); // Keep focus for 2 more seconds after conversation ends
+      }, 1000);
     }
   };
 
@@ -166,15 +293,15 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
               </video>
             </div>
             <div className="flex items-center space-x-2 sm:space-x-3">
-              <img 
-                src="/icons/Logo.png" 
+              <img
+                src="/icons/Logo.png"
                 alt="Logo"
                 className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg object-cover"
               />
               <p className="text-base sm:text-xl font-bold text-gray-800">You're not Alone</p>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-1 sm:space-x-4">
             <span className="text-xs sm:text-sm text-gray-600 hidden md:inline">
               Welcome, {userEmail.split('@')[0]}
@@ -200,15 +327,22 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
         {/* Main Chat Area */}
         <div className="lg:col-span-2 space-y-4">
           {/* Voice Chat Widget */}
-          <VoiceCallWidget 
+          <VoiceCallWidget
             agentId={import.meta.env.VITE_ELEVENLABS_AGENT_ID}
           />
-          
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 h-[500px] sm:h-[600px] flex flex-col">
+
+          <div 
+            ref={chatContainerRef} 
+            className={`bg-white rounded-2xl shadow-xl border transition-all duration-300 h-[500px] sm:h-[600px] flex flex-col ${
+              isUserChatting || shouldMaintainFocus 
+                ? 'border-blue-300 shadow-2xl ring-2 ring-blue-100' 
+                : 'border-gray-200'
+            }`}
+          >
             {/* Chat Header */}
             <div className="p-3 sm:p-6 border-b border-gray-200 flex items-center space-x-2 sm:space-x-3">
-              <img 
-                src="/luma_photo.jpg" 
+              <img
+                src="/luma_photo.jpg"
                 alt="Luma"
                 className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-blue-200"
               />
@@ -224,8 +358,8 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
                   className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   {message.sender === 'luma' && (
-                    <img 
-                      src="/luma_photo.jpg" 
+                    <img
+                      src="/luma_photo.jpg"
                       alt="Luma"
                       className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover border border-gray-200 mr-2 mt-1 flex-shrink-0"
                     />
@@ -251,8 +385,8 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
 
               {isTyping && (
                 <div className="flex justify-start">
-                  <img 
-                    src="/luma_photo.jpg" 
+                  <img
+                    src="/luma_photo.jpg"
                     alt="Luma"
                     className="w-8 h-8 rounded-full object-cover border border-gray-200 mr-2 mt-1 flex-shrink-0"
                   />
@@ -265,16 +399,40 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
                   </div>
                 </div>
               )}
-              
+
               <div ref={messagesEndRef} />
             </div>
 
             {/* Input Area */}
-            <div className="p-3 sm:p-6 border-t border-gray-200">
+            <div 
+              className="input-container-dashboard p-3 sm:p-6 border-t border-gray-200 transition-all duration-300 focus-within:fixed focus-within:bottom-0 focus-within:left-0 focus-within:right-0 focus-within:z-[10000] focus-within:bg-white focus-within:border-t focus-within:border-slate-200 focus-within:shadow-lg"
+              onClick={scrollToChatWindow}
+            >
               <div className="flex space-x-2 sm:space-x-3">
                 <textarea
                   value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
+                  onChange={(e) => {
+                    setInputMessage(e.target.value);
+                    
+                    // Activate chatting state when user starts typing
+                    if (e.target.value.length > 0) {
+                      setIsUserChatting(true);
+                      setShouldMaintainFocus(true);
+                      
+                      // Keep screen focused on chat window while typing
+                      setTimeout(() => {
+                        if (!isChatWindowInFocus()) {
+                          scrollToChatWindow();
+                        }
+                      }, 100);
+                    } else {
+                      // User cleared input, reduce focus priority
+                      setTimeout(() => {
+                        setIsUserChatting(false);
+                        setTimeout(() => setShouldMaintainFocus(false), 1000);
+                      }, 500);
+                    }
+                  }}
                   onKeyPress={handleKeyPress}
                   placeholder="Type your message here..."
                   className="flex-1 px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-gray-800 bg-white placeholder-gray-500 text-xs sm:text-sm"
@@ -283,17 +441,43 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
                   onFocus={(e) => {
                     // Set font size to 16px to prevent zoom on iOS
                     e.target.style.fontSize = '16px';
-                    // Scroll to bottom when input is focused on mobile
-                    if (window.innerWidth <= 768) {
+                    
+                    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                    
+                    if (isMobile && chatContainerRef.current) {
+                      // Scroll to the top of the chat component for mobile
+                      chatContainerRef.current.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'start',
+                        inline: 'nearest'
+                      });
+                      
+                      // Add fixed positioning class for mobile input
+                      const inputContainer = chatContainerRef.current.querySelector('.input-container-dashboard');
+                      if (inputContainer) {
+                        inputContainer.classList.add('mobile-input-focused');
+                      }
+                    } else {
+                      // Desktop behavior - scroll to bottom of messages
                       setTimeout(() => {
                         scrollToBottom();
-                      }, 300);
+                      }, 100);
                     }
                   }}
                   onBlur={(e) => {
                     // Reset font size for desktop
                     if (window.innerWidth > 640) {
                       e.target.style.fontSize = '';
+                    }
+                    
+                    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                    
+                    if (isMobile && chatContainerRef.current) {
+                      // Remove fixed positioning class when input loses focus
+                      const inputContainer = chatContainerRef.current.querySelector('.input-container-dashboard');
+                      if (inputContainer) {
+                        inputContainer.classList.remove('mobile-input-focused');
+                      }
                     }
                   }}
                 />

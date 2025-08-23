@@ -23,14 +23,11 @@ export default async function handler(req: Request) {
   }
 
   try {
-    // Get user from request headers (Supabase auth)
+    // Authentication is optional - allow anonymous users
     const authorization = req.headers.get('authorization');
-    if (!authorization) {
-      return new Response(
-        JSON.stringify({ error: 'Authentication required' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
+    const isAuthenticated = !!authorization;
+    
+    console.log(`[Vercel Chat API] Request from ${isAuthenticated ? 'authenticated' : 'anonymous'} user`);
 
     const { message, history = [] }: ChatRequest = await req.json();
 
