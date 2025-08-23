@@ -2,6 +2,7 @@
 -- Run this in Supabase SQL Editor after the schema has been created
 
 INSERT INTO community_categories (name, slug, description, color, icon) VALUES
+('Introduce Your Self', 'introduce-your-self', 'Welcome! Share a bit about yourself, your wellness journey, and what brings you to our community', '#22c55e', 'users'),
 ('Mental Wellness', 'mental-wellness', 'Share your journey, challenges, and victories in mental health and emotional wellbeing', '#6366f1', 'heart'),
 ('Self-Reflection', 'self-reflection', 'Deep thoughts, personal insights, and growth experiences from your wellness journey', '#8b5cf6', 'users'),
 ('Daily Practices', 'daily-practices', 'Routines, habits, and practices that support your wellbeing and mental health', '#06b6d4', 'calendar'),
