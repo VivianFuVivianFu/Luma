@@ -10,15 +10,17 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
-    storage: window.localStorage
+    storage: window.localStorage,
+    storageKey: 'luma-auth'
   }
 })
 
-// Admin client for memory operations (bypasses RLS)
+// Admin client for memory operations (bypasses RLS) - use different storage key to avoid conflicts
 export const sbAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
   auth: {
     autoRefreshToken: false,
-    persistSession: false
+    persistSession: false,
+    storageKey: 'luma-admin-auth'
   }
 })
 

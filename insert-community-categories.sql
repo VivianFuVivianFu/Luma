@@ -12,6 +12,6 @@ INSERT INTO community_categories (name, slug, description, color, icon) VALUES
 ON CONFLICT (name) DO NOTHING;
 
 -- Verify the categories were inserted
-SELECT name, slug, description, color, icon, post_count, member_count 
-FROM community_categories 
+SELECT name, slug, description, color, icon, post_count, member_count
+FROM community_categories
 ORDER BY name;

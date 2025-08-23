@@ -94,20 +94,37 @@ export interface CreateReplyData {
 
 export const getCommunityCategories = async (): Promise<CommunityCategory[]> => {
   try {
+    console.log('🔍 Fetching community categories...');
+    
+    // Check authentication status
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    console.log('👤 Current user:', user?.email || 'Not authenticated');
+    
+    if (authError) {
+      console.warn('⚠️ Auth error:', authError);
+    }
+    
     const { data, error } = await supabase
       .from('community_categories')
       .select('*')
       .eq('is_active', true)
-      .order('name', { ascending: true });
+      .order('created_at', { ascending: true }); // Change to created_at to show Introduce Yourself first
 
     if (error) {
-      console.error('Error fetching community categories:', error);
+      console.error('❌ Supabase error fetching categories:', error);
+      console.error('Error details:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      });
       throw error;
     }
 
+    console.log('✅ Categories fetched successfully:', data?.length || 0, data);
     return data || [];
   } catch (error) {
-    console.error('Error in getCommunityCategories:', error);
+    console.error('❌ Error in getCommunityCategories:', error);
     throw error;
   }
 };
