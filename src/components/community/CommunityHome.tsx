@@ -19,6 +19,7 @@ import {
 import CategoryCard from './CategoryCard';
 import PostCard from './PostCard';
 import CreatePostModal from './CreatePostModal';
+import TestConnection from './TestConnection';
 
 interface CommunityHomeProps {
   onClose: () => void;
@@ -120,6 +121,9 @@ const CommunityHome: React.FC<CommunityHomeProps> = () => {
       </div>
 
       <div className="flex-1 overflow-auto p-4 sm:p-6">
+        {/* Temporary Test Component */}
+        <TestConnection />
+        
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           <div className="lg:col-span-1">
