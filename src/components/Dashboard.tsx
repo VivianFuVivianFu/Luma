@@ -107,15 +107,31 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
     }
   }, [messages]);
 
-  // Detect mobile device and scroll page to top when component loads
+  // Detect mobile device, initialize Claude AI, and scroll page to top when component loads
   useEffect(() => {
     const checkIfMobile = () => {
       setIsMobile(window.innerWidth <= 768);
     };
     
+    // Initialize Claude AI system
+    const initializeAI = async () => {
+      try {
+        console.log('[Dashboard] Initializing Claude AI system...');
+        const success = await claudeAI.initialize();
+        console.log(`[Dashboard] Claude AI initialization: ${success ? 'Success' : 'Failed'}`);
+        
+        // Log status for debugging
+        const status = claudeAI.getStatus();
+        console.log('[Dashboard] Claude AI status:', status);
+      } catch (error) {
+        console.error('[Dashboard] Failed to initialize Claude AI:', error);
+      }
+    };
+    
     checkIfMobile();
     window.addEventListener('resize', checkIfMobile);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    initializeAI();
     
     return () => window.removeEventListener('resize', checkIfMobile);
   }, []);
@@ -239,7 +255,9 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
     }, 100);
 
     try {
+      console.log('[Dashboard] Sending message to Claude AI:', inputMessage.trim());
       const response = await claudeAI.sendMessage(inputMessage.trim());
+      console.log('[Dashboard] Received response:', response.substring(0, 100) + '...');
 
       setIsTyping(false);
 
