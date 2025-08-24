@@ -81,14 +81,21 @@ export class ClaudeAI {
       return envBackendUrl;
     }
     
-    // Production mode - use Vercel Edge Function
+    // In production, use Vercel Edge Function
     if (import.meta.env.PROD) {
       console.log('[ClaudeAI] Production mode - using Vercel Edge Function');
       return '/api/chat';  // Vercel Edge Function endpoint
     }
     
-    // Development default
-    return 'http://localhost:3001';
+    // In development with API key, use direct mode
+    if (import.meta.env.VITE_CLAUDE_API_KEY) {
+      console.log('[ClaudeAI] Development mode - using direct Claude API');
+      return '';  // Empty string signals direct API mode
+    }
+    
+    // Fallback to Vercel Edge Function
+    console.log('[ClaudeAI] Fallback - using Vercel Edge Function endpoint');
+    return '/api/chat';
   }
 
   /**
