@@ -106,18 +106,27 @@ const ChatSection = () => {
   // Handle input focus for mobile keyboard
   const handleInputFocus = () => {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    setIsUserChatting(true);
+    setShouldMaintainFocus(true);
 
     if (isMobile && chatContainerRef.current) {
-      // Don't scroll the page - just add fixed positioning class for mobile input
-      const inputContainer = chatContainerRef.current.querySelector('.input-container');
-      if (inputContainer) {
-        inputContainer.classList.add('mobile-input-focused');
-      }
+      // Scroll page to top to show the fixed chat container at the top
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
       
-      // Only scroll within the chat messages container, not the entire page
+      // Prevent page body from scrolling when chat is active
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.top = '0px';
+      
+      // Scroll chat messages to bottom after positioning
       setTimeout(() => {
         scrollToBottomChat();
-      }, 100);
+      }, 300);
     } else {
       // Desktop behavior - just scroll chat to bottom
       setTimeout(() => {
@@ -126,17 +135,24 @@ const ChatSection = () => {
     }
   };
 
-  // Handle input blur - remove mobile fixed positioning
+  // Handle input blur - restore page scrolling
   const handleInputBlur = () => {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-    if (isMobile && chatContainerRef.current) {
-      // Remove fixed positioning class when input loses focus
-      const inputContainer = chatContainerRef.current.querySelector('.input-container');
-      if (inputContainer) {
-        inputContainer.classList.remove('mobile-input-focused');
+    // Don't immediately close on blur - wait a moment to see if user clicks elsewhere in chat
+    setTimeout(() => {
+      if (!shouldMaintainFocus) {
+        setIsUserChatting(false);
+        
+        if (isMobile) {
+          // Restore page scrolling
+          document.body.style.overflow = '';
+          document.body.style.position = '';
+          document.body.style.width = '';
+          document.body.style.top = '';
+        }
       }
-    }
+    }, 150);
   };
 
   // Prevent unwanted page scrolling on mobile
@@ -392,20 +408,24 @@ const ChatSection = () => {
           isMaximized
             ? 'fixed inset-0 z-[9999] h-screen w-screen rounded-none bg-white border-gray-200'
             : isUserChatting || shouldMaintainFocus
-              ? 'h-full rounded-2xl border-blue-300 shadow-2xl ring-2 ring-blue-100'
+              ? 'fixed top-0 left-0 right-0 z-[100] h-screen w-full bg-white border-b-2 border-blue-300 shadow-2xl'
               : 'h-full rounded-2xl border-indigo-100'
         }`}
         onTouchStart={handleTouchStart}
         style={{
-          // Ensure proper mobile viewport handling and prevent page scrolling
-          minHeight: isMaximized ? '100vh' : 'auto',
-          maxHeight: isMaximized ? '100vh' : '500px',
-          overflowY: 'hidden', // Prevent the chat container itself from scrolling the page
-          // Keep chat window centered when active
-          position: isUserChatting && !isMaximized ? 'sticky' : 'relative',
-          top: isUserChatting && !isMaximized ? '50%' : 'auto',
-          transform: isUserChatting && !isMaximized ? 'translateY(-50%)' : 'none',
-          zIndex: isUserChatting && !isMaximized ? 50 : 'auto'
+          // Mobile-first design with fixed positioning when chatting
+          minHeight: isMaximized ? '100vh' : (isUserChatting || shouldMaintainFocus) ? '100vh' : 'auto',
+          maxHeight: isMaximized ? '100vh' : (isUserChatting || shouldMaintainFocus) ? '100vh' : '500px',
+          overflowY: 'hidden', // Container doesn't scroll - only messages area does
+          // Enhanced mobile positioning
+          ...(isUserChatting || shouldMaintainFocus) && !isMaximized && {
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '100vh',
+            zIndex: 100
+          }
         }}
       >
       {/* Header - Fixed at top of chat window */}
@@ -438,6 +458,30 @@ const ChatSection = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {/* Mobile close button when chatting */}
+          {(isUserChatting || shouldMaintainFocus) && !isMaximized && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setIsUserChatting(false);
+                setShouldMaintainFocus(false);
+                // Restore page scrolling on mobile
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                if (isMobile) {
+                  document.body.style.overflow = '';
+                  document.body.style.position = '';
+                  document.body.style.width = '';
+                  document.body.style.top = '';
+                }
+              }}
+              className="text-gray-600 hover:text-red-600 hover:bg-red-50 transition-colors"
+              title="Close Chat"
+            >
+              ✕
+            </Button>
+          )}
+          
           <Button
             variant="ghost"
             size="sm"
@@ -455,15 +499,23 @@ const ChatSection = () => {
       </div>
 
       {/* Messages */}
-      {/* Messages Area - Scrollable content between fixed header and input */}
+      {/* Messages Area - Scrollable container separate from page scroll */}
       <div
         ref={messagesContainerRef}
         className="flex-1 overflow-y-auto p-4 space-y-4 chat-scrollbar"
         style={{
-          // Ensure smooth scrolling and proper height calculation
+          // Independent scrolling container
           scrollBehavior: 'smooth',
           minHeight: 0, // Allow flex shrinking
-          maxHeight: isMaximized ? 'calc(100vh - 140px)' : 'calc(500px - 140px)' // Account for header and input
+          height: 'auto',
+          maxHeight: isMaximized 
+            ? 'calc(100vh - 140px)' 
+            : (isUserChatting || shouldMaintainFocus) 
+              ? 'calc(100vh - 140px)' // Full screen minus header and input
+              : 'calc(500px - 140px)',
+          // Ensure this scroll is independent from page scroll
+          overscrollBehavior: 'contain',
+          WebkitOverflowScrolling: 'touch'
         }}
       >
         {messages.map((message) => (
