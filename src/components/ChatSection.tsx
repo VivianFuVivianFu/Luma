@@ -400,14 +400,22 @@ const ChatSection = () => {
           // Ensure proper mobile viewport handling and prevent page scrolling
           minHeight: isMaximized ? '100vh' : 'auto',
           maxHeight: isMaximized ? '100vh' : '500px',
-          overflowY: 'hidden' // Prevent the chat container itself from scrolling the page
+          overflowY: 'hidden', // Prevent the chat container itself from scrolling the page
+          // Keep chat window centered when active
+          position: isUserChatting && !isMaximized ? 'sticky' : 'relative',
+          top: isUserChatting && !isMaximized ? '50%' : 'auto',
+          transform: isUserChatting && !isMaximized ? 'translateY(-50%)' : 'none',
+          zIndex: isUserChatting && !isMaximized ? 50 : 'auto'
         }}
       >
-      {/* Header */}
+      {/* Header - Fixed at top of chat window */}
       <div
-        className="flex items-center justify-between p-4 border-b border-indigo-100/50 bg-white/60 select-none"
+        className="flex items-center justify-between p-4 border-b border-indigo-100/50 bg-white/90 select-none sticky top-0 z-10"
         onClick={handleHeaderDoubleTap}
-        style={{ WebkitTapHighlightColor: 'transparent' }}
+        style={{ 
+          WebkitTapHighlightColor: 'transparent',
+          backdropFilter: 'blur(8px)'
+        }}
       >
         <div className="flex items-center gap-3">
           <img
@@ -447,9 +455,16 @@ const ChatSection = () => {
       </div>
 
       {/* Messages */}
+      {/* Messages Area - Scrollable content between fixed header and input */}
       <div
         ref={messagesContainerRef}
         className="flex-1 overflow-y-auto p-4 space-y-4 chat-scrollbar"
+        style={{
+          // Ensure smooth scrolling and proper height calculation
+          scrollBehavior: 'smooth',
+          minHeight: 0, // Allow flex shrinking
+          maxHeight: isMaximized ? 'calc(100vh - 140px)' : 'calc(500px - 140px)' // Account for header and input
+        }}
       >
         {messages.map((message) => (
           <div
@@ -488,8 +503,15 @@ const ChatSection = () => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
-      <div className="input-container p-4 border-t border-indigo-100/50 bg-white/50 transition-all duration-300 focus-within:fixed focus-within:bottom-0 focus-within:left-0 focus-within:right-0 focus-within:z-[10000] focus-within:bg-white focus-within:border-t focus-within:border-slate-200 focus-within:shadow-lg">
+      {/* Input - Fixed at bottom of chat window */}
+      <div className={`input-container p-4 border-t border-indigo-100/50 bg-white/90 transition-all duration-300 ${
+        isMaximized 
+          ? 'sticky bottom-0 z-10' 
+          : 'focus-within:fixed focus-within:bottom-0 focus-within:left-0 focus-within:right-0 focus-within:z-[10000] focus-within:bg-white focus-within:border-t focus-within:border-slate-200 focus-within:shadow-lg'
+      }`}
+      style={{
+        backdropFilter: 'blur(8px)'
+      }}>
         <div className="flex items-center gap-2">
           <Input
             value={inputValue}
