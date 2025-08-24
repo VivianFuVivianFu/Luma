@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Heart, LogOut, MessageSquare, Maximize, Minimize } from 'lucide-react';
+import { Send, Heart, LogOut, MessageSquare, Maximize, Minimize, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { claudeAI } from '../lib/claudeAI';
 import VoiceCallWidget from './VoiceCallWidget';
@@ -26,6 +26,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
   const [isUserChatting, setIsUserChatting] = useState(false);
   const [shouldMaintainFocus, setShouldMaintainFocus] = useState(false);
   const [isChatMaximized, setIsChatMaximized] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -59,10 +60,12 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
     setIsChatMaximized(!isChatMaximized);
   };
 
-  // Prevent body scroll when chat is maximized
+  // Prevent body scroll when chat is maximized or mobile chat is active
   useEffect(() => {
-    if (isChatMaximized) {
-      // Prevent body scroll on maximized mode
+    const shouldPreventScroll = isChatMaximized || ((isUserChatting || shouldMaintainFocus) && isMobile);
+    
+    if (shouldPreventScroll) {
+      // Prevent body scroll
       document.body.style.overflow = 'hidden';
       document.body.style.position = 'fixed';
       document.body.style.width = '100%';
@@ -82,7 +85,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
       document.body.style.width = '';
       document.body.style.height = '';
     };
-  }, [isChatMaximized]);
+  }, [isChatMaximized, isUserChatting, shouldMaintainFocus, isMobile]);
 
   // Enhanced message watching with chat window focus
   useEffect(() => {
@@ -104,9 +107,17 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
     }
   }, [messages]);
 
-  // Scroll page to top when component loads
+  // Detect mobile device and scroll page to top when component loads
   useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkIfMobile();
+    window.addEventListener('resize', checkIfMobile);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    return () => window.removeEventListener('resize', checkIfMobile);
   }, []);
 
   // Prevent viewport scaling on mobile when input is focused
@@ -349,11 +360,18 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
             agentId={import.meta.env.VITE_ELEVENLABS_AGENT_ID}
           />
 
-          {/* Backdrop overlay for maximized chat */}
-          {isChatMaximized && (
+          {/* Backdrop overlay for maximized chat or mobile chat */}
+          {(isChatMaximized || ((isUserChatting || shouldMaintainFocus) && isMobile)) && (
             <div
-              className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[9998]"
-              onClick={() => setIsChatMaximized(false)}
+              className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[99]"
+              onClick={() => {
+                if (isChatMaximized) {
+                  setIsChatMaximized(false);
+                } else if (isMobile) {
+                  setIsUserChatting(false);
+                  setShouldMaintainFocus(false);
+                }
+              }}
               style={{ touchAction: 'none' }}
             />
           )}
@@ -363,11 +381,13 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
             className={`bg-white shadow-xl border transition-all duration-300 flex flex-col ${
               isChatMaximized
                 ? 'fixed inset-0 z-[9999] h-screen w-screen rounded-none border-gray-200'
-                : `rounded-2xl h-[500px] sm:h-[600px] ${
-                    isUserChatting || shouldMaintainFocus 
-                      ? 'border-blue-300 shadow-2xl ring-2 ring-blue-100' 
-                      : 'border-gray-200'
-                  }`
+                : (isUserChatting || shouldMaintainFocus) && isMobile
+                  ? 'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[100] w-[95vw] h-[80vh] rounded-2xl border-blue-300 shadow-2xl ring-2 ring-blue-100'
+                  : `rounded-2xl h-[500px] sm:h-[600px] ${
+                      isUserChatting || shouldMaintainFocus 
+                        ? 'border-blue-300 shadow-2xl ring-2 ring-blue-100' 
+                        : 'border-gray-200'
+                    }`
             }`}
             style={{
               minHeight: isChatMaximized ? '100vh' : 'auto',
@@ -380,7 +400,8 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
                 left: 0,
                 right: 0,
                 bottom: 0,
-                zIndex: 9999
+                zIndex: 9999,
+                height: '100vh'
               })
             }}
           >
@@ -403,6 +424,20 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
                 </h2>
               </div>
               <div className="flex items-center gap-2">
+                {/* Close button for mobile fixed chat */}
+                {((isUserChatting || shouldMaintainFocus) && isMobile && !isChatMaximized) && (
+                  <button
+                    onClick={() => {
+                      setIsUserChatting(false);
+                      setShouldMaintainFocus(false);
+                    }}
+                    className="p-2 rounded-lg transition-all duration-200 hover:scale-105 text-gray-600 hover:text-gray-700 bg-gray-50 hover:bg-gray-100"
+                    title="Close Chat"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+                
                 <button
                   onClick={handleChatMaximizeToggle}
                   className={`p-2 rounded-lg transition-all duration-200 hover:scale-105 ${
@@ -475,9 +510,17 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
             <div 
               className={`input-container-dashboard border-t border-gray-200 transition-all duration-300 ${
                 isChatMaximized 
-                  ? 'flex-shrink-0 bg-white border-slate-200 shadow-lg p-4' 
-                  : 'p-3 sm:p-6 focus-within:fixed focus-within:bottom-0 focus-within:left-0 focus-within:right-0 focus-within:z-[10000] focus-within:bg-white focus-within:border-t focus-within:border-slate-200 focus-within:shadow-lg'
+                  ? `flex-shrink-0 bg-white border-slate-200 shadow-lg ${isMobile ? 'p-4 pb-8 safe-area-inset-bottom' : 'p-4'}` 
+                  : isMobile && (isUserChatting || shouldMaintainFocus)
+                    ? 'flex-shrink-0 bg-white border-slate-200 p-3'
+                    : 'p-3 sm:p-6 focus-within:fixed focus-within:bottom-0 focus-within:left-0 focus-within:right-0 focus-within:z-[10000] focus-within:bg-white focus-within:border-t focus-within:border-slate-200 focus-within:shadow-lg'
               }`}
+              style={{
+                ...(isChatMaximized && isMobile && {
+                  paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 20px))',
+                  minHeight: '80px'
+                })
+              }}
               onClick={() => {
                 // Only scroll messages within chat container, never scroll the page
                 setTimeout(() => {
@@ -514,33 +557,22 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
                   placeholder="Type your message here..."
                   className="flex-1 px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-gray-800 bg-white placeholder-gray-500 text-xs sm:text-sm"
                   rows={1}
-                  style={{ minHeight: '36px', fontSize: '16px' }}
+                  style={{ 
+                    minHeight: '36px', 
+                    fontSize: '16px',
+                    ...(isChatMaximized && isMobile && { marginBottom: 'env(safe-area-inset-bottom)' })
+                  }}
                   onFocus={(e) => {
                     // Set font size to 16px to prevent zoom on iOS
                     e.target.style.fontSize = '16px';
                     
-                    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-                    
                     setIsUserChatting(true);
                     setShouldMaintainFocus(true);
                     
-                    if (isMobile && chatContainerRef.current) {
-                      // Don't scroll the page - just add mobile input styling and scroll messages
-                      const inputContainer = chatContainerRef.current.querySelector('.input-container-dashboard');
-                      if (inputContainer) {
-                        inputContainer.classList.add('mobile-input-focused');
-                      }
-                      
-                      // Scroll messages within chat container only
-                      setTimeout(() => {
-                        scrollToBottom();
-                      }, 100);
-                    } else {
-                      // Desktop behavior - scroll to bottom of messages
-                      setTimeout(() => {
-                        scrollToBottom();
-                      }, 100);
-                    }
+                    // Scroll messages within chat container only
+                    setTimeout(() => {
+                      scrollToBottom();
+                    }, 100);
                   }}
                   onBlur={(e) => {
                     // Reset font size for desktop
@@ -548,22 +580,14 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
                       e.target.style.fontSize = '';
                     }
                     
-                    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-                    
-                    // Gradually release focus maintenance
-                    setTimeout(() => {
-                      setIsUserChatting(false);
+                    // Gradually release focus maintenance only if input is empty
+                    if (!inputMessage.trim()) {
                       setTimeout(() => {
-                        setShouldMaintainFocus(false);
-                      }, 1000);
-                    }, 500);
-                    
-                    if (isMobile && chatContainerRef.current) {
-                      // Remove fixed positioning class when input loses focus
-                      const inputContainer = chatContainerRef.current.querySelector('.input-container-dashboard');
-                      if (inputContainer) {
-                        inputContainer.classList.remove('mobile-input-focused');
-                      }
+                        setIsUserChatting(false);
+                        setTimeout(() => {
+                          setShouldMaintainFocus(false);
+                        }, 1000);
+                      }, 500);
                     }
                   }}
                 />

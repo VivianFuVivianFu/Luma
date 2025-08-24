@@ -6,7 +6,8 @@ import {
   Clock,
   Plus,
   Heart,
-  ChevronRight
+  ChevronRight,
+  X
 } from 'lucide-react';
 import {
   getCommunityCategories,
@@ -24,7 +25,7 @@ interface CommunityHomeProps {
   onClose: () => void;
 }
 
-const CommunityHome: React.FC<CommunityHomeProps> = () => {
+const CommunityHome: React.FC<CommunityHomeProps> = ({ onClose }) => {
   const [categories, setCategories] = useState<CommunityCategory[]>([]);
   const [recentPosts, setRecentPosts] = useState<CommunityPost[]>([]);
   const [userMemberships, setUserMemberships] = useState<string[]>([]);
@@ -105,6 +106,15 @@ const CommunityHome: React.FC<CommunityHomeProps> = () => {
   return (
     <div className="flex flex-col h-full bg-gray-50">
       <div className="bg-white border-b border-gray-200 p-4 sm:p-6">
+        <div className="flex items-center justify-between mb-4">
+          <button
+            onClick={onClose}
+            className="flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 transition-colors shadow-sm hover:shadow-md"
+            aria-label="Exit Community"
+          >
+            <X className="w-7 h-7" />
+          </button>
+        </div>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
