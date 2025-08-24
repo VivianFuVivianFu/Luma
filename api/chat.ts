@@ -38,10 +38,11 @@ export default async function handler(req: Request) {
       );
     }
 
-    // Claude API configuration
-    const apiKey = process.env.CLAUDE_API_KEY;
+    // Claude API configuration - try multiple environment variable names
+    const apiKey = process.env.CLAUDE_API_KEY || process.env.VITE_CLAUDE_API_KEY;
     if (!apiKey) {
       console.error('[Vercel Chat API] Claude API key not configured');
+      console.error('[Vercel Chat API] Available env vars:', Object.keys(process.env).filter(k => k.includes('CLAUDE')));
       return new Response(
         JSON.stringify({ 
           reply: getFallbackResponse(message),
