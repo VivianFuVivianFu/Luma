@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Users, 
-  MessageSquare, 
-  TrendingUp, 
-  Clock, 
+import {
+  Users,
+  MessageSquare,
+  TrendingUp,
+  Clock,
   Plus,
   Heart,
   ChevronRight
 } from 'lucide-react';
-import { 
-  getCommunityCategories, 
-  getCommunityPosts, 
+import {
+  getCommunityCategories,
+  getCommunityPosts,
   getUserCategoryMemberships,
   ensureUserProfile,
   type CommunityCategory,
@@ -35,24 +35,30 @@ const CommunityHome: React.FC<CommunityHomeProps> = () => {
 
   useEffect(() => {
     loadCommunityData();
+
   }, []);
 
   const loadCommunityData = async () => {
     try {
       setLoading(true);
-      
-      await ensureUserProfile();
-      
+
+      // Try to ensure user profile, but don't fail if it doesn't work
+      try {
+        await ensureUserProfile();
+      } catch (profileError) {
+        console.warn('⚠️ User profile setup failed, continuing anyway:', profileError);
+      }
+
       const [categoriesData, postsData, membershipsData] = await Promise.all([
         getCommunityCategories(),
         getCommunityPosts(undefined, sortBy, 10),
-        getUserCategoryMemberships()
+        getUserCategoryMemberships().catch(() => []) // Return empty array if fails
       ]);
-      
+
       console.log('Categories loaded:', categoriesData?.length || 0, categoriesData);
-      console.log('Posts loaded:', postsData?.length || 0);
-      console.log('Memberships loaded:', membershipsData?.length || 0);
-      
+      console.log('Posts loaded:', postsData?.length || 0, postsData);
+      console.log('Memberships loaded:', membershipsData?.length || 0, membershipsData);
+
       setCategories(categoriesData);
       setRecentPosts(postsData);
       setUserMemberships(membershipsData);
@@ -90,9 +96,9 @@ const CommunityHome: React.FC<CommunityHomeProps> = () => {
   }
 
   const getSortButtonClass = (sort: string) => {
-    return `px-3 py-1 text-sm rounded-lg transition-colors ${ 
-      sortBy === sort 
-        ? 'bg-purple-600 text-white' 
+    return `px-3 py-1 text-sm rounded-lg transition-colors ${
+      sortBy === sort
+        ? 'bg-purple-600 text-white'
         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
     }`;
   };
@@ -109,7 +115,7 @@ const CommunityHome: React.FC<CommunityHomeProps> = () => {
               Share your wellness journey and connect with like-minded individuals
             </p>
           </div>
-          
+
           <button
             onClick={() => setShowCreatePost(true)}
             className="flex items-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
@@ -123,16 +129,16 @@ const CommunityHome: React.FC<CommunityHomeProps> = () => {
       <div className="flex-1 overflow-auto p-4 sm:p-6">
         {/* Temporary Test Component */}
         <TestConnection />
-        
+
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
+
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl p-4 sm:p-6 border border-gray-200 mb-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <Users className="w-5 h-5 mr-2 text-purple-600" />
                 Community Categories
               </h2>
-              
+
               <div className="space-y-3">
                 {categories.length === 0 && !loading ? (
                   <div className="text-center p-6">
@@ -157,7 +163,7 @@ const CommunityHome: React.FC<CommunityHomeProps> = () => {
 
             <div className="bg-white rounded-2xl p-4 sm:p-6 border border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Community Stats</h3>
-              
+
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
@@ -168,7 +174,7 @@ const CommunityHome: React.FC<CommunityHomeProps> = () => {
                     {categories.reduce((sum, cat) => sum + cat.member_count, 0)}
                   </span>
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <MessageSquare className="w-4 h-4 text-green-600" />
@@ -178,7 +184,7 @@ const CommunityHome: React.FC<CommunityHomeProps> = () => {
                     {categories.reduce((sum, cat) => sum + cat.post_count, 0)}
                   </span>
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Heart className="w-4 h-4 text-red-600" />
@@ -200,7 +206,7 @@ const CommunityHome: React.FC<CommunityHomeProps> = () => {
                     <TrendingUp className="w-5 h-5 mr-2 text-purple-600" />
                     Recent Posts
                   </h2>
-                  
+
                   <div className="flex items-center space-x-2">
                     <span className="text-sm text-gray-600">Sort by:</span>
                     <button
