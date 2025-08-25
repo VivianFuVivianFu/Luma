@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Heart, LogOut, MessageSquare, Maximize, Minimize, X } from 'lucide-react';
+import { Send, Heart, LogOut, MessageSquare, Maximize, Minimize } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { claudeAI } from '../lib/claudeAI';
 import VoiceCallWidget from './VoiceCallWidget';
@@ -23,48 +23,24 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isUserChatting, setIsUserChatting] = useState(false);
-  const [shouldMaintainFocus, setShouldMaintainFocus] = useState(false);
   const [isChatMaximized, setIsChatMaximized] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Enhanced scroll within chat container only - no page scrolling
-  const scrollToChatWindow = () => {
-    // Only scroll within the chat messages container, never scroll the page
-    setTimeout(() => {
-      scrollToBottom();
-    }, 100);
-  };
-
-  // Check if chat window is in focus
-  const isChatWindowInFocus = () => {
-    if (!chatContainerRef.current) return false;
-    
-    const rect = chatContainerRef.current.getBoundingClientRect();
-    const windowHeight = window.innerHeight;
-    const chatCenterY = rect.top + rect.height / 2;
-    
-    // Consider chat "in focus" if its center is in the top 70% of viewport
-    return chatCenterY >= 0 && chatCenterY <= windowHeight * 0.7;
-  };
 
   // Handle chat maximize/minimize functionality
   const handleChatMaximizeToggle = () => {
     setIsChatMaximized(!isChatMaximized);
   };
 
-  // Prevent body scroll when chat is maximized or mobile chat is active
+  // Prevent body scroll when chat is maximized
   useEffect(() => {
-    const shouldPreventScroll = isChatMaximized || ((isUserChatting || shouldMaintainFocus) && isMobile);
-    
-    if (shouldPreventScroll) {
+    if (isChatMaximized) {
       // Prevent body scroll
       document.body.style.overflow = 'hidden';
       document.body.style.position = 'fixed';
@@ -85,25 +61,14 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
       document.body.style.width = '';
       document.body.style.height = '';
     };
-  }, [isChatMaximized, isUserChatting, shouldMaintainFocus, isMobile]);
+  }, [isChatMaximized]);
 
-  // Enhanced message watching with chat window focus
+  // Scroll to bottom when messages change
   useEffect(() => {
     if (messages.length > 0) {
-      // On mobile, ensure chat window is always visible when messages change
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      
-      if (isMobile) {
-        // For mobile: scroll to chat window to keep it in view
-        setTimeout(() => {
-          scrollToChatWindow();
-        }, 100);
-      } else {
-        // For desktop: just scroll messages to bottom
-        setTimeout(() => {
-          scrollToBottom();
-        }, 100);
-      }
+      setTimeout(() => {
+        scrollToBottom();
+      }, 100);
     }
   }, [messages]);
 
@@ -205,32 +170,6 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Monitor scroll to maintain chat focus when user is actively chatting
-  useEffect(() => {
-    const handleScroll = () => {
-      if (isUserChatting || shouldMaintainFocus) {
-        // Clear existing timeout
-        if (scrollTimeoutRef.current) {
-          clearTimeout(scrollTimeoutRef.current);
-        }
-        
-        // Set timeout to check and maintain focus
-        scrollTimeoutRef.current = setTimeout(() => {
-          if (!isChatWindowInFocus() && (isUserChatting || shouldMaintainFocus)) {
-            scrollToChatWindow();
-          }
-        }, 500);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-    };
-  }, [isUserChatting, shouldMaintainFocus]);
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return;
@@ -246,12 +185,10 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
     setInputMessage('');
     setIsTyping(true);
     setIsLoading(true);
-    setIsUserChatting(true);
-    setShouldMaintainFocus(true);
 
-    // Ensure chat window is visible and scroll to show new message
+    // Scroll to show new message
     setTimeout(() => {
-      scrollToChatWindow();
+      scrollToBottom();
     }, 100);
 
     try {
@@ -270,9 +207,9 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
 
       setMessages(prev => [...prev, lumaMessage]);
 
-      // Ensure chat window stays visible and scroll to show AI response
+      // Scroll to show AI response
       setTimeout(() => {
-        scrollToChatWindow();
+        scrollToBottom();
       }, 100);
     } catch (error) {
       console.error('Error sending message:', error);
@@ -287,19 +224,12 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
 
       setMessages(prev => [...prev, errorMessage]);
 
-      // Ensure chat window stays visible and scroll to show error message
+      // Scroll to show error message
       setTimeout(() => {
-        scrollToChatWindow();
+        scrollToBottom();
       }, 100);
     } finally {
       setIsLoading(false);
-      // Gradually release focus maintenance after conversation
-      setTimeout(() => {
-        setIsUserChatting(false);
-        setTimeout(() => {
-          setShouldMaintainFocus(false);
-        }, 2000); // Keep focus for 2 more seconds after conversation ends
-      }, 1000);
     }
   };
 
@@ -378,18 +308,11 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
             agentId={import.meta.env.VITE_ELEVENLABS_AGENT_ID}
           />
 
-          {/* Backdrop overlay for maximized chat or mobile chat */}
-          {(isChatMaximized || ((isUserChatting || shouldMaintainFocus) && isMobile)) && (
+          {/* Backdrop overlay for maximized chat */}
+          {isChatMaximized && (
             <div
               className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[99]"
-              onClick={() => {
-                if (isChatMaximized) {
-                  setIsChatMaximized(false);
-                } else if (isMobile) {
-                  setIsUserChatting(false);
-                  setShouldMaintainFocus(false);
-                }
-              }}
+              onClick={() => setIsChatMaximized(false)}
               style={{ touchAction: 'none' }}
             />
           )}
@@ -399,13 +322,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
             className={`bg-white shadow-xl border transition-all duration-300 flex flex-col ${
               isChatMaximized
                 ? 'fixed inset-0 z-[9999] h-screen w-screen rounded-none border-gray-200'
-                : (isUserChatting || shouldMaintainFocus) && isMobile
-                  ? 'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[100] w-[95vw] h-[80vh] rounded-2xl border-blue-300 shadow-2xl ring-2 ring-blue-100'
-                  : `rounded-2xl h-[500px] sm:h-[600px] ${
-                      isUserChatting || shouldMaintainFocus 
-                        ? 'border-blue-300 shadow-2xl ring-2 ring-blue-100' 
-                        : 'border-gray-200'
-                    }`
+                : 'rounded-2xl h-[500px] sm:h-[600px] border-gray-200'
             }`}
             style={{
               minHeight: isChatMaximized ? '100vh' : 'auto',
@@ -442,20 +359,6 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
                 </h2>
               </div>
               <div className="flex items-center gap-2">
-                {/* Close button for mobile fixed chat */}
-                {((isUserChatting || shouldMaintainFocus) && isMobile && !isChatMaximized) && (
-                  <button
-                    onClick={() => {
-                      setIsUserChatting(false);
-                      setShouldMaintainFocus(false);
-                    }}
-                    className="p-2 rounded-lg transition-all duration-200 hover:scale-105 text-gray-600 hover:text-gray-700 bg-gray-50 hover:bg-gray-100"
-                    title="Close Chat"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-                
                 <button
                   onClick={handleChatMaximizeToggle}
                   className={`p-2 rounded-lg transition-all duration-200 hover:scale-105 ${
@@ -529,9 +432,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
               className={`input-container-dashboard border-t border-gray-200 transition-all duration-300 ${
                 isChatMaximized 
                   ? `flex-shrink-0 bg-white border-slate-200 shadow-lg ${isMobile ? 'p-4 pb-8 safe-area-inset-bottom' : 'p-4'}` 
-                  : isMobile && (isUserChatting || shouldMaintainFocus)
-                    ? 'flex-shrink-0 bg-white border-slate-200 p-3'
-                    : 'p-3 sm:p-6 focus-within:fixed focus-within:bottom-0 focus-within:left-0 focus-within:right-0 focus-within:z-[10000] focus-within:bg-white focus-within:border-t focus-within:border-slate-200 focus-within:shadow-lg'
+                  : 'p-3 sm:p-6'
               }`}
               style={{
                 ...(isChatMaximized && isMobile && {
@@ -552,23 +453,14 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
                   onChange={(e) => {
                     setInputMessage(e.target.value);
                     
-                    // Activate chatting state when user starts typing
+                    // Maximize chat when user starts typing
                     if (e.target.value.length > 0) {
-                      setIsUserChatting(true);
-                      setShouldMaintainFocus(true);
+                      setIsChatMaximized(true);
                       
                       // Keep screen focused on chat window while typing
                       setTimeout(() => {
-                        if (!isChatWindowInFocus()) {
-                          scrollToChatWindow();
-                        }
+                        scrollToBottom();
                       }, 100);
-                    } else {
-                      // User cleared input, reduce focus priority
-                      setTimeout(() => {
-                        setIsUserChatting(false);
-                        setTimeout(() => setShouldMaintainFocus(false), 1000);
-                      }, 500);
                     }
                   }}
                   onKeyPress={handleKeyPress}
@@ -584,8 +476,8 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
                     // Set font size to 16px to prevent zoom on iOS
                     e.target.style.fontSize = '16px';
                     
-                    setIsUserChatting(true);
-                    setShouldMaintainFocus(true);
+                    // Maximize chat instead of showing popup
+                    setIsChatMaximized(true);
                     
                     // Scroll messages within chat container only
                     setTimeout(() => {
@@ -598,15 +490,8 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
                       e.target.style.fontSize = '';
                     }
                     
-                    // Gradually release focus maintenance only if input is empty
-                    if (!inputMessage.trim()) {
-                      setTimeout(() => {
-                        setIsUserChatting(false);
-                        setTimeout(() => {
-                          setShouldMaintainFocus(false);
-                        }, 1000);
-                      }, 500);
-                    }
+                    // Note: Chat remains maximized when input loses focus
+                    // User can manually minimize using the minimize button
                   }}
                 />
                 <button
