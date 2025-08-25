@@ -476,7 +476,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
                   : 'p-3 sm:p-6'
               }`}
               style={{
-                ...(isChatMaximized && isMobile && isInputFocused && {
+                ...(isInputFocused && {
                   position: 'fixed',
                   bottom: '0px',
                   left: '0px',
