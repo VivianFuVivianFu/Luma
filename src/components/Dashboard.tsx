@@ -104,14 +104,14 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
     return () => window.removeEventListener('resize', checkIfMobile);
   }, []);
 
-  // Prevent viewport scaling on mobile when input is focused
+  // Prevent viewport scaling and enable visual viewport on mobile when input is focused
   useEffect(() => {
     const handleInputFocus = () => {
-      // Prevent zoom on mobile when focusing input
+      // Set viewport for better keyboard handling on mobile
       if (window.innerWidth <= 768) {
         document.querySelector('meta[name=viewport]')?.setAttribute(
           'content',
-          'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'
+          'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-visual'
         );
       }
     };
@@ -121,7 +121,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
       if (window.innerWidth <= 768) {
         document.querySelector('meta[name=viewport]')?.setAttribute(
           'content',
-          'width=device-width, initial-scale=1.0'
+          'width=device-width, initial-scale=1.0, viewport-fit=cover'
         );
       }
     };
@@ -148,7 +148,6 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
         const initialViewportHeight = window.screen.height;
         const currentViewportHeight = window.innerHeight;
         const keyboardOpen = currentViewportHeight < initialViewportHeight * 0.75;
-        
         setIsKeyboardOpen(keyboardOpen);
         
         if (chatContainerRef.current) {
@@ -368,7 +367,20 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
             }}
           >
             {/* Chat Header */}
-            <div className="p-3 sm:p-6 border-b border-gray-200 flex items-center justify-between">
+            <div 
+              className="p-3 sm:p-6 border-b border-gray-200 flex items-center justify-between"
+              style={{
+                ...(isChatMaximized && {
+                  position: 'fixed',
+                  top: '0px',
+                  left: '0px',
+                  right: '0px',
+                  zIndex: 1001,
+                  backgroundColor: 'white',
+                  borderBottom: '1px solid #e5e7eb'
+                })
+              }}
+            >
               <div className="flex items-center space-x-2 sm:space-x-3">
                 <img
                   src="/luma_photo.jpg"
@@ -404,15 +416,18 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
             <div 
               className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4 chat-scrollbar"
               style={{
+                ...(isChatMaximized && {
+                  paddingTop: '80px', // Account for fixed header
+                  paddingBottom: isInputFocused ? '100px' : '0px', // Add space when input is fixed
+                  minHeight: '0',
+                  flex: '1 1 auto'
+                }),
                 ...(isChatMaximized && isMobile && {
                   maxHeight: isInputFocused && isKeyboardOpen 
-                    ? 'calc(100vh - 200px)' // Input focused + keyboard: extra space for fixed input
+                    ? 'calc(100vh - 260px)' // Header + input focused + keyboard
                     : isKeyboardOpen 
-                      ? 'calc(100vh - 180px)' // Keyboard open: leave space for input
-                      : 'calc(100vh - 160px)', // Keyboard closed: normal spacing
-                  minHeight: '0',
-                  flex: '1 1 auto',
-                  paddingBottom: isInputFocused && isMobile ? '100px' : '0px' // Add space when input is fixed
+                      ? 'calc(100vh - 240px)' // Header + keyboard open
+                      : 'calc(100vh - 220px)', // Header + normal spacing
                 })
               }}
             >
@@ -485,7 +500,8 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
                   paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))',
                   minHeight: '70px',
                   borderTop: '1px solid #e5e7eb',
-                  boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.1)'
+                  boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.1)',
+                  backgroundColor: 'white'
                 }),
                 ...(isChatMaximized && isMobile && !isInputFocused && {
                   position: 'sticky',
