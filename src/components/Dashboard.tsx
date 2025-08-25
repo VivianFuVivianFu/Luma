@@ -25,6 +25,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
   const [isLoading, setIsLoading] = useState(false);
   const [isChatMaximized, setIsChatMaximized] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -142,18 +143,28 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
   useEffect(() => {
     const handleResize = () => {
       if (isMobile && isChatMaximized) {
-        // Check if keyboard is likely open (viewport height reduced significantly)
+        // More reliable keyboard detection
         const initialViewportHeight = window.screen.height;
         const currentViewportHeight = window.innerHeight;
-        const isKeyboardOpen = currentViewportHeight < initialViewportHeight * 0.75;
+        const keyboardOpen = currentViewportHeight < initialViewportHeight * 0.75;
+        
+        setIsKeyboardOpen(keyboardOpen);
         
         if (chatContainerRef.current) {
           const chatContainer = chatContainerRef.current;
           
-          if (isKeyboardOpen) {
-            // Adjust chat container height when keyboard is open
+          if (keyboardOpen) {
+            // When keyboard is open, use available viewport height
             chatContainer.style.height = `${currentViewportHeight}px`;
             chatContainer.style.maxHeight = `${currentViewportHeight}px`;
+            
+            // Also add padding to ensure input is visible
+            const inputContainer = chatContainer.querySelector('.input-container-dashboard') as HTMLElement;
+            if (inputContainer) {
+              inputContainer.style.position = 'sticky';
+              inputContainer.style.bottom = '0px';
+              inputContainer.style.zIndex = '20';
+            }
           } else {
             // Reset to full height when keyboard is closed
             chatContainer.style.height = '100vh';
@@ -163,6 +174,9 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
       }
     };
 
+    // Initial check
+    handleResize();
+
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [isMobile, isChatMaximized]);
@@ -170,6 +184,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return;
+
 
     const newMessage: Message = {
       id: Date.now().toString(),
@@ -187,7 +202,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
     setTimeout(() => {
       textareaRef.current?.focus();
       scrollToBottom();
-    }, 100);
+    }, 50);
 
     try {
       console.log('[Dashboard] Sending message to Claude AI:', inputMessage.trim());
@@ -209,7 +224,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
       setTimeout(() => {
         textareaRef.current?.focus();
         scrollToBottom();
-      }, 100);
+      }, 50);
     } catch (error) {
       console.error('Error sending message:', error);
       setIsTyping(false);
@@ -227,7 +242,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
       setTimeout(() => {
         textareaRef.current?.focus();
         scrollToBottom();
-      }, 100);
+      }, 50);
     } finally {
       setIsLoading(false);
     }
@@ -381,7 +396,9 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
               className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4 chat-scrollbar"
               style={{
                 ...(isChatMaximized && isMobile && {
-                  maxHeight: 'calc(100vh - 160px)', // Account for header (~70px) + input area (~90px)
+                  maxHeight: isKeyboardOpen 
+                    ? 'calc(100vh - 180px)' // Keyboard open: leave more space for input
+                    : 'calc(100vh - 160px)', // Keyboard closed: normal spacing
                   minHeight: '0',
                   flex: '1 1 auto'
                 })
@@ -524,6 +541,14 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
                 />
                 <button
                   onClick={handleSendMessage}
+                  onMouseDown={(e) => {
+                    // Prevent button from taking focus away from textarea
+                    e.preventDefault();
+                  }}
+                  onTouchStart={(e) => {
+                    // Prevent button from taking focus on mobile touch
+                    e.preventDefault();
+                  }}
                   disabled={!inputMessage.trim() || isLoading}
                   className="px-3 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg sm:rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
