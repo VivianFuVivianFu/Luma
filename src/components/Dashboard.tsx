@@ -137,30 +137,26 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
     };
   }, []);
 
-  // Handle window resize (for mobile keyboard show/hide)
+  // Handle window resize and mobile keyboard detection
   useEffect(() => {
     const handleResize = () => {
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      
-      if (isMobile) {
+      if (isMobile && isChatMaximized) {
         // Check if keyboard is likely open (viewport height reduced significantly)
-        const isKeyboardOpen = window.innerHeight < window.screen.height * 0.75;
+        const initialViewportHeight = window.screen.height;
+        const currentViewportHeight = window.innerHeight;
+        const isKeyboardOpen = currentViewportHeight < initialViewportHeight * 0.75;
         
-        if (isKeyboardOpen) {
-          // Keyboard is open - ensure fixed input positioning is active
-          if (chatContainerRef.current) {
-            const inputContainer = chatContainerRef.current.querySelector('.input-container-dashboard');
-            if (inputContainer && document.activeElement?.tagName === 'TEXTAREA') {
-              inputContainer.classList.add('mobile-input-focused');
-            }
-          }
-        } else {
-          // Keyboard is closed - remove fixed positioning
-          if (chatContainerRef.current) {
-            const inputContainer = chatContainerRef.current.querySelector('.input-container-dashboard');
-            if (inputContainer) {
-              inputContainer.classList.remove('mobile-input-focused');
-            }
+        if (chatContainerRef.current) {
+          const chatContainer = chatContainerRef.current;
+          
+          if (isKeyboardOpen) {
+            // Adjust chat container height when keyboard is open
+            chatContainer.style.height = `${currentViewportHeight}px`;
+            chatContainer.style.maxHeight = `${currentViewportHeight}px`;
+          } else {
+            // Reset to full height when keyboard is closed
+            chatContainer.style.height = '100vh';
+            chatContainer.style.maxHeight = '100vh';
           }
         }
       }
@@ -168,7 +164,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [isMobile, isChatMaximized]);
 
 
   const handleSendMessage = async () => {
@@ -321,12 +317,10 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
             ref={chatContainerRef} 
             className={`bg-white shadow-xl border transition-all duration-300 flex flex-col ${
               isChatMaximized
-                ? 'fixed inset-0 z-[9999] h-screen w-screen rounded-none border-gray-200'
+                ? 'fixed inset-0 z-[9999] w-screen rounded-none border-gray-200'
                 : 'rounded-2xl h-[500px] sm:h-[600px] border-gray-200'
             }`}
             style={{
-              minHeight: isChatMaximized ? '100vh' : 'auto',
-              maxHeight: isChatMaximized ? '100vh' : '600px',
               ...(isChatMaximized && {
                 display: 'flex',
                 flexDirection: 'column',
@@ -336,7 +330,12 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
                 right: 0,
                 bottom: 0,
                 zIndex: 9999,
-                height: '100vh'
+                height: '100vh',
+                maxHeight: '100vh'
+              }),
+              ...(!isChatMaximized && {
+                minHeight: 'auto',
+                maxHeight: '600px'
               })
             }}
           >
@@ -374,7 +373,16 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4 chat-scrollbar">
+            <div 
+              className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4 chat-scrollbar"
+              style={{
+                ...(isChatMaximized && isMobile && {
+                  maxHeight: 'calc(100vh - 160px)', // Account for header (~70px) + input area (~90px)
+                  minHeight: '0',
+                  flex: '1 1 auto'
+                })
+              }}
+            >
 
               {messages.map((message) => (
                 <div
@@ -431,13 +439,16 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
             <div 
               className={`input-container-dashboard border-t border-gray-200 transition-all duration-300 ${
                 isChatMaximized 
-                  ? `flex-shrink-0 bg-white border-slate-200 shadow-lg ${isMobile ? 'p-4 pb-8 safe-area-inset-bottom' : 'p-4'}` 
+                  ? `flex-shrink-0 bg-white border-slate-200 shadow-lg ${isMobile ? 'p-3 pb-6' : 'p-4'}` 
                   : 'p-3 sm:p-6'
               }`}
               style={{
                 ...(isChatMaximized && isMobile && {
-                  paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 20px))',
-                  minHeight: '80px'
+                  position: 'sticky',
+                  bottom: 0,
+                  zIndex: 10,
+                  paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))',
+                  minHeight: '70px'
                 })
               }}
               onClick={() => {
@@ -468,9 +479,9 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
                   className="flex-1 px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-gray-800 bg-white placeholder-gray-500 text-xs sm:text-sm"
                   rows={1}
                   style={{ 
-                    minHeight: '36px', 
+                    minHeight: isChatMaximized && isMobile ? '44px' : '36px', 
                     fontSize: '16px',
-                    ...(isChatMaximized && isMobile && { marginBottom: 'env(safe-area-inset-bottom)' })
+                    maxHeight: isChatMaximized && isMobile ? '120px' : 'none'
                   }}
                   onFocus={(e) => {
                     // Set font size to 16px to prevent zoom on iOS
