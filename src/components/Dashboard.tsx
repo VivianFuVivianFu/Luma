@@ -26,6 +26,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
   const [isChatMaximized, setIsChatMaximized] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+  const [isInputFocused, setIsInputFocused] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -158,17 +159,25 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
             chatContainer.style.height = `${currentViewportHeight}px`;
             chatContainer.style.maxHeight = `${currentViewportHeight}px`;
             
-            // Also add padding to ensure input is visible
-            const inputContainer = chatContainer.querySelector('.input-container-dashboard') as HTMLElement;
-            if (inputContainer) {
-              inputContainer.style.position = 'sticky';
-              inputContainer.style.bottom = '0px';
-              inputContainer.style.zIndex = '20';
+            // Prevent body scroll when keyboard is open and input is focused
+            if (isInputFocused) {
+              document.body.style.overflow = 'hidden';
+              document.body.style.position = 'fixed';
+              document.body.style.width = '100%';
+              document.body.style.top = `-${window.scrollY}px`;
             }
           } else {
             // Reset to full height when keyboard is closed
             chatContainer.style.height = '100vh';
             chatContainer.style.maxHeight = '100vh';
+            
+            // Restore body scroll when keyboard closes
+            if (!isChatMaximized || !isInputFocused) {
+              document.body.style.overflow = '';
+              document.body.style.position = '';
+              document.body.style.width = '';
+              document.body.style.top = '';
+            }
           }
         }
       }
@@ -179,7 +188,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [isMobile, isChatMaximized]);
+  }, [isMobile, isChatMaximized, isInputFocused]);
 
 
   const handleSendMessage = async () => {
@@ -396,11 +405,14 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
               className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4 chat-scrollbar"
               style={{
                 ...(isChatMaximized && isMobile && {
-                  maxHeight: isKeyboardOpen 
-                    ? 'calc(100vh - 180px)' // Keyboard open: leave more space for input
-                    : 'calc(100vh - 160px)', // Keyboard closed: normal spacing
+                  maxHeight: isInputFocused && isKeyboardOpen 
+                    ? 'calc(100vh - 200px)' // Input focused + keyboard: extra space for fixed input
+                    : isKeyboardOpen 
+                      ? 'calc(100vh - 180px)' // Keyboard open: leave space for input
+                      : 'calc(100vh - 160px)', // Keyboard closed: normal spacing
                   minHeight: '0',
-                  flex: '1 1 auto'
+                  flex: '1 1 auto',
+                  paddingBottom: isInputFocused && isMobile ? '100px' : '0px' // Add space when input is fixed
                 })
               }}
             >
@@ -464,7 +476,18 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
                   : 'p-3 sm:p-6'
               }`}
               style={{
-                ...(isChatMaximized && isMobile && {
+                ...(isChatMaximized && isMobile && isInputFocused && {
+                  position: 'fixed',
+                  bottom: '0px',
+                  left: '0px',
+                  right: '0px',
+                  zIndex: 1000,
+                  paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))',
+                  minHeight: '70px',
+                  borderTop: '1px solid #e5e7eb',
+                  boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.1)'
+                }),
+                ...(isChatMaximized && isMobile && !isInputFocused && {
                   position: 'sticky',
                   bottom: 0,
                   zIndex: 10,
@@ -513,6 +536,9 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
                     // Set font size to 16px to prevent zoom on iOS
                     e.target.style.fontSize = '16px';
                     
+                    // Set input focused state for fixed positioning
+                    setIsInputFocused(true);
+                    
                     // Maximize chat instead of showing popup (with smoother transition)
                     if (!isChatMaximized) {
                       setIsChatMaximized(true);
@@ -535,8 +561,13 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
                       e.target.style.fontSize = '';
                     }
                     
-                    // Note: Chat remains maximized when input loses focus
-                    // User can manually minimize using the minimize button
+                    // Only clear input focused state if not actively sending message
+                    // Add a small delay to prevent flash during send button interactions
+                    setTimeout(() => {
+                      if (document.activeElement !== e.target) {
+                        setIsInputFocused(false);
+                      }
+                    }, 100);
                   }}
                 />
                 <button
