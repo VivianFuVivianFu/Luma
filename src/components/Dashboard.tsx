@@ -27,6 +27,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
   const [isMobile, setIsMobile] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -182,8 +183,9 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
     setIsTyping(true);
     setIsLoading(true);
 
-    // Scroll to show new message
+    // Keep input focused and scroll to show new message
     setTimeout(() => {
+      textareaRef.current?.focus();
       scrollToBottom();
     }, 100);
 
@@ -203,8 +205,9 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
 
       setMessages(prev => [...prev, lumaMessage]);
 
-      // Scroll to show AI response
+      // Keep input focused and scroll to show AI response
       setTimeout(() => {
+        textareaRef.current?.focus();
         scrollToBottom();
       }, 100);
     } catch (error) {
@@ -220,8 +223,9 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
 
       setMessages(prev => [...prev, errorMessage]);
 
-      // Scroll to show error message
+      // Keep input focused and scroll to show error message
       setTimeout(() => {
+        textareaRef.current?.focus();
         scrollToBottom();
       }, 100);
     } finally {
@@ -296,7 +300,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-8 grid lg:grid-cols-3 gap-4 sm:gap-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-8 pb-8 sm:pb-12 grid lg:grid-cols-3 gap-4 sm:gap-8">
         {/* Main Chat Area */}
         <div className="lg:col-span-2 space-y-4">
           {/* Voice Chat Widget */}
@@ -460,18 +464,23 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
             >
               <div className="flex space-x-2 sm:space-x-3">
                 <textarea
+                  ref={textareaRef}
                   value={inputMessage}
                   onChange={(e) => {
                     setInputMessage(e.target.value);
                     
-                    // Maximize chat when user starts typing
-                    if (e.target.value.length > 0) {
+                    // Maximize chat when user starts typing (only if not already maximized)
+                    if (e.target.value.length > 0 && !isChatMaximized) {
                       setIsChatMaximized(true);
-                      
-                      // Keep screen focused on chat window while typing
+                      // Wait for layout to stabilize before scrolling
                       setTimeout(() => {
                         scrollToBottom();
-                      }, 100);
+                      }, 150);
+                    } else if (e.target.value.length > 0) {
+                      // Already maximized, gentle scroll
+                      setTimeout(() => {
+                        scrollToBottom();
+                      }, 50);
                     }
                   }}
                   onKeyPress={handleKeyPress}
@@ -487,13 +496,21 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
                     // Set font size to 16px to prevent zoom on iOS
                     e.target.style.fontSize = '16px';
                     
-                    // Maximize chat instead of showing popup
-                    setIsChatMaximized(true);
-                    
-                    // Scroll messages within chat container only
-                    setTimeout(() => {
-                      scrollToBottom();
-                    }, 100);
+                    // Maximize chat instead of showing popup (with smoother transition)
+                    if (!isChatMaximized) {
+                      setIsChatMaximized(true);
+                      // Wait for maximize animation before scrolling
+                      setTimeout(() => {
+                        scrollToBottom();
+                        // Ensure focus is maintained after maximize
+                        e.target.focus();
+                      }, 200);
+                    } else {
+                      // Already maximized, just scroll
+                      setTimeout(() => {
+                        scrollToBottom();
+                      }, 50);
+                    }
                   }}
                   onBlur={(e) => {
                     // Reset font size for desktop
@@ -518,7 +535,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-4 sm:space-y-6 mt-4 lg:mt-0">
+        <div className="space-y-4 sm:space-y-6 mt-4 lg:mt-0 pb-16 sm:pb-8 lg:pb-0">
           {/* Customer Feedback Section */}
           <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-4 sm:p-6 border border-purple-200">
             <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4 leading-relaxed">
