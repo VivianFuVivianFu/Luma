@@ -9,11 +9,11 @@ import { intentClassifier, IntentType, IntentAnalysis } from './intentClassifier
 import { enhancedMemoryRetrieval, SemanticMemoryResult } from './enhancedMemoryRetrieval';
 import { responseTemplateEngine, StructuredResponse, TemplateContext } from './responseTemplateEngine';
 import { memoryExtractionQueue } from './memoryExtractionQueue';
-import { engagementTracker, EngagementMetrics, UserPreferences } from './engagementTracker';
+import { engagementTracker } from './engagementTracker';
 import { memoryCacheService } from './memoryCacheService';
 
 // Legacy imports for compatibility
-import { ConversationMessage, MemoryRetrievalResult } from './memoryFirstService';
+import { ConversationMessage } from './memoryFirstService';
 
 export interface EnhancedResponseMetrics {
   // Performance metrics
@@ -63,7 +63,7 @@ export class EnhancedIntelligentOrchestrator {
 
   // Performance targets
   private static readonly TARGET_RESPONSE_TIME = 1500; // 1.5 seconds
-  private static readonly TARGET_MEMORY_TIME = 300; // 300ms
+  // private static readonly TARGET_MEMORY_TIME = 300; // 300ms
   private static readonly MIN_QUALITY_SCORE = 0.75;
 
   constructor() {
@@ -166,7 +166,11 @@ export class EnhancedIntelligentOrchestrator {
           intent,
           memories,
           conversationHistory: this.conversationHistory.slice(-intent.contextWindowSize || 15),
-          userPreferences: userPreferences || undefined
+          userPreferences: userPreferences ? {
+            responseLength: 'detailed' as const,
+            style: 'gentle' as const, 
+            focus: 'emotional' as const
+          } : undefined
         };
 
         return templateContext;
@@ -184,7 +188,7 @@ export class EnhancedIntelligentOrchestrator {
       // Stage 6: Response Template Enforcement
       const structuredResult = await this.executeStage('response_validation', async () => {
         const context = contextResult.data as TemplateContext;
-        const rawResponse = llmResult.data.response || llmResult.data;
+        const rawResponse = typeof llmResult.data === 'string' ? llmResult.data : llmResult.data.response;
 
         return await responseTemplateEngine.generateStructuredResponse(rawResponse, context);
       });
@@ -307,16 +311,12 @@ export class EnhancedIntelligentOrchestrator {
     
     try {
       // Route based on intent analysis and complexity
-      switch (intent.suggestedModel) {
-        case 'llama-70b':
-          return await this.processWithLLaMA(systemPrompt, context.userMessage, 'llama-analysis');
-          
-        case 'hybrid':
-          return await this.processWithHybridApproach(systemPrompt, context);
-          
-        case 'claude-haiku':
-        default:
-          return await this.processWithClaude(systemPrompt, context.userMessage, 'claude-empathy');
+      if (intent.urgencyLevel === 'critical') {
+        return await this.processWithClaude(systemPrompt, context.userMessage, 'claude-empathy');
+      } else if (intent.requiresMemoryDepth === 'deep' || intent.requiresMemoryDepth === 'comprehensive') {
+        return await this.processWithLLaMA(systemPrompt, context.userMessage, 'llama-analysis');
+      } else {
+        return await this.processWithClaude(systemPrompt, context.userMessage, 'claude-empathy');
       }
       
     } catch (error) {
@@ -354,9 +354,9 @@ export class EnhancedIntelligentOrchestrator {
     // Add user preferences
     if (userPreferences) {
       prompt += `\n\nUSER PREFERENCES:`;
-      prompt += `\n- Response length: ${userPreferences.preferredResponseLength}`;
-      prompt += `\n- Communication style: ${userPreferences.preferredStyle}`;
-      prompt += `\n- Focus area: ${userPreferences.preferredFocus}`;
+      prompt += `\n- Response length: ${userPreferences.responseLength}`;
+      prompt += `\n- Communication style: ${userPreferences.style}`;
+      prompt += `\n- Focus area: ${userPreferences.focus}`;
     }
 
     // Add intent-specific guidance

@@ -1,6 +1,5 @@
 // Enhanced Memory Service with Real-time Retrieval and Intelligent Processing
 import { supabase } from './supabase';
-import { getCurrentUser } from './auth';
 
 export interface Memory {
   id: string;

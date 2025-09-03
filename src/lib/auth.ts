@@ -86,7 +86,7 @@ export async function signOut() {
 
 // Listen to auth state changes
 export function onAuthStateChange(callback: (user: AuthUser | null) => void) {
-  return supabase.auth.onAuthStateChange(async (event, session) => {
+  return supabase.auth.onAuthStateChange(async (_event, session) => {
     if (session?.user) {
       const authUser: AuthUser = {
         id: session.user.id,

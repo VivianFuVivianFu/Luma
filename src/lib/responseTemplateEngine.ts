@@ -45,7 +45,12 @@ export class ResponseTemplateEngine {
   private static readonly MAX_RETRY_ATTEMPTS = 2;
 
   // Template patterns for different intents
-  private static readonly TEMPLATES = {
+  private static readonly TEMPLATES: Record<IntentType, {
+    reflection: string;
+    insightPrefix: string;
+    actionPrefix: string;
+    followUpPrefix: string;
+  }> = {
     [IntentType.CRISIS]: {
       reflection: "I hear that you're in a really difficult place right now, and I want you to know that reaching out shows incredible strength.",
       insightPrefix: "Based on what you've shared and what I know about your situation",
@@ -87,6 +92,12 @@ export class ResponseTemplateEngine {
       insightPrefix: "Thinking about how you've been doing lately",
       actionPrefix: "Today, you might focus on",
       followUpPrefix: "What's one thing you're looking forward to"
+    },
+    [IntentType.CLARIFICATION_NEEDED]: {
+      reflection: "I want to make sure I understand what you're sharing with me",
+      insightPrefix: "Based on what you've mentioned",
+      actionPrefix: "It would help if you could",
+      followUpPrefix: "Could you tell me more about"
     }
   };
 
@@ -201,8 +212,7 @@ export class ResponseTemplateEngine {
     llmResponse: string,
     context: TemplateContext
   ): Promise<StructuredResponse> {
-    const template = ResponseTemplateEngine.TEMPLATES[context.intent.primaryIntent] || 
-                    ResponseTemplateEngine.TEMPLATES[IntentType.DAILY_CHECKIN];
+    const template = ResponseTemplateEngine.TEMPLATES[context.intent.primaryIntent];
 
     // Build reflection
     const reflection = this.buildReflection(template, context);
@@ -263,8 +273,8 @@ export class ResponseTemplateEngine {
       
       if (relevantMemory.type === 'progress') {
         insight += `this builds on the progress you've been making with ${this.extractTheme(relevantMemory.content)}.`;
-      } else if (relevantMemory.type === 'pattern') {
-        insight += `this connects to a pattern we've discussed where ${this.extractPattern(relevantMemory.content)}.`;
+      } else if (relevantMemory.type === 'insight') {
+        insight += `this connects to an insight we've discussed where ${this.extractPattern(relevantMemory.content)}.`;
       } else if (relevantMemory.type === 'trigger') {
         insight += `this seems related to what we've identified as a challenging area for you.`;
       } else {
@@ -327,7 +337,7 @@ export class ResponseTemplateEngine {
    * Build follow-up question for conversation continuity
    */
   private buildFollowUp(template: any, context: TemplateContext): string {
-    const { intent, userMessage } = context;
+    const { intent } = context;
     
     let followUp = template.followUpPrefix;
     
@@ -487,7 +497,7 @@ export class ResponseTemplateEngine {
 
     // Improve empathy
     if (!quality.isEmpathetic) {
-      improved.reflection = this.addEmpathy(improved.reflection, context.intent.primaryIntent);
+      improved.reflection = this.addEmpathy(improved.reflection);
     }
 
     // Make action more specific
@@ -515,7 +525,7 @@ export class ResponseTemplateEngine {
     return `${insight} This connects to what you shared about ${theme}.`;
   }
 
-  private addEmpathy(reflection: string, intent: IntentType): string {
+  private addEmpathy(reflection: string): string {
     const empathyPhrases = [
       "I can really hear how important this is to you.",
       "Your feelings about this make complete sense.",
@@ -533,17 +543,18 @@ export class ResponseTemplateEngine {
   }
 
   private generateFollowUpQuestion(intent: IntentType): string {
-    const questions = {
+    const questions: Record<IntentType, string> = {
       [IntentType.CRISIS]: "What feels like the most important support you need right now?",
       [IntentType.GOAL_SETTING]: "What would achieving this goal mean to you?",
       [IntentType.EMOTIONAL_VENTING]: "What would help you feel more supported today?",
       [IntentType.RELATIONSHIP_ISSUE]: "How do you think this conversation could go?",
       [IntentType.PATTERN_ANALYSIS]: "When do you notice this pattern most strongly?",
       [IntentType.THERAPEUTIC_BREAKTHROUGH]: "How do you want to build on this insight?",
-      [IntentType.DAILY_CHECKIN]: "What's one thing you're grateful for today?"
+      [IntentType.DAILY_CHECKIN]: "What's one thing you're grateful for today?",
+      [IntentType.CLARIFICATION_NEEDED]: "What would be most helpful to clarify?"
     };
     
-    return questions[intent] || "What would be most helpful to explore next?";
+    return questions[intent];
   }
 
   /**

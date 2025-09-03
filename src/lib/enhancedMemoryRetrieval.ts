@@ -2,7 +2,7 @@
 // Replaces basic keyword matching with embedding-based similarity search
 
 import { supabase } from './supabase';
-import { Memory, ConversationMessage } from './memoryFirstService';
+import { Memory } from './memoryFirstService';
 
 export interface SemanticMemoryResult {
   memories: Memory[];

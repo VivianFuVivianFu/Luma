@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { signInWithEmail, signUpWithEmail, getCurrentUser } from '@/lib/auth'
 
 interface AuthPanelProps {
   onAuthed: (session: any) => void

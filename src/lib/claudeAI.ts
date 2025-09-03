@@ -50,10 +50,10 @@ export class ClaudeAI {
       this.currentSessionId = await this.memoryService.startSession(currentUser.id);
       
       // Load recent conversation history
-      const recentMessages = await this.memoryService.getRecentMessages(currentUser.id, 10);
+      const recentMessages = await this.getRecentMessagesFromDB(currentUser.id, 10);
       
       // Convert to conversation history format
-      this.conversationHistory = recentMessages.map(msg => ({
+      this.conversationHistory = recentMessages.map((msg: any) => ({
         role: msg.role as 'user' | 'assistant',
         content: msg.content,
         timestamp: new Date(msg.created_at)
@@ -80,6 +80,30 @@ export class ClaudeAI {
       console.log(`[Memory] Started new conversation session: ${this.currentSessionId}`);
     } catch (error) {
       console.error('[Memory] Error starting new session:', error);
+    }
+  }
+
+  /**
+   * Get recent messages from database
+   */
+  private async getRecentMessagesFromDB(userId: string, limit: number = 10): Promise<any[]> {
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('role, content, created_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (error) {
+        console.error('[Memory] Error loading recent messages:', error);
+        return [];
+      }
+
+      return (data || []).reverse(); // Reverse to chronological order
+    } catch (error) {
+      console.error('[Memory] Error in getRecentMessagesFromDB:', error);
+      return [];
     }
   }
 
@@ -204,7 +228,7 @@ export class ClaudeAI {
 
       // Save user message to memory system
       if (this.currentUserId && this.currentSessionId) {
-        await this.memoryService.addMessage(
+        await this.memoryService.saveMessage(
           this.currentSessionId,
           this.currentUserId,
           'user',
@@ -235,7 +259,7 @@ export class ClaudeAI {
 
       // Save assistant response to memory system
       if (this.currentUserId && this.currentSessionId) {
-        await this.memoryService.addMessage(
+        await this.memoryService.saveMessage(
           this.currentSessionId,
           this.currentUserId,
           'assistant',
@@ -245,7 +269,7 @@ export class ClaudeAI {
         
         // Process long-term memory extraction for meaningful conversations
         if (this.conversationHistory.length >= 6) { // After a few exchanges
-          await this.memoryService.processLongTermMemory(this.currentUserId, this.currentSessionId);
+          await this.memoryService.extractLongMemories(this.currentUserId, this.currentSessionId);
           console.log(`[Memory] Processed long-term memory for user ${this.currentUserId}`);
         }
       }

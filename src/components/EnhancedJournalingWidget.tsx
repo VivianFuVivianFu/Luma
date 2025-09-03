@@ -4,13 +4,13 @@ import { BookOpen, Sparkles, Send, X, FileText, Calendar, Clock } from 'lucide-r
 import { generateJournalPrompt, submitJournalEntry } from '../lib/auth';
 import { getCurrentUser } from '../lib/auth';
 
-interface JournalEntry {
-  id: string;
-  created_at: string;
-  prompt: string;
-  content: string;
-  word_count: number;
-}
+// interface JournalEntry {
+//   id: string;
+//   created_at: string;
+//   prompt: string;
+//   content: string;
+//   word_count: number;
+// }
 
 interface EnhancedJournalingWidgetProps {
   onClose: () => void;
@@ -20,7 +20,7 @@ const EnhancedJournalingWidget: React.FC<EnhancedJournalingWidgetProps> = ({ onC
   const [currentPrompt, setCurrentPrompt] = useState('');
   const [promptType, setPromptType] = useState('');
   const [journalContent, setJournalContent] = useState('');
-  const [recentEntries, setRecentEntries] = useState<JournalEntry[]>([]);
+  // const [recentEntries] = useState<JournalEntry[]>([]);
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState('');

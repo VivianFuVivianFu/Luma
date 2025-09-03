@@ -1,5 +1,4 @@
 // Intelligent Claude AI with Memory Integration and Dynamic LLM Routing
-import { supabase } from './supabase';
 import { getCurrentUser } from './auth';
 import { enhancedMemoryService, Memory, ConversationMessage } from './enhancedMemoryService';
 
@@ -59,7 +58,7 @@ export class IntelligentClaudeAI {
 
       // Step 5: Assemble enhanced context
       const contextStartTime = Date.now();
-      const contextData = await this.assembleEnhancedContext(userMessage, relevantMemories, complexity);
+      const contextData = await this.assembleEnhancedContext(relevantMemories, complexity);
       metrics.contextAssemblyTime = Date.now() - contextStartTime;
       metrics.messagesInContext = contextData.messages.length;
 
@@ -160,7 +159,6 @@ export class IntelligentClaudeAI {
    * Assemble enhanced context with dynamic window sizing
    */
   private async assembleEnhancedContext(
-    currentMessage: string, 
     memories: Memory[], 
     complexity: {score: number, type: string}
   ): Promise<{systemPrompt: string, messages: ConversationMessage[]}> {
@@ -241,7 +239,7 @@ ${memories.map(m => `- ${m.content} (${m.type})`).join('\n')}`;
       }))
     ];
 
-    const response = await fetch(this.CLAUDE_API_URL, {
+    const response = await fetch(IntelligentClaudeAI.CLAUDE_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -249,7 +247,7 @@ ${memories.map(m => `- ${m.content} (${m.type})`).join('\n')}`;
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: this.CLAUDE_MODEL,
+        model: IntelligentClaudeAI.CLAUDE_MODEL,
         max_tokens: 200, // Slightly increased for complex responses
         temperature: 0.7,
         system: contextData.systemPrompt,
@@ -282,14 +280,14 @@ ${memories.map(m => `- ${m.content} (${m.type})`).join('\n')}`;
       }))
     ];
 
-    const response = await fetch(this.LLAMA_API_URL, {
+    const response = await fetch(IntelligentClaudeAI.LLAMA_API_URL, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: this.LLAMA_MODEL,
+        model: IntelligentClaudeAI.LLAMA_MODEL,
         messages: messages,
         max_tokens: 300,
         temperature: 0.6,
