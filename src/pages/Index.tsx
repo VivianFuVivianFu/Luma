@@ -9,6 +9,39 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [showDashboard, setShowDashboard] = useState(false);
 
+  // Helper function to ensure user profile exists
+  async function ensureUserProfile(user: any) {
+    try {
+      // First check if profile already exists
+      const { data: existingProfile } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+
+      // If profile doesn't exist, create it
+      if (!existingProfile) {
+        const { error: profileError } = await supabase
+          .from('user_profiles')
+          .insert({
+            id: user.id,
+            display_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+            avatar_url: user.user_metadata?.avatar_url || null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+
+        if (profileError) {
+          console.error('Error creating user profile:', profileError);
+        } else {
+          console.log('User profile created successfully for:', user.email);
+        }
+      }
+    } catch (error) {
+      console.error('Error ensuring user profile:', error);
+    }
+  }
+
   useEffect(() => {
     let isMounted = true;
 
@@ -56,6 +89,12 @@ const Index = () => {
           setIsAuthenticated(true);
           setUserEmail(session?.user?.email || '');
           setShowDashboard(true);
+          
+          // Ensure user profile exists for OAuth users
+          if (event === 'SIGNED_IN' && session?.user) {
+            await ensureUserProfile(session.user);
+          }
+          
           console.log('User authenticated:', session?.user?.email);
         } else if (event === 'SIGNED_OUT' || !session?.user) {
           setIsAuthenticated(false);

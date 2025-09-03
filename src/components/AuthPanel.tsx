@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { signInWithEmail, signUpWithEmail, getCurrentUser } from '@/lib/auth'
 
 interface AuthPanelProps {
   onAuthed: (session: any) => void
@@ -13,6 +14,38 @@ const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthed, mode: initialMode = 'si
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState('')
 
+  // Helper function to ensure user profile exists
+  async function ensureUserProfile(user: any) {
+    try {
+      // First check if profile already exists
+      const { data: existingProfile } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('id', user.id)
+        .single()
+
+      // If profile doesn't exist, create it
+      if (!existingProfile) {
+        const { error: profileError } = await supabase
+          .from('user_profiles')
+          .insert({
+            id: user.id,
+            display_name: user.email?.split('@')[0] || 'User',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+
+        if (profileError) {
+          console.error('Error creating user profile:', profileError)
+        } else {
+          console.log('User profile created successfully')
+        }
+      }
+    } catch (error) {
+      console.error('Error ensuring user profile:', error)
+    }
+  }
+
   async function handleGoogleLogin() {
     setLoading(true)
     setMsg('')
@@ -21,7 +54,7 @@ const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthed, mode: initialMode = 'si
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin
+          redirectTo: `${window.location.origin}?auth_callback=true`
         }
       })
       
@@ -48,12 +81,18 @@ const AuthPanel: React.FC<AuthPanelProps> = ({ onAuthed, mode: initialMode = 'si
         if (data.user && !data.session) {
           setMsg('Please check your email to confirm your account.')
         } else if (data.session) {
+          // Create user profile if it doesn't exist
+          await ensureUserProfile(data.session.user)
           // Auto-login if no email confirmation required
           onAuthed(data.session)
         }
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error
+        // Ensure user profile exists on login as well
+        if (data.session?.user) {
+          await ensureUserProfile(data.session.user)
+        }
         onAuthed(data.session)
       }
     } catch (err: any) {

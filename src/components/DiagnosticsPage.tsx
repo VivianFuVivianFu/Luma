@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import MemoryDiagnostics from './MemoryDiagnostics';
 
 interface DiagnosticsData {
   sha: string;
@@ -160,6 +161,11 @@ const DiagnosticsPage = () => {
               <div className="text-white font-medium">Config Updated</div>
               <div className="text-purple-100 text-sm">Dependencies and fixes applied</div>
             </div>
+          </div>
+
+          {/* Memory Diagnostics */}
+          <div className="mt-8">
+            <MemoryDiagnostics />
           </div>
 
           {/* Back to Home */}

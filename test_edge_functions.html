@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Supabase Edge Functions</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .test-section { background: #f5f5f5; padding: 15px; margin: 15px 0; border-radius: 8px; }
+        button { background: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #45a049; }
+        .result { background: white; padding: 10px; margin: 10px 0; border-radius: 4px; border-left: 4px solid #4CAF50; white-space: pre-wrap; }
+        .error { border-left-color: #f44336; }
+        input, textarea { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; }
+        .loading { color: #666; font-style: italic; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Supabase Edge Functions Test Suite</h1>
+    
+    <div class="test-section">
+        <h2>1. Test Daily Check-in Generator</h2>
+        <p>This tests the automated daily check-in system that generates personalized messages.</p>
+        <button onclick="testDailyCheckin()">🔄 Test Daily Check-in</button>
+        <div id="checkin-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Test Journal Entry Submission</h2>
+        <p>This tests saving journal entries to the database.</p>
+        <label>User ID (UUID):</label>
+        <input type="text" id="user-id" placeholder="Enter your user UUID from Supabase auth.users" />
+        
+        <label>Journal Prompt:</label>
+        <textarea id="prompt" rows="3" placeholder="Enter the journaling prompt...">Imagine your ideal day 5 years from now. What does it look like?</textarea>
+        
+        <label>Journal Content:</label>
+        <textarea id="content" rows="5" placeholder="Enter your journal entry...">In 5 years, I wake up feeling energized and purposeful. My work aligns with my values and I feel fulfilled by the impact I'm making...</textarea>
+        
+        <button onclick="testJournalEntry()">📝 Submit Journal Entry</button>
+        <div id="journal-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Test Journal Prompt Generator</h2>
+        <p>This tests generating personalized journaling prompts using Llama 3.1 70B.</p>
+        <label>User ID (UUID):</label>
+        <input type="text" id="prompt-user-id" placeholder="Enter your user UUID" />
+        <button onclick="testJournalPrompt()">🧠 Generate Journal Prompt</button>
+        <div id="prompt-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Connection Test</h2>
+        <p>Basic connectivity test to ensure functions are deployed.</p>
+        <button onclick="testConnection()">🔗 Test Connection</button>
+        <div id="connection-result"></div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://oyqzljunafjfuwdedjee.supabase.co';
+        const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95cXpsanVuYWZqZnV3ZGVkamVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ2NTgyMDYsImV4cCI6MjA3MDIzNDIwNn0.jP-zXVLqQHZfzFwg3QU_a0o7VOp_wmIiLZX1ehuOHaI';
+        const SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95cXpsanVuYWZqZnV3ZGVkamVlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDY1ODIwNiwiZXhwIjoyMDcwMjM0MjA2fQ.eUbnUfEeXJ7p7SCTBS3-MuUPglnR8ztIiqqsZgHruUg';
+
+        function showResult(elementId, content, isError = false) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="result ${isError ? 'error' : ''}">${content}</div>`;
+        }
+
+        function showLoading(elementId) {
+            document.getElementById(elementId).innerHTML = '<div class="loading">⏳ Testing...</div>';
+        }
+
+        async function testDailyCheckin() {
+            showLoading('checkin-result');
+            try {
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/daily-checkin-generator`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${SERVICE_KEY}`,
+                        'Content-Type': 'application/json',
+                        'apikey': SERVICE_KEY
+                    },
+                    body: JSON.stringify({})
+                });
+
+                const result = await response.text();
+                if (response.ok) {
+                    showResult('checkin-result', `✅ Daily Check-in Test Successful!\n\nResponse: ${result}`);
+                } else {
+                    showResult('checkin-result', `❌ Error (${response.status}): ${result}`, true);
+                }
+            } catch (error) {
+                showResult('checkin-result', `❌ Network Error: ${error.message}`, true);
+            }
+        }
+
+        async function testJournalEntry() {
+            showLoading('journal-result');
+            const userId = document.getElementById('user-id').value;
+            const prompt = document.getElementById('prompt').value;
+            const content = document.getElementById('content').value;
+
+            if (!userId) {
+                showResult('journal-result', '❌ Please enter a User ID', true);
+                return;
+            }
+
+            try {
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/submit-journal-entry`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${ANON_KEY}`,
+                        'Content-Type': 'application/json',
+                        'apikey': ANON_KEY
+                    },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        prompt: prompt,
+                        content: content
+                    })
+                });
+
+                const result = await response.text();
+                if (response.ok) {
+                    showResult('journal-result', `✅ Journal Entry Submitted Successfully!\n\nResponse: ${result}`);
+                } else {
+                    showResult('journal-result', `❌ Error (${response.status}): ${result}`, true);
+                }
+            } catch (error) {
+                showResult('journal-result', `❌ Network Error: ${error.message}`, true);
+            }
+        }
+
+        async function testJournalPrompt() {
+            showLoading('prompt-result');
+            const userId = document.getElementById('prompt-user-id').value;
+
+            if (!userId) {
+                showResult('prompt-result', '❌ Please enter a User ID', true);
+                return;
+            }
+
+            try {
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-journal-prompt`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${ANON_KEY}`,
+                        'Content-Type': 'application/json',
+                        'apikey': ANON_KEY
+                    },
+                    body: JSON.stringify({
+                        user_id: userId
+                    })
+                });
+
+                const result = await response.text();
+                if (response.ok) {
+                    showResult('prompt-result', `✅ Journal Prompt Generated Successfully!\n\nResponse: ${result}`);
+                } else {
+                    showResult('prompt-result', `❌ Error (${response.status}): ${result}`, true);
+                }
+            } catch (error) {
+                showResult('prompt-result', `❌ Network Error: ${error.message}`, true);
+            }
+        }
+
+        async function testConnection() {
+            showLoading('connection-result');
+            try {
+                // Test if functions endpoint is reachable with a simple GET
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/daily-checkin-generator`, {
+                    method: 'OPTIONS',
+                    headers: {
+                        'Authorization': `Bearer ${SERVICE_KEY}`,
+                        'apikey': SERVICE_KEY
+                    }
+                });
+
+                if (response.ok || response.status === 405 || response.status === 200) {
+                    showResult('connection-result', '✅ Connection successful! Functions are deployed and reachable.');
+                } else {
+                    showResult('connection-result', `❌ Connection issue (${response.status}): ${await response.text()}`, true);
+                }
+            } catch (error) {
+                showResult('connection-result', `❌ Connection Error: ${error.message}\n\nMake sure you've deployed the Edge Functions to Supabase first.`, true);
+            }
+        }
+
+        // Auto-populate with current user if available
+        window.addEventListener('load', () => {
+            // Auto-fill the user UUID you got from your app
+            const userUuid = 'ae31c42f-4346-4cd2-8cce-a495d290fbee';
+            document.getElementById('user-id').value = userUuid;
+            document.getElementById('prompt-user-id').value = userUuid;
+        });
+    </script>
+</body>
+</html>

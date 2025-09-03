@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Heart, LogOut, MessageSquare, Maximize, Minimize } from 'lucide-react';
+import { Send, Heart, LogOut, MessageSquare, Maximize, Minimize, BookOpen } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { claudeAI } from '../lib/claudeAI';
+import { enhancedIntelligentOrchestrator } from '../lib/enhancedIntelligentOrchestrator';
 import VoiceCallWidget from './VoiceCallWidget';
 import CommunitySection from './CommunitySection';
+import UserIdDisplay from './UserIdDisplay';
+import EnhancedJournalingWidget from './EnhancedJournalingWidget';
 
 interface DashboardProps {
   userEmail: string;
@@ -16,6 +18,17 @@ interface Message {
   content: string;
   sender: 'user' | 'luma';
   timestamp: Date;
+  intent?: string;
+  responseTime?: number;
+  qualityScore?: number;
+}
+
+interface SystemStatus {
+  cacheHitRate: number;
+  avgResponseTime: number;
+  memorySystemActive: boolean;
+  engagementLevel: string;
+  lastProcessingPipeline?: any[];
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome }) => {
@@ -27,12 +40,36 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
   const [isMobile, setIsMobile] = useState(false);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const [isInputFocused, setIsInputFocused] = useState(false);
+  const [, setCurrentUserId] = useState<string>(''); // Only used for initialization
+  const [isMemoryLoaded, setIsMemoryLoaded] = useState(false);
+  const [showJournaling, setShowJournaling] = useState(false);
+  const [systemStatus, setSystemStatus] = useState<SystemStatus>({
+    cacheHitRate: 0,
+    avgResponseTime: 0,
+    memorySystemActive: false,
+    engagementLevel: 'medium'
+  });
+  const [showSystemStats, setShowSystemStats] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const inputContainerRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  // 🔧 IMPROVED: Enhanced scroll function for better mobile UX
+  const scrollToBottom = (force = false) => {
+    // 🎯 FIX: More reliable scroll to bottom
+    if (messagesEndRef.current) {
+      const scrollOptions: ScrollIntoViewOptions = {
+        behavior: force ? 'auto' : 'smooth',
+        block: 'end',
+        inline: 'nearest'
+      };
+      
+      // Use requestAnimationFrame for better performance on mobile
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView(scrollOptions);
+      });
+    }
   };
 
 
@@ -66,40 +103,65 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
     };
   }, [isChatMaximized]);
 
-  // Scroll to bottom when messages change
+  // 🔧 IMPROVED: Better auto-scroll with immediate scroll for new conversations
   useEffect(() => {
     if (messages.length > 0) {
+      // 🎯 FIX: Force immediate scroll for first message, smooth for subsequent
+      const isFirstMessage = messages.length === 1;
+      const delay = isFirstMessage ? 0 : 100;
+      const forceScroll = isFirstMessage;
+      
       setTimeout(() => {
-        scrollToBottom();
-      }, 100);
+        scrollToBottom(forceScroll);
+      }, delay);
     }
   }, [messages]);
 
-  // Detect mobile device, initialize Claude AI, and scroll page to top when component loads
+  // Initialize user session and load conversation history
+  useEffect(() => {
+    const initializeUserSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.id) {
+          setCurrentUserId(session.user.id);
+          
+          // Initialize the enhanced intelligent orchestrator
+          await enhancedIntelligentOrchestrator.initialize();
+          
+          // Load conversation history
+          const history = enhancedIntelligentOrchestrator.getHistory();
+          if (history.length > 0) {
+            const formattedMessages: Message[] = history.map((msg, index) => ({
+              id: `history-${index}`,
+              content: msg.content,
+              sender: msg.role === 'user' ? 'user' : 'luma',
+              timestamp: msg.timestamp || new Date()
+            }));
+            setMessages(formattedMessages);
+          }
+          
+          setIsMemoryLoaded(true);
+          console.log('[Dashboard] Intelligent orchestrator initialized for user:', session.user.email);
+        }
+      } catch (error) {
+        console.error('[Dashboard] Failed to initialize user session:', error);
+        setIsMemoryLoaded(true); // Allow chat to work without memory
+      }
+    };
+
+    initializeUserSession();
+  }, []);
+
+
+  // Detect mobile device and scroll page to top when component loads
   useEffect(() => {
     const checkIfMobile = () => {
       setIsMobile(window.innerWidth <= 768);
     };
     
-    // Initialize Claude AI system
-    const initializeAI = async () => {
-      try {
-        console.log('[Dashboard] Initializing Claude AI system...');
-        const success = await claudeAI.initialize();
-        console.log(`[Dashboard] Claude AI initialization: ${success ? 'Success' : 'Failed'}`);
-        
-        // Log status for debugging
-        const status = claudeAI.getStatus();
-        console.log('[Dashboard] Claude AI status:', status);
-      } catch (error) {
-        console.error('[Dashboard] Failed to initialize Claude AI:', error);
-      }
-    };
-    
     checkIfMobile();
     window.addEventListener('resize', checkIfMobile);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    initializeAI();
     
     return () => window.removeEventListener('resize', checkIfMobile);
   }, []);
@@ -140,63 +202,80 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
     };
   }, []);
 
-  // Handle window resize and mobile keyboard detection
+  // 🔧 IMPROVED: Simplified mobile keyboard handling
   useEffect(() => {
-    const handleResize = () => {
-      if (isMobile && isChatMaximized) {
-        // More reliable keyboard detection
-        const initialViewportHeight = window.screen.height;
-        const currentViewportHeight = window.innerHeight;
-        const keyboardOpen = currentViewportHeight < initialViewportHeight * 0.75;
-        setIsKeyboardOpen(keyboardOpen);
+    let initialViewportHeight = window.innerHeight;
+    
+    const handleViewportChange = () => {
+      if (!isMobile || !isChatMaximized) return;
+      
+      const currentHeight = window.visualViewport?.height || window.innerHeight;
+      const keyboardOpen = currentHeight < initialViewportHeight * 0.75;
+      setIsKeyboardOpen(keyboardOpen);
+      
+      if (chatContainerRef.current) {
+        const chatContainer = chatContainerRef.current;
         
-        if (chatContainerRef.current) {
-          const chatContainer = chatContainerRef.current;
-          
-          if (keyboardOpen) {
-            // When keyboard is open, use available viewport height
-            chatContainer.style.height = `${currentViewportHeight}px`;
-            chatContainer.style.maxHeight = `${currentViewportHeight}px`;
-            
-            // Prevent body scroll when keyboard is open and input is focused
-            if (isInputFocused) {
-              document.body.style.overflow = 'hidden';
-              document.body.style.position = 'fixed';
-              document.body.style.width = '100%';
-              document.body.style.top = `-${window.scrollY}px`;
-            }
-          } else {
-            // Reset to full height when keyboard is closed
-            chatContainer.style.height = '100vh';
-            chatContainer.style.maxHeight = '100vh';
-            
-            // Restore body scroll when keyboard closes
-            if (!isChatMaximized || !isInputFocused) {
-              document.body.style.overflow = '';
-              document.body.style.position = '';
-              document.body.style.width = '';
-              document.body.style.top = '';
-            }
-          }
+        if (keyboardOpen) {
+          // 🎯 FIX: Use CSS env() for better keyboard handling
+          chatContainer.style.height = `${currentHeight}px`;
+          chatContainer.style.paddingBottom = 'env(keyboard-inset-height, 0px)';
+        } else {
+          chatContainer.style.height = '100vh';
+          chatContainer.style.paddingBottom = '';
         }
       }
+      
+      // 🎯 FIX: Ensure input stays visible above keyboard
+      if (inputContainerRef.current && isInputFocused && keyboardOpen) {
+        const inputContainer = inputContainerRef.current;
+        inputContainer.style.position = 'fixed';
+        inputContainer.style.bottom = '0px';
+        inputContainer.style.left = '0px';
+        inputContainer.style.right = '0px';
+        inputContainer.style.zIndex = '1000';
+        inputContainer.style.backgroundColor = 'white';
+        inputContainer.style.borderTop = '1px solid #e5e7eb';
+        inputContainer.style.boxShadow = '0 -4px 12px rgba(0, 0, 0, 0.1)';
+      } else if (inputContainerRef.current && !keyboardOpen) {
+        // Reset input positioning when keyboard closes
+        const inputContainer = inputContainerRef.current;
+        inputContainer.style.position = '';
+        inputContainer.style.bottom = '';
+        inputContainer.style.left = '';
+        inputContainer.style.right = '';
+        inputContainer.style.zIndex = '';
+        inputContainer.style.backgroundColor = '';
+        inputContainer.style.borderTop = '';
+        inputContainer.style.boxShadow = '';
+      }
     };
-
-    // Initial check
-    handleResize();
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    
+    // Store initial height
+    initialViewportHeight = window.innerHeight;
+    
+    // Listen to viewport changes
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleViewportChange);
+    }
+    window.addEventListener('resize', handleViewportChange);
+    
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleViewportChange);
+      }
+      window.removeEventListener('resize', handleViewportChange);
+    };
   }, [isMobile, isChatMaximized, isInputFocused]);
 
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return;
 
-
+    const userMessageContent = inputMessage.trim();
     const newMessage: Message = {
       id: Date.now().toString(),
-      content: inputMessage.trim(),
+      content: userMessageContent,
       sender: 'user',
       timestamp: new Date()
     };
@@ -206,15 +285,17 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
     setIsTyping(true);
     setIsLoading(true);
 
-    // Keep input focused and scroll to show new message
+    // 🎯 FIX: Improved scroll timing for new messages
     setTimeout(() => {
       textareaRef.current?.focus();
-      scrollToBottom();
+      scrollToBottom(true); // Force immediate scroll for user messages
     }, 50);
 
     try {
-      console.log('[Dashboard] Sending message to Claude AI:', inputMessage.trim());
-      const response = await claudeAI.sendMessage(inputMessage.trim());
+      console.log('[Dashboard] Sending message to intelligent orchestrator...');
+      const startTime = Date.now();
+      const response = await enhancedIntelligentOrchestrator.sendMessage(userMessageContent);
+      const responseTime = Date.now() - startTime;
       console.log('[Dashboard] Received response:', response.substring(0, 100) + '...');
 
       setIsTyping(false);
@@ -223,16 +304,31 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
         id: (Date.now() + 1).toString(),
         content: response,
         sender: 'luma',
-        timestamp: new Date()
+        timestamp: new Date(),
+        responseTime: responseTime
       };
 
       setMessages(prev => [...prev, lumaMessage]);
 
-      // Keep input focused and scroll to show AI response
+      // 🎯 FIX: Smooth scroll for AI responses
       setTimeout(() => {
         textareaRef.current?.focus();
-        scrollToBottom();
-      }, 50);
+        scrollToBottom(); // Smooth scroll for AI responses
+      }, 100); // Slightly longer delay for AI responses
+      
+      // Update system status after successful response
+      try {
+        const stats = enhancedIntelligentOrchestrator.getPerformanceMetrics();
+        setSystemStatus({
+          cacheHitRate: stats.cacheHitRate || 0,
+          avgResponseTime: stats.averageResponseTime || responseTime,
+          memorySystemActive: stats.memorySystemActive !== false,
+          engagementLevel: stats.engagementLevel || 'medium',
+          lastProcessingPipeline: stats.lastProcessingPipeline || []
+        });
+      } catch (error) {
+        console.warn('[Dashboard] Could not fetch system metrics:', error);
+      }
     } catch (error) {
       console.error('Error sending message:', error);
       setIsTyping(false);
@@ -272,8 +368,75 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
     }
   };
 
+  const handleNewSession = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Clear current messages
+      setMessages([]);
+      
+      // Start new session in enhanced intelligent orchestrator
+      await enhancedIntelligentOrchestrator.startNewSession();
+      
+      console.log('[Dashboard] Started new conversation session');
+    } catch (error) {
+      console.error('[Dashboard] Error starting new session:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <>
+      {/* 🔧 MOBILE FIX: Add CSS for better keyboard handling */}
+      <style>{`
+        /* Mobile keyboard handling improvements */
+        @media (max-width: 768px) {
+          .input-container-dashboard {
+            /* Use CSS environment variables for keyboard handling */
+            padding-bottom: max(1rem, env(safe-area-inset-bottom), env(keyboard-inset-height, 0px)) !important;
+          }
+          
+          /* Improve chat scrolling on mobile */
+          .chat-scrollbar {
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+          }
+          
+          /* Ensure proper viewport sizing */
+          .mobile-chat-container {
+            height: 100vh;
+            height: 100dvh; /* Dynamic viewport height for modern browsers */
+          }
+          
+          /* Fix for iOS Safari keyboard */
+          @supports (-webkit-appearance: none) {
+            .mobile-chat-container {
+              height: -webkit-fill-available;
+            }
+          }
+        }
+        
+        /* Smooth scrolling for all scroll containers */
+        .chat-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        
+        .chat-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        
+        .chat-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(156, 163, 175, 0.5);
+          border-radius: 2px;
+        }
+        
+        .chat-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(156, 163, 175, 0.8);
+        }
+      `}</style>
+      
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
@@ -306,6 +469,14 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
             <span className="text-xs sm:text-sm text-gray-600 hidden md:inline">
               Welcome, {userEmail.split('@')[0]}
             </span>
+            <button
+              onClick={handleNewSession}
+              disabled={isLoading}
+              className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 text-green-600 hover:text-green-800 transition-colors font-medium text-xs sm:text-sm disabled:opacity-50"
+            >
+              <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">New</span>
+            </button>
             <button
               onClick={onBackToHome}
               className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 text-blue-600 hover:text-blue-800 transition-colors font-medium text-xs sm:text-sm"
@@ -344,7 +515,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
             ref={chatContainerRef} 
             className={`bg-white shadow-xl border transition-all duration-300 flex flex-col ${
               isChatMaximized
-                ? 'fixed inset-0 z-[9999] w-screen rounded-none border-gray-200'
+                ? `fixed inset-0 z-[9999] w-screen rounded-none border-gray-200 ${isMobile ? 'mobile-chat-container' : ''}`
                 : 'rounded-2xl h-[500px] sm:h-[600px] border-gray-200'
             }`}
             style={{
@@ -368,7 +539,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
           >
             {/* Chat Header */}
             <div 
-              className="p-3 sm:p-6 border-b border-gray-200 flex items-center justify-between"
+              className="chat-header p-3 sm:p-6 border-b border-gray-200 flex items-center justify-between"
               style={{
                 ...(isChatMaximized && {
                   position: 'fixed',
@@ -394,10 +565,42 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
                       • Full Screen
                     </span>
                   )}
-                  <span className="ml-2 text-xs text-green-600 font-normal">v2.2</span>
+                  {isMemoryLoaded && (
+                    <span className="ml-2 text-xs text-purple-600 font-normal">
+                      • Memory Active
+                    </span>
+                  )}
+                  <span className="ml-2 text-xs text-green-600 font-normal">v2.3</span>
                 </h2>
               </div>
               <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowSystemStats(!showSystemStats)}
+                  className={`p-2 rounded-lg transition-all duration-200 hover:scale-105 ${
+                    showSystemStats
+                      ? 'text-green-600 hover:text-green-700 bg-green-50 hover:bg-green-100'
+                      : 'text-gray-600 hover:text-gray-700 bg-gray-50 hover:bg-gray-100'
+                  }`}
+                  title="System Statistics"
+                >
+                  <div className="w-4 h-4 grid grid-cols-2 gap-0.5">
+                    <div className="w-1.5 h-1.5 bg-current rounded-sm"></div>
+                    <div className="w-1.5 h-1.5 bg-current rounded-sm"></div>
+                    <div className="w-1.5 h-1.5 bg-current rounded-sm"></div>
+                    <div className="w-1.5 h-1.5 bg-current rounded-sm"></div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setShowJournaling(!showJournaling)}
+                  className={`p-2 rounded-lg transition-all duration-200 hover:scale-105 ${
+                    showJournaling
+                      ? 'text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100'
+                      : 'text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100'
+                  }`}
+                  title="AI Journal"
+                >
+                  <BookOpen className="w-4 h-4" />
+                </button>
                 <button
                   onClick={handleChatMaximizeToggle}
                   className={`p-2 rounded-lg transition-all duration-200 hover:scale-105 ${
@@ -412,23 +615,50 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
               </div>
             </div>
 
-            {/* Messages Area */}
+            {/* System Statistics Panel */}
+            {showSystemStats && (
+              <div className="p-4 bg-gray-50 border-b border-gray-200">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                  <div className="text-center">
+                    <div className="text-gray-500 mb-1">Cache Hit Rate</div>
+                    <div className="font-semibold text-green-600">
+                      {(systemStatus.cacheHitRate * 100).toFixed(1)}%
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-gray-500 mb-1">Avg Response</div>
+                    <div className="font-semibold text-blue-600">
+                      {systemStatus.avgResponseTime.toFixed(0)}ms
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-gray-500 mb-1">Memory System</div>
+                    <div className={`font-semibold ${
+                      systemStatus.memorySystemActive ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      {systemStatus.memorySystemActive ? 'Active' : 'Inactive'}
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-gray-500 mb-1">Engagement</div>
+                    <div className="font-semibold text-purple-600 capitalize">
+                      {systemStatus.engagementLevel}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 🔧 IMPROVED: Messages Area with better mobile handling */}
             <div 
               className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4 chat-scrollbar"
               style={{
-                ...(isChatMaximized && {
-                  paddingTop: '80px', // Account for fixed header
-                  paddingBottom: isInputFocused ? '100px' : '0px', // Add space when input is fixed
-                  minHeight: '0',
-                  flex: '1 1 auto'
-                }),
-                ...(isChatMaximized && isMobile && {
-                  maxHeight: isInputFocused && isKeyboardOpen 
-                    ? 'calc(100vh - 260px)' // Header + input focused + keyboard
-                    : isKeyboardOpen 
-                      ? 'calc(100vh - 240px)' // Header + keyboard open
-                      : 'calc(100vh - 220px)', // Header + normal spacing
-                })
+                // 🎯 SIMPLIFIED: Better mobile viewport handling
+                minHeight: '0',
+                flex: '1 1 auto',
+                paddingBottom: isChatMaximized && isMobile ? '20px' : '0px',
+                // Add extra bottom padding when keyboard might be open
+                marginBottom: isKeyboardOpen && isMobile ? 'env(keyboard-inset-height, 0px)' : '0px',
               }}
             >
 
@@ -483,39 +713,32 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input Area */}
+            {/* 🔧 IMPROVED: Mobile-optimized Input Area */}
             <div 
-              className={`input-container-dashboard border-t border-gray-200 transition-all duration-300 ${
+              ref={inputContainerRef}
+              className={`input-container-dashboard border-t border-gray-200 bg-white ${
                 isChatMaximized 
-                  ? `flex-shrink-0 bg-white border-slate-200 shadow-lg ${isMobile ? 'p-3 pb-6' : 'p-4'}` 
+                  ? `flex-shrink-0 shadow-lg ${isMobile ? 'p-3' : 'p-4'}` 
                   : 'p-3 sm:p-6'
               }`}
               style={{
-                ...(isInputFocused && {
-                  position: 'fixed',
-                  bottom: '0px',
-                  left: '0px',
-                  right: '0px',
-                  zIndex: 1000,
-                  paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))',
-                  minHeight: '70px',
-                  borderTop: '1px solid #e5e7eb',
-                  boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.1)',
-                  backgroundColor: 'white'
-                }),
-                ...(isChatMaximized && isMobile && !isInputFocused && {
-                  position: 'sticky',
-                  bottom: 0,
-                  zIndex: 10,
-                  paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))',
-                  minHeight: '70px'
-                })
+                // 🎯 SIMPLIFIED: Better mobile input positioning
+                position: isChatMaximized && isMobile ? 'sticky' : 'static',
+                bottom: isChatMaximized && isMobile ? 0 : 'auto',
+                zIndex: isChatMaximized && isMobile ? 1000 : 'auto',
+                paddingBottom: isChatMaximized && isMobile ? 'max(1rem, env(safe-area-inset-bottom))' : undefined,
+                minHeight: isChatMaximized && isMobile ? '70px' : 'auto',
+                // Add safe area support for modern mobile devices
+                paddingLeft: isMobile ? 'max(1rem, env(safe-area-inset-left))' : undefined,
+                paddingRight: isMobile ? 'max(1rem, env(safe-area-inset-right))' : undefined,
               }}
               onClick={() => {
-                // Only scroll messages within chat container, never scroll the page
-                setTimeout(() => {
-                  scrollToBottom();
-                }, 100);
+                // 🎯 FIX: Scroll to bottom when input area is clicked
+                if (isMobile) {
+                  setTimeout(() => {
+                    scrollToBottom();
+                  }, 50);
+                }
               }}
             >
               <div className="flex space-x-2 sm:space-x-3">
@@ -549,26 +772,23 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
                     maxHeight: isChatMaximized && isMobile ? '120px' : 'none'
                   }}
                   onFocus={(e) => {
-                    // Set font size to 16px to prevent zoom on iOS
+                    // 🎯 FIX: Prevent iOS zoom and set focus state
                     e.target.style.fontSize = '16px';
-                    
-                    // Set input focused state for fixed positioning
                     setIsInputFocused(true);
                     
-                    // Maximize chat instead of showing popup (with smoother transition)
+                    // 🎯 FIX: Maximize chat and scroll for better mobile UX
                     if (!isChatMaximized) {
                       setIsChatMaximized(true);
-                      // Wait for maximize animation before scrolling
+                      // Wait for layout changes, then scroll to bottom
                       setTimeout(() => {
-                        scrollToBottom();
-                        // Ensure focus is maintained after maximize
+                        scrollToBottom(true); // Force immediate scroll
                         e.target.focus();
-                      }, 200);
+                      }, 150);
                     } else {
-                      // Already maximized, just scroll
+                      // Already maximized, gentle scroll after a short delay
                       setTimeout(() => {
                         scrollToBottom();
-                      }, 50);
+                      }, 100);
                     }
                   }}
                   onBlur={(e) => {
@@ -629,7 +849,13 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
         </div>
       </div>
 
-    </div>
+      {/* User ID Display - Fixed position overlay */}
+      <UserIdDisplay />
+      
+      {/* Enhanced Journaling Widget - Controlled by header button */}
+      {showJournaling && <EnhancedJournalingWidget onClose={() => setShowJournaling(false)} />}
+      </div>
+    </>
   );
 };
 

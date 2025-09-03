@@ -39,11 +39,22 @@ async function chatCompletion(messages: Array<{role: string, content: string}>, 
 // Memory Service Class
 export class MemoryService {
   
-  // Start a new session for a user
-  async startSession(userId: string): Promise<string | null> {
+  // Start a new session for a user (compatible with unified schema)
+  async startSession(userId: string, sessionKey?: string): Promise<string | null> {
     try {
+      const insertData: any = { 
+        user_id: userId, 
+        status: 'active',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      if (sessionKey) {
+        insertData.session_key = sessionKey;
+      }
+
       const { data, error } = await sbAdmin.from('sessions')
-        .insert({ user_id: userId, status: 'active' })
+        .insert(insertData)
         .select('id')
         .single();
 
@@ -55,7 +66,12 @@ export class MemoryService {
       // Initialize empty summary for the new session
       try {
         await sbAdmin.from('session_summaries')
-          .insert({ session_id: data.id, summary: '' });
+          .insert({ 
+            session_id: data.id, 
+            summary: '',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
       } catch (error) {
         // Ignore duplicate key errors
         console.log('Session summary already exists or insert failed:', error);
@@ -68,15 +84,36 @@ export class MemoryService {
     }
   }
 
-  // Get active session for a user or create a new one
-  async getActiveSession(userId: string): Promise<string> {
+  // Get active session for a user or create a new one using unified schema functions
+  async getActiveSession(userId: string, sessionKey?: string): Promise<string> {
+    try {
+      // Use the unified get_or_create_session function from database
+      const { data, error } = await sbAdmin.rpc('get_or_create_session', {
+        p_user_id: userId,
+        p_session_key: sessionKey || null
+      });
+
+      if (error) {
+        console.error('Error calling get_or_create_session:', error);
+        return await this.fallbackGetSession(userId);
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error getting active session:', error);
+      return await this.fallbackGetSession(userId);
+    }
+  }
+
+  // Fallback method for getting session when RPC fails
+  private async fallbackGetSession(userId: string): Promise<string> {
     try {
       // First try to find an active session
       const { data: existingSession } = await sbAdmin.from('sessions')
         .select('id')
         .eq('user_id', userId)
         .eq('status', 'active')
-        .order('created_at', { ascending: false })
+        .order('updated_at', { ascending: false })
         .maybeSingle();
 
       if (existingSession) {
@@ -87,7 +124,7 @@ export class MemoryService {
       const newSessionId = await this.startSession(userId);
       return newSessionId || this.generateSessionId(userId);
     } catch (error) {
-      console.error('Error getting active session:', error);
+      console.error('Error in fallback session creation:', error);
       return this.generateSessionId(userId);
     }
   }
@@ -101,12 +138,30 @@ export class MemoryService {
         .eq('session_id', sessionId)
         .maybeSingle();
 
-      // 2) Get user's recent long-term memories (ordered by creation time, limit 5)
-      const { data: mems } = await sbAdmin.from('user_memories')
-        .select('content')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(5);
+      // 2) Get user's recent long-term memories (supports both user_memories and user_long_memory)
+      let mems;
+      try {
+        // Try user_memories first
+        const { data } = await sbAdmin.from('user_memories')
+          .select('content')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(5);
+        mems = data;
+      } catch (error) {
+        // Fallback to user_long_memory view if available
+        try {
+          const { data } = await sbAdmin.from('user_long_memory')
+            .select('text as content')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(5);
+          mems = data;
+        } catch (fallbackError) {
+          console.error('Error accessing both user_memories and user_long_memory:', fallbackError);
+          mems = [];
+        }
+      }
 
       const longMemText = (mems || []).map((m: any) => `- ${m.content}`).join('\n');
 
@@ -264,24 +319,28 @@ export class MemoryService {
     return context;
   }
 
-  // Close a session
+  // Close a session (compatible with both created_at and started_at columns)
   async closeSession(sessionId: string): Promise<void> {
     try {
       await sbAdmin.from('sessions')
-        .update({ status: 'closed', updated_at: new Date().toISOString() })
+        .update({ 
+          status: 'closed',
+          ended_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
         .eq('id', sessionId);
     } catch (error) {
       console.error('Error closing session:', error);
     }
   }
 
-  // Get recent active sessions for a user
-  async getUserSessions(userId: string, limit: number = 5): Promise<Array<{ id: string, created_at: string, status: string }>> {
+  // Get recent active sessions for a user (compatible with unified schema)
+  async getUserSessions(userId: string, limit: number = 5): Promise<Array<{ id: string, created_at: string, status: string, session_key?: string }>> {
     try {
       const { data, error } = await sbAdmin.from('sessions')
-        .select('id, created_at, status')
+        .select('id, created_at, status, session_key, updated_at')
         .eq('user_id', userId)
-        .order('created_at', { ascending: false })
+        .order('updated_at', { ascending: false })
         .limit(limit);
 
       if (error) throw error;

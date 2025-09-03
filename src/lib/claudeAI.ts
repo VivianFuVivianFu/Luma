@@ -2,6 +2,8 @@
 // Pure frontend Claude API integration with authentication requirement
 
 import { supabase } from './supabase';
+import { MemoryService } from './memoryService';
+import { getCurrentUser } from './auth';
 
 export interface ConversationMessage {
   role: 'user' | 'assistant';
@@ -20,6 +22,9 @@ export class ClaudeAI {
   private config: ClaudeConfig;
   private conversationHistory: ConversationMessage[] = [];
   private isInitialized: boolean = false;
+  private memoryService: MemoryService;
+  private currentSessionId: string | null = null;
+  private currentUserId: string | null = null;
 
   constructor() {
     this.config = {
@@ -28,6 +33,54 @@ export class ClaudeAI {
       maxTokens: 1024,
       temperature: 0.7
     };
+    this.memoryService = new MemoryService();
+  }
+
+  /**
+   * Load conversation history from memory system
+   */
+  async loadConversationHistory(): Promise<void> {
+    try {
+      const currentUser = await getCurrentUser();
+      if (!currentUser) return;
+
+      this.currentUserId = currentUser.id;
+      
+      // Get or create current session
+      this.currentSessionId = await this.memoryService.startSession(currentUser.id);
+      
+      // Load recent conversation history
+      const recentMessages = await this.memoryService.getRecentMessages(currentUser.id, 10);
+      
+      // Convert to conversation history format
+      this.conversationHistory = recentMessages.map(msg => ({
+        role: msg.role as 'user' | 'assistant',
+        content: msg.content,
+        timestamp: new Date(msg.created_at)
+      }));
+      
+      console.log(`[Memory] Loaded ${this.conversationHistory.length} messages from history`);
+    } catch (error) {
+      console.error('[Memory] Error loading conversation history:', error);
+    }
+  }
+
+  /**
+   * Start a new conversation session
+   */
+  async startNewSession(): Promise<void> {
+    try {
+      const currentUser = await getCurrentUser();
+      if (!currentUser) return;
+
+      this.currentUserId = currentUser.id;
+      this.currentSessionId = await this.memoryService.startSession(currentUser.id);
+      this.conversationHistory = [];
+      
+      console.log(`[Memory] Started new conversation session: ${this.currentSessionId}`);
+    } catch (error) {
+      console.error('[Memory] Error starting new session:', error);
+    }
   }
 
   /**
@@ -118,6 +171,24 @@ export class ClaudeAI {
 
       const backendUrl = this.getBackendUrl();
       
+      // Get authenticated user for memory operations
+      const currentUser = await getCurrentUser();
+      if (currentUser) {
+        this.currentUserId = currentUser.id;
+        
+        // Initialize session if needed
+        if (!this.currentSessionId) {
+          this.currentSessionId = await this.memoryService.startSession(currentUser.id);
+          console.log(`[Memory] Started new session: ${this.currentSessionId}`);
+        }
+        
+        // CRITICAL FIX: Load conversation history if empty
+        if (this.conversationHistory.length === 0) {
+          console.log(`[Memory] Loading conversation history for user ${this.currentUserId}`);
+          await this.loadConversationHistory();
+        }
+      }
+      
       // Only require authentication for proxy mode, not for production Vercel Edge Functions
       let userId = '';
       if (backendUrl !== '/api/chat' && backendUrl !== '') {
@@ -130,6 +201,17 @@ export class ClaudeAI {
         content: userMessage,
         timestamp: new Date()
       });
+
+      // Save user message to memory system
+      if (this.currentUserId && this.currentSessionId) {
+        await this.memoryService.addMessage(
+          this.currentSessionId,
+          this.currentUserId,
+          'user',
+          userMessage
+        );
+        console.log(`[Memory] Saved user message to session ${this.currentSessionId}`);
+      }
 
       let reply: string;
 
@@ -150,6 +232,23 @@ export class ClaudeAI {
         content: reply,
         timestamp: new Date()
       });
+
+      // Save assistant response to memory system
+      if (this.currentUserId && this.currentSessionId) {
+        await this.memoryService.addMessage(
+          this.currentSessionId,
+          this.currentUserId,
+          'assistant',
+          reply
+        );
+        console.log(`[Memory] Saved assistant response to session ${this.currentSessionId}`);
+        
+        // Process long-term memory extraction for meaningful conversations
+        if (this.conversationHistory.length >= 6) { // After a few exchanges
+          await this.memoryService.processLongTermMemory(this.currentUserId, this.currentSessionId);
+          console.log(`[Memory] Processed long-term memory for user ${this.currentUserId}`);
+        }
+      }
 
       // Keep conversation history manageable (last 20 messages)
       if (this.conversationHistory.length > 20) {
@@ -278,8 +377,25 @@ export class ClaudeAI {
   private async sendDirectClaudeRequest(userMessage: string): Promise<string> {
     console.log('[ClaudeAI] Making direct Claude API request...');
     
-    // Create simple therapeutic system prompt for direct API
-    const systemPrompt = `You are Luma, an AI emotional companion. Provide warm, empathetic support with brief responses (2-3 sentences max). Focus on validation and understanding.`;
+    // Advanced conversation analysis system prompt for direct API
+    const systemPrompt = `You are Luma, an expert AI emotional companion with advanced conversation analysis capabilities and memory integration.
+
+CORE FUNCTION: Provide warm, personalized emotional support while preventing conversation breakdowns through sophisticated analysis and memory usage.
+
+MEMORY INTEGRATION: You have access to conversation history. Reference specific past interactions naturally when relevant. If memory retrieval fails or context is unclear, acknowledge this and ask for clarification while maintaining empathetic support.
+
+CONVERSATION ANALYSIS - Automatically prevent breakdowns by:
+- Avoiding over-generic responses (use specific details from user's situation)
+- Maintaining consistency with previous advice across interactions
+- Using multi-step reasoning that connects current topics to past discussions  
+- Clarifying user intent when ambiguous rather than making assumptions
+- Monitoring for contradictory guidance and addressing inconsistencies immediately
+
+RESPONSE PROTOCOL: Keep responses warm and empathetic (2-4 sentences). Reference conversation history when contextually appropriate. If you detect potential misunderstandings, acknowledge and clarify immediately while maintaining supportive tone.
+
+ERROR RECOVERY: When conversation issues occur, acknowledge directly, ask specific questions to regain context, and provide corrected guidance with clear reasoning.
+
+Remember: You are both a compassionate companion AND a sophisticated conversation analyst. Every response should feel natural and supportive while maintaining technical excellence in context retention and breakdown prevention.`;
     
     // Prepare messages for Claude API
     const messages = [
@@ -363,7 +479,7 @@ export class ClaudeAI {
     
     // Check for greetings
     if (message.includes('hello') || message.includes('hi') || message.includes('hey')) {
-      return "Hi there! I'm having a bit of trouble connecting to my main systems right now, but I'm here with you. What's on your mind?";
+      return "Hi! It's good to hear from you again. I'm having a bit of trouble connecting to my main systems right now, but I'm still here with you. What's on your mind?";
     }
     
     // Check for friendship requests
