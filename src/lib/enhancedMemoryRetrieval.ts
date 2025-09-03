@@ -44,7 +44,7 @@ export class EnhancedMemoryRetrieval {
     limit: number = 8
   ): Promise<SemanticMemoryResult> {
     const startTime = Date.now();
-    let fallbackUsed = false;
+    const fallbackUsed = false;
     
     try {
       console.log(`[SemanticMemory] Retrieving for: "${currentMessage.substring(0, 50)}..."`);
@@ -226,7 +226,7 @@ export class EnhancedMemoryRetrieval {
   /**
    * Retrieve memories with their stored embeddings
    */
-  private async getMemoriesWithEmbeddings(userId: string, sessionId?: string) {
+  private async getMemoriesWithEmbeddings(userId: string, _sessionId?: string) {
     const query = supabase
       .from('user_memories')
       .select('id, user_id, session_id, content, type, theme, created_at, embedding')
@@ -311,7 +311,7 @@ export class EnhancedMemoryRetrieval {
   /**
    * Group related memories into thematic clusters
    */
-  private async clusterMemories(memories: Memory[], userId: string): Promise<MemoryCluster[]> {
+  private async clusterMemories(memories: Memory[], _userId: string): Promise<MemoryCluster[]> {
     const clusters: MemoryCluster[] = [];
     const usedMemories = new Set<string>();
     
@@ -372,7 +372,7 @@ export class EnhancedMemoryRetrieval {
     const keywords = this.extractKeywords(message);
     
     // Build query with keyword filtering
-    let query = supabase
+    const query = supabase
       .from('user_memories')
       .select('*')
       .eq('user_id', userId)

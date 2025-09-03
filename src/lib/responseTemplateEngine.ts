@@ -488,7 +488,7 @@ export class ResponseTemplateEngine {
   ): Promise<StructuredResponse> {
     console.log(`[ResponseTemplate] Improving response. Issues: ${quality.issues.join(', ')}`);
 
-    let improved = { ...response };
+    const improved = { ...response };
 
     // Fix memory integration
     if (!quality.hasMemoryReference && context.memories.length > 0) {
@@ -554,7 +554,7 @@ export class ResponseTemplateEngine {
       [IntentType.CLARIFICATION_NEEDED]: "What would be most helpful to clarify?"
     };
     
-    return questions[intent];
+    return questions[intent] || "What would be most helpful to explore together?";
   }
 
   /**

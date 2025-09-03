@@ -1,7 +1,7 @@
 // High-Performance Memory Caching Service
 // Sub-300ms memory retrieval with Redis-like caching and smart prefetching
 
-import { Memory, MemoryRetrievalResult } from './memoryFirstService';
+import { MemoryRetrievalResult } from './memoryFirstService';
 
 export interface CacheEntry {
   key: string;

@@ -1,6 +1,6 @@
 // Memory-First Service - Real-time retrieval with cross-session continuity
 import { supabase } from './supabase';
-import { getCurrentUser } from './auth';
+// import { getCurrentUser } from './auth'; // Currently unused
 
 export interface Memory {
   id: string;
@@ -198,7 +198,7 @@ export class MemoryFirstService {
     if (!sessionId) return [];
 
     try {
-      let query = supabase
+      const query = supabase
         .from('user_memories')
         .select('*')
         .eq('user_id', userId)

@@ -136,7 +136,7 @@ Please provide your analysis in the specified JSON format.`;
   /**
    * Create fallback analysis when JSON parsing fails
    */
-  private static createFallbackAnalysis(response: string, chatLog: string): ConversationAnalysisResult {
+  private static createFallbackAnalysis(response: string, _chatLog: string): ConversationAnalysisResult {
     return {
       breakdowns: [
         {

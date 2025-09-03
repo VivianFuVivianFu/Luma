@@ -119,7 +119,8 @@ export class AdvancedIntentClassifier {
 
     // Check for ambiguity/clarification needs early
     if (this.needsClarification(text, messageLength)) {
-      const clarificationPrompt = this.generateClarificationPrompt(text, conversationHistory);
+      // Generate clarification prompt (currently unused but available for future use)
+      // const clarificationPrompt = this.generateClarificationPrompt(text, conversationHistory);
       return {
         primaryIntent: IntentType.CLARIFICATION_NEEDED,
         confidence: 0.85,
@@ -382,7 +383,7 @@ export class AdvancedIntentClassifier {
     return topics.slice(0, 2); // Return top 2 recent topics
   }
 
-  private getIntentConfiguration(intent: IntentType, confidence: number, secondaryIntents: IntentType[]) {
+  private getIntentConfiguration(intent: IntentType, _confidence: number, _secondaryIntents: IntentType[]) {
     const configs = {
       [IntentType.CRISIS]: {
         urgencyLevel: 'critical' as const,

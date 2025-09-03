@@ -319,6 +319,38 @@ export class MemoryService {
     return context;
   }
 
+  // Get recent messages for a user (compatibility method for claudeAI.ts)
+  async getRecentMessages(userId: string, limit: number = 10): Promise<any[]> {
+    try {
+      const { data, error } = await sbAdmin
+        .from('messages')
+        .select('role, content, created_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (error) {
+        console.error('[MemoryService] Error loading recent messages:', error);
+        return [];
+      }
+
+      return (data || []).reverse(); // Reverse to chronological order
+    } catch (error) {
+      console.error('[MemoryService] Error in getRecentMessages:', error);
+      return [];
+    }
+  }
+
+  // Add message (alias for saveMessage for compatibility)
+  async addMessage(sessionId: string, userId: string, role: 'user' | 'assistant', content: string): Promise<void> {
+    return this.saveMessage(sessionId, userId, role, content);
+  }
+
+  // Process long-term memory (alias for extractLongMemories for compatibility)
+  async processLongTermMemory(userId: string, sessionId: string): Promise<void> {
+    return this.extractLongMemories(userId, sessionId);
+  }
+
   // Close a session (compatible with both created_at and started_at columns)
   async closeSession(sessionId: string): Promise<void> {
     try {

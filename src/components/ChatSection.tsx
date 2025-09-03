@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useId, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,19 +17,25 @@ interface Message {
 }
 
 const ChatSection = () => {
+  // Generate stable component ID for hydration consistency
+  const componentId = useId();
+  const messageIdPrefix = useRef(`msg-${componentId}`);
+  const messageCounter = useRef(0);
+  
   // Generate or retrieve persistent anonymous user ID (stored but not used in component)
   useState(() => {
     let id = localStorage.getItem('luma_user_id');
     if (!id) {
-      id = `anon-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+      // Use componentId for consistent ID generation instead of Date.now() and Math.random()
+      id = `anon-${componentId.replace(/:/g, '-')}-${Date.now()}`;
       localStorage.setItem('luma_user_id', id);
     }
     return id;
   });
 
-  const [messages, setMessages] = useState<Message[]>([
+  const [messages, setMessages] = useState<Message[]>(() => [
     {
-      id: 'welcome-message',
+      id: `welcome-${componentId}`,
       content: "Hi, I'm Luma — your AI emotional companion. Thoughtfully designed with empathy, psychology, and neuroscience, I'm here to support your self-reflection and transformation. Wherever you are on your journey, let's take the next step together.",
       sender: 'luma',
       timestamp: new Date()
@@ -55,6 +61,12 @@ const ChatSection = () => {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const notificationTimerRef = useRef<NodeJS.Timeout | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Consistent ID generator to prevent hydration mismatches
+  const generateMessageId = useCallback(() => {
+    messageCounter.current += 1;
+    return `${messageIdPrefix.current}-${messageCounter.current}`;
+  }, []);
 
   const conversation = useConversation({
     apiKey: 'sk_415684fdf9ebc8dc4aaeca3706625ab0b496276d0a69f74e',
@@ -252,15 +264,15 @@ const ChatSection = () => {
     };
   }, [isAuthenticated, membershipPromptDismissed, userInteractionCount, conversationStartTime]);
 
-  const addMessage = (content: string, sender: 'user' | 'luma') => {
+  const addMessage = useCallback((content: string, sender: 'user' | 'luma') => {
     const newMessage: Message = {
-      id: Date.now().toString(),
+      id: generateMessageId(),
       content,
       sender,
       timestamp: new Date()
     };
     setMessages(prev => [...prev, newMessage]);
-  };
+  }, [generateMessageId]);
 
   const sendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -380,8 +392,8 @@ const ChatSection = () => {
   };
 
   // Handle double tap to maximize on mobile
-  const handleHeaderDoubleTap = () => {
-    const currentTime = new Date().getTime();
+  const handleHeaderDoubleTap = useCallback(() => {
+    const currentTime = performance.now();
     const tapLength = currentTime - lastTapTime;
 
     if (tapLength < 500 && tapLength > 0) {
@@ -390,7 +402,7 @@ const ChatSection = () => {
     }
 
     setLastTapTime(currentTime);
-  };
+  }, [lastTapTime, handleMaximizeToggle]);
 
   const chatContent = (
     <>

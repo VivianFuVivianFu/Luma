@@ -52,7 +52,7 @@ export class IntelligentOrchestrator {
    */
   async sendMessage(userMessage: string): Promise<string> {
     const startTime = Date.now();
-    let metrics: Partial<ResponseMetrics> = {};
+    const metrics: Partial<ResponseMetrics> = {};
 
     try {
       console.log(`[Orchestrator] Processing: "${userMessage.substring(0, 60)}..."`);

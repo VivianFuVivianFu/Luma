@@ -32,7 +32,7 @@ export class IntelligentClaudeAI {
    */
   async sendMessage(userMessage: string): Promise<string> {
     const startTime = Date.now();
-    let metrics: Partial<ProcessingMetrics> = {};
+    const metrics: Partial<ProcessingMetrics> = {};
 
     try {
       console.log(`[IntelligentClaude] Processing message: "${userMessage.substring(0, 50)}..."`);

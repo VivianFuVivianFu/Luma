@@ -3,7 +3,7 @@
 
 import { supabase } from './supabase';
 import { ConversationMessage } from './memoryFirstService';
-import { IntentType } from './intentClassifier';
+// import { IntentType } from './intentClassifier'; // Currently unused
 
 export interface ExtractionJob {
   id: string;

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useId, useCallback } from 'react';
 import { Send, Heart, LogOut, MessageSquare, Maximize, Minimize, BookOpen } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { enhancedIntelligentOrchestrator } from '../lib/enhancedIntelligentOrchestrator';
@@ -32,6 +32,11 @@ interface SystemStatus {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome }) => {
+  // Generate stable IDs for hydration consistency
+  const componentId = useId();
+  const messageIdPrefix = useRef(`msg-${componentId}`);
+  const messageCounter = useRef(0);
+  
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -54,6 +59,12 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inputContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Consistent ID generator to prevent hydration mismatches
+  const generateMessageId = useCallback(() => {
+    messageCounter.current += 1;
+    return `${messageIdPrefix.current}-${messageCounter.current}`;
+  }, []);
 
   // 🔧 IMPROVED: Enhanced scroll function for better mobile UX
   const scrollToBottom = (force = false) => {
@@ -132,7 +143,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
           const history = enhancedIntelligentOrchestrator.getHistory();
           if (history.length > 0) {
             const formattedMessages: Message[] = history.map((msg, index) => ({
-              id: `history-${index}`,
+              id: `history-${componentId}-${index}`,
               content: msg.content,
               sender: msg.role === 'user' ? 'user' : 'luma',
               timestamp: msg.timestamp || new Date()
@@ -274,7 +285,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
 
     const userMessageContent = inputMessage.trim();
     const newMessage: Message = {
-      id: Date.now().toString(),
+      id: generateMessageId(),
       content: userMessageContent,
       sender: 'user',
       timestamp: new Date()
@@ -293,15 +304,15 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
 
     try {
       console.log('[Dashboard] Sending message to intelligent orchestrator...');
-      const startTime = Date.now();
+      const startTime = performance.now();
       const response = await enhancedIntelligentOrchestrator.sendMessage(userMessageContent);
-      const responseTime = Date.now() - startTime;
+      const responseTime = performance.now() - startTime;
       console.log('[Dashboard] Received response:', response.substring(0, 100) + '...');
 
       setIsTyping(false);
 
       const lumaMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: generateMessageId(),
         content: response,
         sender: 'luma',
         timestamp: new Date(),
@@ -334,7 +345,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
       setIsTyping(false);
 
       const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: generateMessageId(),
         content: "I'm having trouble connecting right now. Please try again in a moment.",
         sender: 'luma',
         timestamp: new Date()

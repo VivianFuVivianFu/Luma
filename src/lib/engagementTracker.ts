@@ -424,7 +424,7 @@ export class EngagementTracker {
   /**
    * Track intent patterns for preference learning
    */
-  private trackIntentPattern(userId: string, intent: IntentType, timestamp: Date): void {
+  private trackIntentPattern(userId: string, intent: IntentType, _timestamp: Date): void {
     // This could be expanded to learn which intents lead to higher engagement
     console.log(`[EngagementTracker] Intent ${intent} for user ${userId}`);
   }
