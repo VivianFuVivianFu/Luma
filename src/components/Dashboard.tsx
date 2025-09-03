@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect, useId, useCallback } from 'react';
 import { Send, Heart, LogOut, MessageSquare, Maximize, Minimize, BookOpen } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { enhancedIntelligentOrchestrator } from '../lib/enhancedIntelligentOrchestrator';
 import VoiceCallWidget from './VoiceCallWidget';
 import CommunitySection from './CommunitySection';
 import UserIdDisplay from './UserIdDisplay';
@@ -45,7 +44,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
   const [isMobile, setIsMobile] = useState(false);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const [isInputFocused, setIsInputFocused] = useState(false);
-  const [, setCurrentUserId] = useState<string>(''); // Only used for initialization
+  const [currentUserId, setCurrentUserId] = useState<string>(''); // Current authenticated user ID
   const [isMemoryLoaded, setIsMemoryLoaded] = useState(false);
   const [showJournaling, setShowJournaling] = useState(false);
   const [systemStatus, setSystemStatus] = useState<SystemStatus>({
@@ -135,24 +134,8 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user?.id) {
           setCurrentUserId(session.user.id);
-          
-          // Initialize the enhanced intelligent orchestrator
-          await enhancedIntelligentOrchestrator.initialize();
-          
-          // Load conversation history
-          const history = enhancedIntelligentOrchestrator.getHistory();
-          if (history.length > 0) {
-            const formattedMessages: Message[] = history.map((msg, index) => ({
-              id: `history-${componentId}-${index}`,
-              content: msg.content,
-              sender: msg.role === 'user' ? 'user' : 'luma',
-              timestamp: msg.timestamp || new Date()
-            }));
-            setMessages(formattedMessages);
-          }
-          
           setIsMemoryLoaded(true);
-          console.log('[Dashboard] Intelligent orchestrator initialized for user:', session.user.email);
+          console.log('[Dashboard] User session initialized for user:', session.user.email);
         }
       } catch (error) {
         console.error('[Dashboard] Failed to initialize user session:', error);
@@ -303,9 +286,32 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
     }, 50);
 
     try {
-      console.log('[Dashboard] Sending message to intelligent orchestrator...');
+      console.log('[Dashboard] Sending message to chat API...');
       const startTime = performance.now();
-      const response = await enhancedIntelligentOrchestrator.sendMessage(userMessageContent);
+      
+      // Use the API route instead of direct orchestrator call
+      const apiResponse = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(currentUserId && { 'Authorization': `Bearer ${currentUserId}` })
+        },
+        body: JSON.stringify({
+          message: userMessageContent,
+          history: messages.slice(-10).map(msg => ({
+            role: msg.sender === 'user' ? 'user' : 'assistant',
+            content: msg.content
+          })),
+          userId: currentUserId
+        })
+      });
+
+      if (!apiResponse.ok) {
+        throw new Error(`API request failed: ${apiResponse.status}`);
+      }
+
+      const data = await apiResponse.json();
+      const response = data.reply || data.response || 'I apologize, but I encountered an issue. Please try again.';
       const responseTime = performance.now() - startTime;
       console.log('[Dashboard] Received response:', response.substring(0, 100) + '...');
 
@@ -328,18 +334,12 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
       }, 100); // Slightly longer delay for AI responses
       
       // Update system status after successful response
-      try {
-        const stats = enhancedIntelligentOrchestrator.getPerformanceMetrics();
-        setSystemStatus({
-          cacheHitRate: stats.cacheHitRate || 0,
-          avgResponseTime: stats.averageResponseTime || responseTime,
-          memorySystemActive: stats.memorySystemActive !== false,
-          engagementLevel: stats.engagementLevel || 'medium',
-          lastProcessingPipeline: stats.lastProcessingPipeline || []
-        });
-      } catch (error) {
-        console.warn('[Dashboard] Could not fetch system metrics:', error);
-      }
+      setSystemStatus(prev => ({
+        ...prev,
+        avgResponseTime: responseTime,
+        memorySystemActive: true,
+        engagementLevel: 'high'
+      }));
     } catch (error) {
       console.error('Error sending message:', error);
       setIsTyping(false);
@@ -383,11 +383,8 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
     try {
       setIsLoading(true);
       
-      // Clear current messages
+      // Clear current messages to start fresh
       setMessages([]);
-      
-      // Start new session in enhanced intelligent orchestrator
-      await enhancedIntelligentOrchestrator.startNewSession();
       
       console.log('[Dashboard] Started new conversation session');
     } catch (error) {

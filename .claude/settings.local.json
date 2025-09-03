@@ -16,7 +16,8 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(npx vercel:*)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "WebFetch(domain:luma-3-8eb9fzzix-vivianfu2022-gmailcoms-projects.vercel.app)"
     ],
     "deny": [],
     "ask": [],
