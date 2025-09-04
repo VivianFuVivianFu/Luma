@@ -276,8 +276,8 @@ async function processWithClaude(contextData: { systemPrompt: string, messages: 
   const apiKey = process.env.CLAUDE_API_KEY || process.env.VITE_CLAUDE_API_KEY;
   
   if (!apiKey) {
-    console.error('[EnhancedChat] Claude API key not configured');
-    return getFallbackResponse('Unable to connect to Claude API');
+    console.warn('[EnhancedChat] Claude API key not configured, using intelligent fallback');
+    return getIntelligentFallback(contextData.messages[contextData.messages.length - 1]?.content || 'hello');
   }
 
   try {
@@ -415,4 +415,59 @@ function getFallbackResponse(userMessage: string): string {
   }
   
   return "I'm here with you, even though I'm experiencing some technical challenges at the moment. What's important to you right now that we can talk about?";
+}
+
+/**
+ * Intelligent fallback with better therapeutic responses
+ */
+function getIntelligentFallback(userMessage: string): string {
+  const message = userMessage.toLowerCase();
+  
+  // Greetings
+  if (message.includes('hello') || message.includes('hi') || message.includes('hey')) {
+    return "Hello! I'm Luma, your AI wellness companion. I'm here to listen and support you through whatever you're experiencing. How are you feeling today?";
+  }
+  
+  // Emotional support
+  if (message.includes('sad') || message.includes('upset') || message.includes('hurt') || message.includes('crying')) {
+    return "I can hear that you're going through something really difficult right now. It takes courage to reach out when you're hurting. Your feelings are completely valid. Would you like to share more about what's happening?";
+  }
+  
+  if (message.includes('anxious') || message.includes('worried') || message.includes('stress') || message.includes('panic')) {
+    return "I can sense the anxiety you're feeling. Anxiety can be really overwhelming, but you're not alone in this. Sometimes it helps to take a slow, deep breath with me. What's been weighing on your mind lately?";
+  }
+  
+  if (message.includes('angry') || message.includes('mad') || message.includes('frustrated')) {
+    return "I hear the frustration in your words. Anger often comes from feeling unheard or overwhelmed. It's okay to feel angry - your emotions are valid. What's been building up that led to these feelings?";
+  }
+  
+  if (message.includes('tired') || message.includes('exhausted') || message.includes('drained')) {
+    return "It sounds like you're carrying a lot right now. Feeling exhausted, especially emotionally, is your mind and body telling you something important. You deserve rest and care. What's been taking the most out of you?";
+  }
+  
+  if (message.includes('lonely') || message.includes('alone') || message.includes('isolated')) {
+    return "Loneliness can feel so heavy. Even when you're surrounded by people, sometimes you can still feel deeply alone. I want you to know that you're not truly alone - I'm here with you right now. What would connection look like for you?";
+  }
+  
+  // Goal and progress
+  if (message.includes('goal') || message.includes('want to') || message.includes('trying to')) {
+    return "I love hearing about your aspirations and what you're working toward. Setting goals shows real strength and hope for your future. What step, even a small one, feels manageable for you right now?";
+  }
+  
+  if (message.includes('progress') || message.includes('better') || message.includes('improvement')) {
+    return "Progress isn't always linear, and every small step forward matters. You're already showing strength by being here and reflecting on your growth. What positive changes have you noticed, even tiny ones?";
+  }
+  
+  // Relationships
+  if (message.includes('family') || message.includes('relationship') || message.includes('friend') || message.includes('partner')) {
+    return "Relationships can bring us so much joy and also so much complexity. Whether you're celebrating connection or navigating challenges, your feelings about the people in your life matter deeply. What's happening in your relationships that feels important to share?";
+  }
+  
+  // Crisis indicators
+  if (message.includes('end') || message.includes('over') || message.includes('give up') || message.includes('hopeless')) {
+    return "I'm really concerned about what you're sharing with me. When everything feels overwhelming and hopeless, please know that you don't have to face this alone. If you're having thoughts of self-harm, please reach out to a crisis helpline immediately: 988 Suicide & Crisis Lifeline (US) or emergency services. You matter, and there is help available. Can you tell me more about what's making things feel so difficult?";
+  }
+  
+  // General therapeutic response
+  return "Thank you for reaching out and sharing with me. I'm here to listen without judgment and support you however I can. Every feeling you have is valid, and you deserve care and understanding. What feels most important for you to talk about right now?";
 }
