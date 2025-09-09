@@ -276,12 +276,13 @@ ${memories.map(m => `- ${m.content} (${m.type})`).join('\n')}`;
  * Process with Claude 3.5 Haiku
  */
 async function processWithClaude(contextData: { systemPrompt: string, messages: Array<{role: string, content: string}> }): Promise<string> {
-  const apiKey = process.env.CLAUDE_API_KEY || process.env.VITE_CLAUDE_API_KEY;
+  // For Edge runtime, prioritize CLAUDE_API_KEY over VITE_CLAUDE_API_KEY
+  const apiKey = process.env.CLAUDE_API_KEY;
   
   console.log('[EnhancedChat] API key check:', { 
     hasClaudeKey: !!process.env.CLAUDE_API_KEY, 
-    hasViteKey: !!process.env.VITE_CLAUDE_API_KEY,
-    hasAnyKey: !!apiKey 
+    claudeKeyLength: process.env.CLAUDE_API_KEY?.length || 0,
+    hasAnyKey: !!apiKey
   });
   
   if (!apiKey) {
