@@ -1,21 +1,7 @@
 {
   "buildCommand": "npm run build",
-  "framework": "vite",
+  "framework": "vite", 
   "installCommand": "npm ci --include=optional",
-  "functions": {
-    "api/enhancedChat.ts": {
-      "runtime": "edge",
-      "maxDuration": 60
-    },
-    "api/chat.ts": {
-      "runtime": "edge", 
-      "maxDuration": 30
-    },
-    "api/test-claude.ts": {
-      "runtime": "edge",
-      "maxDuration": 30
-    }
-  },
   "headers": [
     {
       "source": "/api/(.*)",
@@ -25,11 +11,11 @@
           "value": "*"
         },
         {
-          "key": "Access-Control-Allow-Methods", 
+          "key": "Access-Control-Allow-Methods",
           "value": "GET, POST, PUT, DELETE, OPTIONS"
         },
         {
-          "key": "Access-Control-Allow-Headers",
+          "key": "Access-Control-Allow-Headers", 
           "value": "Content-Type, Authorization"
         }
       ]
