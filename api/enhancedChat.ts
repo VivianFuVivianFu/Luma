@@ -278,6 +278,12 @@ ${memories.map(m => `- ${m.content} (${m.type})`).join('\n')}`;
 async function processWithClaude(contextData: { systemPrompt: string, messages: Array<{role: string, content: string}> }): Promise<string> {
   const apiKey = process.env.CLAUDE_API_KEY || process.env.VITE_CLAUDE_API_KEY;
   
+  console.log('[EnhancedChat] API key check:', { 
+    hasClaudeKey: !!process.env.CLAUDE_API_KEY, 
+    hasViteKey: !!process.env.VITE_CLAUDE_API_KEY,
+    hasAnyKey: !!apiKey 
+  });
+  
   if (!apiKey) {
     console.warn('[EnhancedChat] Claude API key not configured, using intelligent fallback');
     return getIntelligentFallback(contextData.messages[contextData.messages.length - 1]?.content || 'hello');
@@ -301,10 +307,13 @@ async function processWithClaude(contextData: { systemPrompt: string, messages: 
     });
 
     if (!response.ok) {
-      throw new Error(`Claude API error: ${response.status}`);
+      const errorText = await response.text();
+      console.error('[EnhancedChat] Claude API error:', { status: response.status, error: errorText });
+      throw new Error(`Claude API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
+    console.log('[EnhancedChat] Claude API success:', { hasContent: !!data.content, contentLength: data.content?.[0]?.text?.length });
     return data.content[0]?.text?.trim() || 'I apologize, but I had trouble processing your message.';
   } catch (error) {
     console.error('[EnhancedChat] Claude processing error:', error);
