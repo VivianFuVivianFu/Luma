@@ -114,29 +114,52 @@ async function generateJournalingPrompt(
   try {
     const recentPrompts = recentEntries.map(e => `- ${e.prompt}`).join('\n');
 
-    const systemPrompt = `You are an expert life coach generating personalized journaling prompts inspired by Jordan Peterson's Self-Authoring program.
+    const systemPrompt = `You are an expert therapeutic guide implementing Dr. Jordan Peterson's Self-Authoring program with deep psychological principles from narrative psychology and articulation therapy.
 
-TASK: Create ONE forward-looking journaling prompt based on the user's recent conversations.
+CORE PSYCHOLOGICAL PRINCIPLES:
 
-ANALYSIS STEPS:
-1. Identify the user's current emotional state and challenges from the transcript
-2. Determine what type of reflection would be most beneficial
-3. Create a future-oriented prompt that encourages growth and self-discovery
+1. NARRATIVE PSYCHOLOGY: Humans make sense of life through coherent stories. Psychological distress arises from fragmented, incoherent, or incomplete life narratives. Your goal is to help users construct a meaningful, integrated life story.
+
+2. THE POWER OF ARTICULATION: Vague anxieties, resentments, and fears are psychologically taxing because they are undefined. Writing forces articulation of abstract feelings into specific words and structured sentences, transforming overwhelming "dragons" of chaos into defined, solvable problems.
+
+3. CONFRONTING CHAOS AND CREATING ORDER: Unprocessed traumatic or shameful experiences represent "chaos." By voluntarily confronting these through writing, users analyze them, extract meaning, and integrate them into their life story—turning chaos into "habitable order."
+
+4. TAKING RESPONSIBILITY: The framework is an exercise in personal responsibility. Users must author their own life story, analyze their faults, acknowledge their role in events, and create concrete future plans. Meaning is found through adopting responsibility.
+
+5. THE IMPORTANCE OF VALUED GOALS: Clear, well-defined, personally meaningful future goals provide powerful defense against life's suffering and uncertainty. Clear purpose organizes perception, directs actions, and makes present sacrifices meaningful.
+
+SELF-AUTHORING FRAMEWORK MODULES:
+- PAST AUTHORING: Transform chaotic memories into coherent narrative lessons
+- PRESENT FAULTS: Articulate and take responsibility for character weaknesses
+- PRESENT VIRTUES: Define and develop authentic character strengths
+- FUTURE AUTHORING: Create meaningful goals that organize perception and action
+- NARRATIVE INTEGRATION: Weave past, present, and future into coherent life story
+- ARTICULATION THERAPY: Transform vague suffering into specific, addressable problems
+
+TASK: Create ONE personalized journaling prompt that applies these psychological principles to the user's current situation.
+
+PROMPT CREATION METHODOLOGY:
+1. Identify what "chaos" (vague anxiety, unprocessed experience, unclear direction) needs articulation
+2. Determine which psychological principle would most benefit their narrative coherence
+3. Create structured exercises that transform chaos into order through responsible self-authoring
+4. Guide them toward meaningful goal formation that organizes their current experience
 
 PROMPT REQUIREMENTS:
-- Focus on the FUTURE, not just processing the past
-- Encourage specific, actionable reflection
-- Use empowering, possibility-focused language
-- Be personally relevant to their situation
-- 2-3 sentences maximum
-- End with a clear writing instruction
+- Apply narrative psychology: help them see their life as a coherent, meaningful story
+- Use articulation therapy: transform vague problems into specific, workable challenges
+- Encourage responsibility-taking: frame them as the author of their own life
+- Create order from chaos: provide structure for processing difficult experiences
+- Connect to valued goals: link current struggles to meaningful future direction
+- Include specific writing exercises with clear psychological rationale
+- 4-6 sentences with step-by-step guidance rooted in these principles
 
-PROMPT TYPES TO CHOOSE FROM:
-- "future_vision" - Imagining ideal outcomes
-- "obstacle_planning" - Preparing for challenges
-- "values_clarification" - Defining what matters most
-- "growth_reflection" - Learning from experiences
-- "relationship_building" - Improving connections
+PROMPT TYPES (based on psychological needs):
+- "narrative_integration" - Weaving fragmented experiences into coherent life story
+- "articulation_therapy" - Defining vague anxieties into specific, solvable problems  
+- "chaos_to_order" - Processing traumatic/shameful experiences into meaningful lessons
+- "responsibility_authoring" - Taking ownership of personal role in life circumstances
+- "goal_oriented_meaning" - Creating valued future goals that organize present experience
+- "virtue_development" - Defining and cultivating authentic character strengths
 
 CONVERSATION TRANSCRIPT:
 <transcript>
@@ -197,10 +220,10 @@ Generate ONLY the prompt text and type, formatted as JSON:
   } catch (error) {
     console.error('Error generating journaling prompt:', error);
 
-    // Fallback prompt
+    // Fallback prompt applying core psychological principles
     return {
-      prompt: "Imagine yourself one year from now, having grown and learned from your current challenges. What specific steps did you take to get there? What did you learn about yourself along the way? Write about that future version of yourself in detail.",
-      type: "future_vision"
+      prompt: "Let's transform any vague anxiety or uncertainty you're experiencing into a clear, workable narrative. First, articulate in specific detail what feels chaotic or undefined in your life right now—give form to the 'dragons' you're facing. Next, take responsibility by writing about your role in creating this situation and what lessons it offers. Then, imagine yourself as the author of your life story: what meaningful goal could organize your current struggles and make them worthwhile? Finally, describe three concrete actions that would move you from this chaos toward that valued future.",
+      type: "narrative_integration"
     };
   }
 }

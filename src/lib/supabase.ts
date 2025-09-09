@@ -15,12 +15,17 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 })
 
-// Admin client for memory operations (bypasses RLS) - use different storage key to avoid conflicts
+// Admin client for memory operations (bypasses RLS) - minimal auth configuration to avoid multiple GoTrueClient instances
 export const sbAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
   auth: {
     autoRefreshToken: false,
     persistSession: false,
-    storageKey: 'luma-admin-auth'
+    detectSessionInUrl: false,
+    storage: {
+      getItem: () => null,
+      setItem: () => {},
+      removeItem: () => {}
+    }
   }
 })
 

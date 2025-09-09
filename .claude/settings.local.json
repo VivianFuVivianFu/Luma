@@ -17,7 +17,9 @@
       "Bash(git push:*)",
       "Bash(npx vercel:*)",
       "Bash(npx eslint:*)",
-      "WebFetch(domain:luma-3-8eb9fzzix-vivianfu2022-gmailcoms-projects.vercel.app)"
+      "WebFetch(domain:luma-3-8eb9fzzix-vivianfu2022-gmailcoms-projects.vercel.app)",
+      "Bash(npm run lint)",
+      "WebFetch(domain:www.selfauthoring.com)"
     ],
     "deny": [],
     "ask": [],

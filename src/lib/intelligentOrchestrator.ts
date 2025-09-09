@@ -32,6 +32,14 @@ export interface StructuredResponse {
   confidence: number;
 }
 
+export interface CriticalConversationAnalysis {
+  isCritical: boolean;
+  criticalityScore: number;
+  suggestJournaling: boolean;
+  criticalThemes: string[];
+  journalingReason: string;
+}
+
 export class IntelligentOrchestrator {
   private conversationHistory: ConversationMessage[] = [];
   private currentUserId: string | null = null;
@@ -81,6 +89,13 @@ export class IntelligentOrchestrator {
       metrics.memoryRetrievalTime = memoryResult.totalRetrievalTime;
       metrics.memoriesUsed = memoryResult.currentSessionMemories.length + memoryResult.crossSessionMemories.length + memoryResult.criticalInsights.length;
 
+      // Step 3.5: Analyze for critical conversation themes
+      const criticalAnalysis = this.analyzeCriticalConversation(
+        userMessage,
+        this.conversationHistory,
+        memoryResult
+      );
+
       // Step 4: Assemble enhanced context
       const contextStartTime = Date.now();
       const contextData = await this.assembleContext(
@@ -113,10 +128,17 @@ export class IntelligentOrchestrator {
       metrics.llmProcessingTime = Date.now() - llmStartTime;
       metrics.complexityScore = complexityAnalysis.score;
 
-      // Step 6: Store response and trigger async memory extraction
+      // Step 6: Add narrative therapy suggestion if psychological principles indicate need
+      if (criticalAnalysis.suggestJournaling) {
+        const journalingPrompt = `\n\n📝 **Transform Chaos into Order**: ${criticalAnalysis.journalingReason} The Journal feature offers structured self-authoring exercises based on Dr. Peterson's proven framework—transform vague suffering into clear insight through the power of articulation.`;
+        response += journalingPrompt;
+        console.log(`[Orchestrator] Added narrative therapy suggestion for themes: ${criticalAnalysis.criticalThemes.join(', ')}`);
+      }
+
+      // Step 7: Store response and trigger async memory extraction
       await this.storeMessage('assistant', response);
       
-      // Step 7: Async memory processing for continuous learning
+      // Step 8: Async memory processing for continuous learning
       if (this.conversationHistory.length >= 6) {
         memoryFirstService.updateLongTermMemoryAsync(
           this.currentUserId, 
@@ -127,7 +149,7 @@ export class IntelligentOrchestrator {
         });
       }
 
-      // Step 8: Log comprehensive metrics
+      // Step 9: Log comprehensive metrics
       metrics.totalResponseTime = Date.now() - startTime;
       this.logMetrics(metrics as ResponseMetrics);
 
@@ -236,6 +258,175 @@ export class IntelligentOrchestrator {
       requiresDeepAnalysis,
       suggestedModel,
       contextWindowSize
+    };
+  }
+
+  /**
+   * Analyze conversation for psychological patterns requiring narrative therapy and articulation
+   * Based on Peterson's principles: transforming chaos into order through responsible self-authoring
+   */
+  private analyzeCriticalConversation(
+    message: string, 
+    conversationHistory: ConversationMessage[], 
+    memoryResult: MemoryRetrievalResult
+  ): CriticalConversationAnalysis {
+    const text = message.toLowerCase();
+    let criticalityScore = 0;
+    const criticalThemes: string[] = [];
+    
+    // VAGUE ANXIETIES & ARTICULATION NEEDS - The "Dragons" of undefined chaos
+    const vagueAnxieties = [
+      'i feel weird', 'something\'s wrong', 'i don\'t know what\'s bothering me',
+      'general anxiety', 'vague feeling', 'can\'t put my finger on it',
+      'uncomfortable', 'something off', 'uneasy', 'restless', 'unsettled'
+    ];
+    vagueAnxieties.forEach(anxiety => {
+      if (text.includes(anxiety)) {
+        criticalityScore += 0.4;
+        criticalThemes.push('articulation_needed');
+      }
+    });
+
+    // NARRATIVE FRAGMENTATION - Incoherent or incomplete life stories
+    const narrativeFragments = [
+      'my life doesn\'t make sense', 'nothing connects', 'feels meaningless',
+      'random things happening', 'no story', 'disconnected events',
+      'can\'t see the bigger picture', 'life feels scattered', 'no direction'
+    ];
+    narrativeFragments.forEach(fragment => {
+      if (text.includes(fragment)) {
+        criticalityScore += 0.35;
+        criticalThemes.push('narrative_fragmentation');
+      }
+    });
+
+    // CHAOS vs ORDER - Unprocessed experiences creating psychological distress
+    const chaosIndicators = [
+      'out of control', 'chaos', 'everything\'s falling apart', 'can\'t organize',
+      'mess', 'scattered', 'unraveling', 'spinning', 'hurricane', 'storm',
+      'drowning', 'overwhelmed by everything', 'can\'t make sense'
+    ];
+    chaosIndicators.forEach(chaos => {
+      if (text.includes(chaos)) {
+        criticalityScore += 0.4;
+        criticalThemes.push('chaos_to_order');
+      }
+    });
+
+    // RESPONSIBILITY AVOIDANCE - Victim mentality vs authorship
+    const responsibilityAvoidance = [
+      'not my fault', 'things happen to me', 'bad luck', 'victim',
+      'everyone else', 'they did this', 'circumstances', 'helpless',
+      'can\'t control anything', 'powerless', 'unfair'
+    ];
+    responsibilityAvoidance.forEach(avoidance => {
+      if (text.includes(avoidance)) {
+        criticalityScore += 0.3;
+        criticalThemes.push('responsibility_authoring');
+      }
+    });
+
+    // MEANINGLESSNESS & GOAL ABSENCE - Lack of valued future organizing perception
+    const meaninglessness = [
+      'what\'s the point', 'nothing matters', 'no purpose', 'meaningless',
+      'why bother', 'don\'t care', 'empty', 'void', 'no goals',
+      'no direction', 'drifting', 'aimless', 'lost'
+    ];
+    meaninglessness.forEach(meaning => {
+      if (text.includes(meaning)) {
+        criticalityScore += 0.35;
+        criticalThemes.push('goal_oriented_meaning');
+      }
+    });
+
+    // UNINTEGRATED PAST EXPERIENCES - Traumatic or shameful memories needing processing
+    const unintegratedPast = [
+      'haunted by', 'can\'t get over', 'keeps coming back', 'traumatic',
+      'shameful', 'regret', 'guilt', 'painful memories', 'can\'t forget',
+      'stuck in the past', 'why did this happen', 'unresolved'
+    ];
+    unintegratedPast.forEach(past => {
+      if (text.includes(past)) {
+        criticalityScore += 0.35;
+        criticalThemes.push('past_integration');
+      }
+    });
+
+    // CHARACTER DEVELOPMENT NEEDS - Virtues vs Faults requiring articulation
+    const characterStruggles = [
+      'bad person', 'character flaws', 'weakness', 'strength',
+      'who i really am', 'authentic self', 'values', 'principles',
+      'moral', 'ethical', 'integrity', 'courage', 'honesty'
+    ];
+    characterStruggles.forEach(character => {
+      if (text.includes(character)) {
+        criticalityScore += 0.25;
+        criticalThemes.push('virtue_development');
+      }
+    });
+
+    // RECURRING PATTERNS - Narrative psychology: repeating themes indicate fragmented story
+    const recentMessages = conversationHistory.slice(-5).map(m => m.content.toLowerCase()).join(' ');
+    const recurringThemes = [
+      'again', 'same thing', 'pattern', 'cycle', 'repeat', 'always',
+      'every time', 'happens again', 'story of my life'
+    ];
+    let hasRecurringTheme = false;
+    recurringThemes.forEach(theme => {
+      if (recentMessages.includes(theme) || text.includes(theme)) {
+        hasRecurringTheme = true;
+      }
+    });
+    if (hasRecurringTheme || criticalThemes.length >= 2) {
+      criticalityScore += 0.2;
+      criticalThemes.push('recurring_narrative');
+    }
+
+    // MEMORY INTEGRATION - Long-term patterns requiring coherent narrative
+    const criticalMemories = memoryResult.criticalInsights.filter(insight => 
+      insight.content.includes('unresolved') || 
+      insight.content.includes('recurring') ||
+      insight.content.includes('pattern') ||
+      insight.content.includes('chaos') ||
+      insight.content.includes('unclear')
+    );
+    if (criticalMemories.length > 0) {
+      criticalityScore += 0.15;
+      criticalThemes.push('memory_integration');
+    }
+
+    const isCritical = criticalityScore >= 0.5;
+    const suggestJournaling = criticalityScore >= 0.35; // Lower threshold for Peterson's framework
+
+    let journalingReason = '';
+    if (suggestJournaling) {
+      if (criticalThemes.includes('articulation_needed')) {
+        journalingReason = 'Those vague feelings are "dragons" of undefined chaos. Writing will transform them into specific, solvable problems you can actually address.';
+      } else if (criticalThemes.includes('narrative_fragmentation')) {
+        journalingReason = 'Your life story seems fragmented. Self-authoring exercises can help weave these pieces into a coherent, meaningful narrative.';
+      } else if (criticalThemes.includes('chaos_to_order')) {
+        journalingReason = 'Confronting this chaos through structured writing will help you extract meaning and create habitable order from the storm.';
+      } else if (criticalThemes.includes('responsibility_authoring')) {
+        journalingReason = 'Taking responsibility as the author of your own life story is where meaning begins. Journaling helps you claim that authorship.';
+      } else if (criticalThemes.includes('goal_oriented_meaning')) {
+        journalingReason = 'A clear, valued future goal provides powerful defense against suffering. Let\'s help you discover what could make your current struggles worthwhile.';
+      } else if (criticalThemes.includes('past_integration')) {
+        journalingReason = 'Unprocessed experiences create ongoing chaos. Writing helps transform these memories into wisdom and integrate them into your larger story.';
+      } else if (criticalThemes.includes('virtue_development')) {
+        journalingReason = 'Articulating your character—both strengths and faults—is essential for authentic self-development and meaningful action.';
+      } else {
+        journalingReason = 'This moment calls for the transformative power of articulation—turning internal chaos into clear, actionable insight through responsible self-authoring.';
+      }
+    }
+
+    console.log(`[Orchestrator] Narrative Analysis: ${criticalityScore.toFixed(2)} - Themes: ${criticalThemes.join(', ')}`);
+
+    return {
+      isCritical,
+      criticalityScore,
+      suggestJournaling,
+      criticalThemes,
+      journalingReason
     };
   }
 

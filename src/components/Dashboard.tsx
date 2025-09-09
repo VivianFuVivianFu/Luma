@@ -457,7 +457,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
                 playsInline
                 className="w-full h-full object-cover"
               >
-                <source src="/Photho background.mp4" type="video/mp4" />
+                <source src="/Video.mp4" type="video/mp4" />
                 <div className="w-full h-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
                   <Heart className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
                 </div>
@@ -600,14 +600,15 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
                 </button>
                 <button
                   onClick={() => setShowJournaling(!showJournaling)}
-                  className={`p-2 rounded-lg transition-all duration-200 hover:scale-105 ${
+                  className={`px-4 py-2 rounded-lg transition-all duration-200 hover:scale-105 flex items-center space-x-2 ${
                     showJournaling
                       ? 'text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100'
                       : 'text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100'
                   }`}
-                  title="AI Journal"
+                  title="AI Journal - Self-Authoring Guide"
                 >
-                  <BookOpen className="w-4 h-4" />
+                  <BookOpen className="w-6 h-6" />
+                  <span className="font-medium text-sm">Journal</span>
                 </button>
                 <button
                   onClick={handleChatMaximizeToggle}

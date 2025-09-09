@@ -127,8 +127,8 @@ const EnhancedJournalingWidget: React.FC<EnhancedJournalingWidgetProps> = ({ onC
             <div className="flex items-center space-x-3">
               <BookOpen className="w-6 h-6" />
               <div>
-                <h2 className="text-xl font-bold">AI-Powered Journaling</h2>
-                <p className="text-indigo-100 text-sm">Reflect, grow, and discover insights about yourself</p>
+                <h2 className="text-xl font-bold">Self-Authoring Journal</h2>
+                <p className="text-indigo-100 text-sm">Transform chaos into order through the power of articulation</p>
               </div>
             </div>
             <button
@@ -175,10 +175,10 @@ const EnhancedJournalingWidget: React.FC<EnhancedJournalingWidgetProps> = ({ onC
                 <div className="text-center py-8 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border-2 border-dashed border-indigo-200">
                   <BookOpen className="w-12 h-12 text-indigo-400 mx-auto mb-4" />
                   <p className="text-gray-700 mb-4 text-lg">
-                    Ready to start journaling? Let AI create a personalized prompt for you.
+                    Ready to author your own life story? Let's generate a structured prompt for self-reflection.
                   </p>
                   <p className="text-gray-500 text-sm mb-6">
-                    Our AI analyzes your recent conversations to suggest meaningful topics for reflection.
+                    Using Dr. Peterson's Self-Authoring framework, we'll transform vague anxieties into clear, actionable insights through the power of articulation.
                   </p>
                   <button
                     onClick={handleGeneratePrompt}
@@ -187,7 +187,7 @@ const EnhancedJournalingWidget: React.FC<EnhancedJournalingWidgetProps> = ({ onC
                   >
                     <Sparkles className="w-5 h-5" />
                     <span className="font-medium">
-                      {isGeneratingPrompt ? 'Creating Your Prompt...' : 'Generate AI Prompt'}
+                      {isGeneratingPrompt ? 'Creating Your Narrative Prompt...' : 'Generate Self-Authoring Prompt'}
                     </span>
                   </button>
                 </div>

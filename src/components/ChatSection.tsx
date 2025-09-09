@@ -8,6 +8,7 @@ import { claudeAI } from '@/lib/claudeAI';
 import { supabase } from '@/lib/supabase';
 import lumaAvatar from '@/assets/luma-avatar.png';
 import MembershipPrompt from './MembershipPrompt';
+import { mobileViewport, type ViewportState } from '@/utils/mobileViewport';
 
 interface Message {
   id: string;
@@ -49,6 +50,8 @@ const ChatSection = () => {
   const [lastTapTime, setLastTapTime] = useState(0);
   const [isUserChatting, setIsUserChatting] = useState(false);
   const [shouldMaintainFocus, setShouldMaintainFocus] = useState(false);
+  const [viewportState, setViewportState] = useState<ViewportState>(mobileViewport.getState());
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
   // Membership notification system states
   const [showMembershipPrompt, setShowMembershipPrompt] = useState(false);
@@ -61,6 +64,7 @@ const ChatSection = () => {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const notificationTimerRef = useRef<NodeJS.Timeout | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   
   // Consistent ID generator to prevent hydration mismatches
   const generateMessageId = useCallback(() => {
@@ -92,80 +96,113 @@ const ChatSection = () => {
     },
   });
 
-  // Enhanced scroll to bottom for chat messages only
-  const scrollToBottomChat = () => {
+  // Enhanced scroll to bottom for chat messages only with mobile optimization
+  const scrollToBottomChat = useCallback(() => {
     if (messagesContainerRef.current) {
       const container = messagesContainerRef.current;
       // Use requestAnimationFrame for smoother scrolling on mobile
       requestAnimationFrame(() => {
-        container.scrollTo({
+        const scrollOptions: ScrollToOptions = {
           top: container.scrollHeight,
-          behavior: 'smooth'
-        });
+          behavior: mobileViewport.isMobileDevice ? 'auto' : 'smooth' // Auto on mobile for better performance
+        };
+        container.scrollTo(scrollOptions);
       });
     }
-  };
+  }, []);
 
 
 
   useEffect(() => {
     // Only auto-scroll within the chat messages container, never the page
     scrollToBottomChat();
-  }, [messages]);
+  }, [messages, scrollToBottomChat]);
 
-  // Component loads - no page scrolling needed for embedded chat
+  // Setup mobile viewport management
+  useEffect(() => {
+    // Configure viewport callbacks
+    mobileViewport.setCallbacks({
+      onKeyboardShow: (height) => {
+        console.log('[MobileViewport] Keyboard shown, height:', height);
+        setIsKeyboardVisible(true);
+        setIsUserChatting(true);
+        
+        // Scroll to show input above keyboard
+        setTimeout(() => {
+          if (inputRef.current) {
+            inputRef.current.scrollIntoView({
+              behavior: 'smooth',
+              block: 'end'
+            });
+          }
+        }, 100);
+      },
+      onKeyboardHide: () => {
+        console.log('[MobileViewport] Keyboard hidden');
+        setIsKeyboardVisible(false);
+        
+        // Delay state reset to prevent flashing
+        setTimeout(() => {
+          if (!shouldMaintainFocus) {
+            setIsUserChatting(false);
+          }
+        }, 200);
+      },
+      onViewportChange: (state) => {
+        setViewportState(state);
+      }
+    });
+
+    // Optimize chat container for mobile
+    if (chatContainerRef.current) {
+      mobileViewport.optimizeElement(chatContainerRef.current, {
+        preventZoom: true,
+        touchOptimized: true,
+        keyboardAdjusted: true,
+        useModernViewport: true
+      });
+    }
+
+    return () => {
+      mobileViewport.destroy();
+    };
+  }, [shouldMaintainFocus]);
 
   // Handle input focus for mobile keyboard
-  const handleInputFocus = () => {
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    
+  const handleInputFocus = useCallback(() => {
     setIsUserChatting(true);
     setShouldMaintainFocus(true);
 
-    if (isMobile && chatContainerRef.current) {
-      // Scroll page to top to show the fixed chat container at the top
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      });
+    if (mobileViewport.isMobileDevice) {
+      // Use modern viewport manager for mobile focus
+      if (inputRef.current) {
+        mobileViewport.focusInput(inputRef.current, {
+          scrollIntoView: true,
+          preventZoom: true,
+          delay: 50
+        });
+      }
       
-      // Prevent page body from scrolling when chat is active
-      document.body.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
-      document.body.style.width = '100%';
-      document.body.style.top = '0px';
-      
-      // Scroll chat messages to bottom after positioning
-      setTimeout(() => {
-        scrollToBottomChat();
-      }, 300);
+      // Scroll to bottom after a brief delay
+      setTimeout(scrollToBottomChat, 300);
     } else {
       // Desktop behavior - just scroll chat to bottom
-      setTimeout(() => {
-        scrollToBottomChat();
-      }, 100);
+      setTimeout(scrollToBottomChat, 100);
     }
-  };
+  }, [scrollToBottomChat]);
 
-  // Handle input blur - restore page scrolling
-  const handleInputBlur = () => {
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
+  // Handle input blur with improved mobile handling
+  const handleInputBlur = useCallback(() => {
     // Don't immediately close on blur - wait a moment to see if user clicks elsewhere in chat
     setTimeout(() => {
       if (!shouldMaintainFocus) {
         setIsUserChatting(false);
         
-        if (isMobile) {
-          // Restore page scrolling
-          document.body.style.overflow = '';
-          document.body.style.position = '';
-          document.body.style.width = '';
-          document.body.style.top = '';
-        }
+        // The mobile viewport manager handles body style restoration automatically
+        // through CSS custom properties and classes
       }
     }, 150);
-  };
+  }, [shouldMaintainFocus]);
 
   // Prevent unwanted page scrolling on mobile
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -173,38 +210,8 @@ const ChatSection = () => {
     e.stopPropagation();
   };
 
-  // Handle window resize (for mobile keyboard show/hide)
-  useEffect(() => {
-    const handleResize = () => {
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-      if (isMobile) {
-        // Check if keyboard is likely open (viewport height reduced significantly)
-        const isKeyboardOpen = window.innerHeight < window.screen.height * 0.75;
-
-        if (isKeyboardOpen) {
-          // Keyboard is open - ensure fixed input positioning is active
-          if (chatContainerRef.current) {
-            const inputContainer = chatContainerRef.current.querySelector('.input-container');
-            if (inputContainer && document.activeElement?.tagName === 'INPUT') {
-              inputContainer.classList.add('mobile-input-focused');
-            }
-          }
-        } else {
-          // Keyboard is closed - remove fixed positioning
-          if (chatContainerRef.current) {
-            const inputContainer = chatContainerRef.current.querySelector('.input-container');
-            if (inputContainer) {
-              inputContainer.classList.remove('mobile-input-focused');
-            }
-          }
-        }
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  // Mobile viewport state is now handled by the MobileViewportManager
+  // No need for manual resize handling
 
   // Authentication status check
   useEffect(() => {
@@ -386,10 +393,10 @@ const ChatSection = () => {
   };
 
   // Simple maximize/minimize functionality
-  const handleMaximizeToggle = () => {
+  const handleMaximizeToggle = useCallback(() => {
     setIsMaximized(!isMaximized);
     // No automatic scrolling - let user control their view
-  };
+  }, [isMaximized]);
 
   // Handle double tap to maximize on mobile
   const handleHeaderDoubleTap = useCallback(() => {
@@ -420,22 +427,28 @@ const ChatSection = () => {
           isMaximized
             ? 'fixed inset-0 z-[9999] h-screen w-screen rounded-none bg-white border-gray-200'
             : isUserChatting || shouldMaintainFocus
-              ? 'fixed top-0 left-0 right-0 z-[100] h-screen w-full bg-white border-b-2 border-blue-300 shadow-2xl'
+              ? 'fixed top-0 left-0 right-0 z-[100] bg-white border-b-2 border-blue-300 shadow-2xl keyboard-adjusted'
               : 'h-full rounded-2xl border-indigo-100'
-        }`}
+        } ${mobileViewport.isMobileDevice ? 'touch-optimized' : ''}`}
         onTouchStart={handleTouchStart}
         style={{
-          // Mobile-first design with fixed positioning when chatting
-          minHeight: isMaximized ? '100vh' : (isUserChatting || shouldMaintainFocus) ? '100vh' : 'auto',
-          maxHeight: isMaximized ? '100vh' : (isUserChatting || shouldMaintainFocus) ? '100vh' : '500px',
+          // Use CSS custom properties for dynamic height
+          minHeight: isMaximized ? '100vh' : (isUserChatting || shouldMaintainFocus) 
+            ? `var(--available-height, ${viewportState.height - viewportState.keyboardHeight}px)` 
+            : 'auto',
+          maxHeight: isMaximized ? '100vh' : (isUserChatting || shouldMaintainFocus) 
+            ? `var(--available-height, ${viewportState.height - viewportState.keyboardHeight}px)` 
+            : '500px',
           overflowY: 'hidden', // Container doesn't scroll - only messages area does
-          // Enhanced mobile positioning
+          // Enhanced mobile positioning with viewport awareness
           ...(isUserChatting || shouldMaintainFocus) && !isMaximized && {
             position: 'fixed',
             top: 0,
             left: 0,
             right: 0,
-            height: '100vh',
+            height: viewportState.dynamicViewportSupported 
+              ? '100dvh' 
+              : `var(--available-height, ${viewportState.height}px)`,
             zIndex: 100
           }
         }}
@@ -478,16 +491,12 @@ const ChatSection = () => {
               onClick={() => {
                 setIsUserChatting(false);
                 setShouldMaintainFocus(false);
-                // Restore page scrolling on mobile
-                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-                if (isMobile) {
-                  document.body.style.overflow = '';
-                  document.body.style.position = '';
-                  document.body.style.width = '';
-                  document.body.style.top = '';
+                // Viewport restoration is handled automatically by MobileViewportManager
+                if (inputRef.current) {
+                  inputRef.current.blur();
                 }
               }}
-              className="text-gray-600 hover:text-red-600 hover:bg-red-50 transition-colors"
+              className="text-gray-600 hover:text-red-600 hover:bg-red-50 transition-colors touch-optimized"
               title="Close Chat"
             >
               ✕
@@ -516,18 +525,20 @@ const ChatSection = () => {
         ref={messagesContainerRef}
         className="flex-1 overflow-y-auto p-4 space-y-4 chat-scrollbar"
         style={{
-          // Independent scrolling container
-          scrollBehavior: 'smooth',
+          // Independent scrolling container with modern viewport support
+          scrollBehavior: mobileViewport.isMobileDevice ? 'auto' : 'smooth', // Better performance on mobile
           minHeight: 0, // Allow flex shrinking
           height: 'auto',
           maxHeight: isMaximized 
-            ? 'calc(100vh - 140px)' 
+            ? viewportState.dynamicViewportSupported ? 'calc(100dvh - 140px)' : 'calc(100vh - 140px)'
             : (isUserChatting || shouldMaintainFocus) 
-              ? 'calc(100vh - 140px)' // Full screen minus header and input
+              ? `calc(var(--available-height, ${viewportState.height - viewportState.keyboardHeight}px) - 140px)`
               : 'calc(500px - 140px)',
           // Ensure this scroll is independent from page scroll
           overscrollBehavior: 'contain',
-          WebkitOverflowScrolling: 'touch'
+          WebkitOverflowScrolling: 'touch',
+          // CSS containment for better performance
+          contain: 'layout style paint'
         }}
       >
         {messages.map((message) => (
@@ -568,30 +579,54 @@ const ChatSection = () => {
       </div>
 
       {/* Input - Fixed at bottom of chat window */}
-      <div className={`input-container p-4 border-t border-indigo-100/50 bg-white/90 transition-all duration-300 ${
+      <div className={`input-container p-4 border-t border-indigo-100/50 bg-white/90 transition-all duration-300 keyboard-transition ${
         isMaximized 
           ? 'sticky bottom-0 z-10' 
-          : 'focus-within:fixed focus-within:bottom-0 focus-within:left-0 focus-within:right-0 focus-within:z-[10000] focus-within:bg-white focus-within:border-t focus-within:border-slate-200 focus-within:shadow-lg'
-      }`}
+          : isKeyboardVisible 
+            ? 'fixed bottom-0 left-0 right-0 z-[10000] bg-white border-t border-slate-200 shadow-lg'
+            : 'focus-within:fixed focus-within:bottom-0 focus-within:left-0 focus-within:right-0 focus-within:z-[10000] focus-within:bg-white focus-within:border-t focus-within:border-slate-200 focus-within:shadow-lg'
+      } ${mobileViewport.isMobileDevice ? 'touch-optimized' : ''}`}
       style={{
-        backdropFilter: 'blur(8px)'
+        backdropFilter: 'blur(8px)',
+        // Position input above keyboard using CSS custom property
+        bottom: isKeyboardVisible ? `var(--keyboard-height, 0px)` : 0,
+        transform: isKeyboardVisible && mobileViewport.isIOSDevice 
+          ? `translateY(calc(-1 * var(--keyboard-height, 0px)))` 
+          : 'none'
       }}>
         <div className="flex items-center gap-2">
           <Input
+            ref={inputRef}
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyPress={handleKeyPress}
             onFocus={handleInputFocus}
             onBlur={handleInputBlur}
             placeholder={isVoiceConnected ? "Voice chat active - speak or type..." : "Share what's on your mind..."}
-            className="flex-1 bg-white border-blue-200 focus:ring-blue-400 focus:border-blue-400 text-gray-900 placeholder:text-gray-500"
+            className={`flex-1 bg-white border-blue-200 focus:ring-blue-400 focus:border-blue-400 text-gray-900 placeholder:text-gray-500 ${
+              mobileViewport.isMobileDevice ? 'no-zoom-input touch-optimized' : ''
+            }`}
             disabled={isLoading}
-            style={{ fontSize: '16px' }} // Prevents zoom on iOS
+            style={{ 
+              fontSize: '16px', // Prevents zoom on iOS
+              // Additional iOS Safari fixes
+              ...(mobileViewport.isIOSDevice && {
+                WebkitAppearance: 'none',
+                borderRadius: '8px'
+              })
+            }}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="none"
+            spellCheck="false"
           />
           <Button
             onClick={sendMessage}
             disabled={!inputValue.trim() || isLoading}
-            className="bg-blue-500 hover:bg-blue-600 text-white"
+            className={`bg-blue-500 hover:bg-blue-600 text-white keyboard-transition ${
+              mobileViewport.isMobileDevice ? 'touch-optimized' : ''
+            }`}
+            type="submit"
           >
             <Send className="w-4 h-4" />
           </Button>
@@ -599,11 +634,11 @@ const ChatSection = () => {
             <Button
               onClick={isVoiceConnected ? endVoiceConversation : startVoiceConversation}
               disabled={isLoading}
-              className={`transition-colors ${
+              className={`transition-colors keyboard-transition ${
                 isVoiceConnected
                   ? 'bg-red-500 hover:bg-red-600 text-white'
                   : 'bg-green-500 hover:bg-green-600 text-white'
-              }`}
+              } ${mobileViewport.isMobileDevice ? 'touch-optimized' : ''}`}
               title={isVoiceConnected ? 'End Voice Chat' : 'Start Voice Chat'}
             >
               {isVoiceConnected ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
