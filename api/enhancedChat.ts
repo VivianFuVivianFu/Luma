@@ -418,15 +418,30 @@ function detectEmotionalContext(message: string): string {
 function getFallbackResponse(userMessage: string): string {
   const message = userMessage.toLowerCase();
   
+  // Array of varied responses to avoid repetition
+  const generalResponses = [
+    "I'm here with you right now. While I'm working through some technical adjustments, your thoughts and feelings matter to me. What would you like to share?",
+    "Even though I'm experiencing some connection challenges, I want you to know that I'm fully present with you. What's weighing on your heart today?",
+    "I'm here to listen and support you. Despite some technical hiccups on my end, our conversation is important to me. How are you feeling right now?",
+    "Your voice matters to me. While I'm managing some technical issues, I'm committed to being here with you. What's going through your mind?",
+    "I'm experiencing some technical adjustments, but my focus remains entirely on you. What would be most helpful to talk about right now?"
+  ];
+  
   if (message.includes('hello') || message.includes('hi')) {
     return "Hi there! I'm here to support you. While I'm experiencing some technical adjustments, I'm still available to listen. What's on your mind?";
   }
   
-  if (message.includes('sad') || message.includes('upset')) {
+  if (message.includes('sad') || message.includes('upset') || message.includes('hurt')) {
     return "I can sense you're going through something difficult. Even with some technical hiccups, I want you to know that your feelings are valid and I'm here with you. What would help right now?";
   }
   
-  return "I'm here with you, even though I'm experiencing some technical challenges at the moment. What's important to you right now that we can talk about?";
+  if (message.includes('anxious') || message.includes('worried') || message.includes('stress')) {
+    return "I hear that you're feeling anxious or stressed. Those feelings are completely understandable. Despite some technical challenges on my end, I'm here to support you through this. What's been on your mind?";
+  }
+  
+  // Return a random general response to add variety
+  const randomIndex = Math.floor(Math.random() * generalResponses.length);
+  return generalResponses[randomIndex];
 }
 
 /**

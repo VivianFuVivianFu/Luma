@@ -104,6 +104,15 @@ function getFallbackResponse(userMessage: string): string {
     return "I can sense you're feeling anxious. That's completely understandable. What's been weighing on your mind?";
   }
   
-  // General supportive response
-  return "I'm here with you. Whatever you're going through, you don't have to face it alone. What's on your mind today?";
+  // General supportive responses with variety
+  const supportiveResponses = [
+    "I'm here with you. Whatever you're going through, you don't have to face it alone. What's on your mind today?",
+    "Your thoughts and feelings are important to me. I'm here to listen and support you. How can I help right now?",
+    "I want you to know that I'm fully present with you in this moment. What would be most helpful to talk about?",
+    "You've taken a brave step by reaching out. I'm here to support you through whatever you're experiencing. What's weighing on your heart?",
+    "I'm committed to being here with you. Your wellbeing matters deeply to me. What's going through your mind right now?"
+  ];
+  
+  const randomIndex = Math.floor(Math.random() * supportiveResponses.length);
+  return supportiveResponses[randomIndex];
 }
