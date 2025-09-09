@@ -21,8 +21,12 @@ export const sbAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
     autoRefreshToken: false,
     persistSession: false,
     detectSessionInUrl: false,
-    storageKey: undefined, // Completely disable storage
-    storage: undefined
+    storageKey: 'luma-admin-auth', // Unique storage key to separate from main client
+    storage: typeof window !== 'undefined' ? {
+      getItem: () => null, // Always return null to prevent session persistence
+      setItem: () => {}, // No-op
+      removeItem: () => {} // No-op
+    } : undefined
   },
   global: {
     headers: {
