@@ -65,6 +65,66 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
     return `${messageIdPrefix.current}-${messageCounter.current}`;
   }, []);
 
+  // Personalized greeting function for new and returning users
+  const addPersonalizedGreeting = async (user: any) => {
+    try {
+      let greetingContent = "";
+      
+      if (user?.id) {
+        // Check if this is a returning user with previous conversations
+        const { data: existingProfile } = await supabase
+          .from('user_profiles')
+          .select('display_name, created_at')
+          .eq('id', user.id)
+          .single();
+          
+        // Check for recent memories to personalize greeting
+        const { data: recentMemories } = await supabase
+          .from('memories')
+          .select('content, created_at')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(3);
+          
+        const displayName = existingProfile?.display_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'there';
+        const isReturningUser = existingProfile && recentMemories && recentMemories.length > 0;
+        
+        if (isReturningUser) {
+          // Returning user greeting with memory context
+          greetingContent = `Welcome back, ${displayName}! I'm Luma, your AI emotional companion. I remember our previous conversations, and I'm here to continue supporting you on your journey. Whether you'd like to explore something new or follow up on what we've discussed before, I'm ready to listen with care and understanding. How are you feeling today?`;
+        } else {
+          // New user greeting
+          greetingContent = `Hi ${displayName}! I'm Luma, your AI emotional companion. I'm here to provide warm, personalized support as you navigate through whatever you're experiencing. Whether you want to talk through your feelings, work through a challenge, or just have someone listen, I'm here for you with empathy and understanding. What's on your mind today?`;
+        }
+      } else {
+        // Anonymous/guest user greeting
+        greetingContent = "Hi there! I'm Luma, your AI emotional companion. I'm here to provide warm, personalized support and help you navigate through whatever you're experiencing. Whether you want to talk through your feelings, work through a challenge, or just have someone listen, I'm here for you. What's on your mind today?";
+      }
+      
+      const greetingMessage: Message = {
+        id: generateMessageId(),
+        content: greetingContent,
+        sender: 'luma',
+        timestamp: new Date()
+      };
+      
+      setMessages([greetingMessage]);
+      console.log('[Dashboard] Added personalized greeting message');
+      
+    } catch (error) {
+      console.error('[Dashboard] Error creating personalized greeting:', error);
+      
+      // Fallback to basic greeting
+      const fallbackGreeting: Message = {
+        id: generateMessageId(),
+        content: "Hi there! I'm Luma, your AI emotional companion. I'm here to provide warm, personalized support and help you navigate through whatever you're experiencing. What's on your mind today?",
+        sender: 'luma',
+        timestamp: new Date()
+      };
+      setMessages([fallbackGreeting]);
+    }
+  };
+
   // 🔧 IMPROVED: Enhanced scroll function for better mobile UX
   const scrollToBottom = (force = false) => {
     // 🎯 FIX: More reliable scroll to bottom
@@ -136,15 +196,25 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
           setCurrentUserId(session.user.id);
           setIsMemoryLoaded(true);
           console.log('[Dashboard] User session initialized for user:', session.user.email);
+          
+          // Add personalized greeting message if no messages exist
+          if (messages.length === 0) {
+            await addPersonalizedGreeting(session.user);
+          }
         }
       } catch (error) {
         console.error('[Dashboard] Failed to initialize user session:', error);
         setIsMemoryLoaded(true); // Allow chat to work without memory
+        
+        // Still add greeting even if session fails
+        if (messages.length === 0) {
+          await addPersonalizedGreeting(null);
+        }
       }
     };
 
     initializeUserSession();
-  }, []);
+  }, [messages.length, generateMessageId]);
 
 
   // Detect mobile device and scroll page to top when component loads
