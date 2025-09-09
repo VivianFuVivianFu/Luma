@@ -120,3 +120,4 @@ twa-manifest.json
 
 # Vercel local config
 .vercel
+.env*.local
