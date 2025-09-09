@@ -161,7 +161,7 @@ const MemoryTestPanel: React.FC = () => {
         addTestResult('Database Tables', 'error', `Database check failed: ${error.message}`);
       } else {
         addTestResult('Database Tables', 'success', `Found ${data?.length || 0} memory-related tables`, {
-          tablesFound: data?.map(t => t.table_name) || [],
+          tablesFound: data?.map((t: any) => t.table_name) || [],
           totalTables: data?.length || 0
         });
       }

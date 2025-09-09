@@ -276,13 +276,19 @@ ${memories.map(m => `- ${m.content} (${m.type})`).join('\n')}`;
  * Process with Claude 3.5 Haiku
  */
 async function processWithClaude(contextData: { systemPrompt: string, messages: Array<{role: string, content: string}> }): Promise<string> {
-  // For Edge runtime, try both CLAUDE_API_KEY and VITE_CLAUDE_API_KEY
+  // Comprehensive environment variable access for Edge runtime
   const apiKey = process.env.CLAUDE_API_KEY || process.env.VITE_CLAUDE_API_KEY;
   
-  console.log('[EnhancedChat] API key check:', { 
+  console.log('[EnhancedChat] Environment debug:', { 
     hasClaudeKey: !!process.env.CLAUDE_API_KEY, 
+    hasViteClaudeKey: !!process.env.VITE_CLAUDE_API_KEY,
     claudeKeyLength: process.env.CLAUDE_API_KEY?.length || 0,
-    hasAnyKey: !!apiKey
+    viteClaudeKeyLength: process.env.VITE_CLAUDE_API_KEY?.length || 0,
+    hasAnyKey: !!apiKey,
+    finalKeyLength: apiKey?.length || 0,
+    runtime: 'edge',
+    nodeEnv: process.env.NODE_ENV,
+    vercelEnv: process.env.VERCEL_ENV
   });
   
   if (!apiKey) {
@@ -290,36 +296,88 @@ async function processWithClaude(contextData: { systemPrompt: string, messages: 
     return getIntelligentFallback(contextData.messages[contextData.messages.length - 1]?.content || 'hello');
   }
 
-  try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-3-5-haiku-20241022',
-        max_tokens: 200,
-        temperature: 0.7,
-        system: contextData.systemPrompt,
-        messages: contextData.messages
-      })
-    });
+  // Retry logic with exponential backoff
+  const maxRetries = 2;
+  let lastError: Error | null = null;
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[EnhancedChat] Claude API error:', { status: response.status, error: errorText });
-      throw new Error(`Claude API error: ${response.status} - ${errorText}`);
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`[EnhancedChat] Claude API attempt ${attempt}/${maxRetries}`);
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+      
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model: 'claude-3-5-haiku-20241022',
+          max_tokens: 300,
+          temperature: 0.7,
+          system: contextData.systemPrompt,
+          messages: contextData.messages
+        }),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[EnhancedChat] Claude API error (attempt ${attempt}):`, { 
+          status: response.status, 
+          error: errorText,
+          headers: Object.fromEntries(response.headers.entries())
+        });
+        
+        // Don't retry on 4xx errors (client errors)
+        if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+          throw new Error(`Claude API client error: ${response.status} - ${errorText}`);
+        }
+        
+        lastError = new Error(`Claude API error: ${response.status} - ${errorText}`);
+        
+        // Wait before retry (exponential backoff)
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+          continue;
+        }
+        throw lastError;
+      }
+
+      const data = await response.json();
+      console.log('[EnhancedChat] Claude API success:', { 
+        hasContent: !!data.content, 
+        contentLength: data.content?.[0]?.text?.length,
+        attempt
+      });
+      
+      const responseText = data.content?.[0]?.text?.trim();
+      if (!responseText) {
+        throw new Error('Empty response from Claude API');
+      }
+      
+      return responseText;
+      
+    } catch (error) {
+      console.error(`[EnhancedChat] Claude processing error (attempt ${attempt}):`, error);
+      lastError = error instanceof Error ? error : new Error(String(error));
+      
+      // Wait before retry
+      if (attempt < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+        continue;
+      }
     }
-
-    const data = await response.json();
-    console.log('[EnhancedChat] Claude API success:', { hasContent: !!data.content, contentLength: data.content?.[0]?.text?.length });
-    return data.content[0]?.text?.trim() || 'I apologize, but I had trouble processing your message.';
-  } catch (error) {
-    console.error('[EnhancedChat] Claude processing error:', error);
-    return getFallbackResponse('I encountered a technical issue, but I\'m still here to support you.');
   }
+
+  // All retries failed - return intelligent fallback
+  console.error('[EnhancedChat] All Claude API attempts failed, using intelligent fallback');
+  return getIntelligentFallback(contextData.messages[contextData.messages.length - 1]?.content || 'hello');
 }
 
 /**

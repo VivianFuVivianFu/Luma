@@ -15,25 +15,39 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 })
 
-// Admin client for memory operations (bypasses RLS) - completely disable auth to avoid multiple GoTrueClient instances
-export const sbAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
-    detectSessionInUrl: false,
-    storageKey: 'luma-admin-auth', // Unique storage key to separate from main client
-    storage: typeof window !== 'undefined' ? {
-      getItem: () => null, // Always return null to prevent session persistence
-      setItem: () => {}, // No-op
-      removeItem: () => {} // No-op
-    } : undefined
-  },
-  global: {
-    headers: {
-      'Authorization': `Bearer ${supabaseServiceRoleKey}`
+// Admin client for memory operations (bypasses RLS) - singleton pattern to prevent conflicts
+let _sbAdmin: any = null;
+
+const createAdminClient = () => {
+  if (_sbAdmin) return _sbAdmin;
+  
+  _sbAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+      detectSessionInUrl: false,
+      storageKey: 'luma-admin-noauth', // Completely different storage key
+      storage: typeof window !== 'undefined' ? {
+        getItem: () => null,
+        setItem: () => {},
+        removeItem: () => {}
+      } : undefined
+    },
+    global: {
+      headers: {
+        'Authorization': `Bearer ${supabaseServiceRoleKey}`,
+        'apikey': supabaseServiceRoleKey
+      }
+    },
+    db: {
+      schema: 'public'
     }
-  }
-})
+  });
+  
+  return _sbAdmin;
+};
+
+export const sbAdmin = createAdminClient();
 
 export const isSupabaseConfigured = () => {
   return !!(supabaseUrl && supabaseAnonKey && supabaseServiceRoleKey)
