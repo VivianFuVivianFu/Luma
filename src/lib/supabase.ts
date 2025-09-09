@@ -15,16 +15,18 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 })
 
-// Admin client for memory operations (bypasses RLS) - minimal auth configuration to avoid multiple GoTrueClient instances
+// Admin client for memory operations (bypasses RLS) - completely disable auth to avoid multiple GoTrueClient instances
 export const sbAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
   auth: {
     autoRefreshToken: false,
     persistSession: false,
     detectSessionInUrl: false,
-    storage: {
-      getItem: () => null,
-      setItem: () => {},
-      removeItem: () => {}
+    storageKey: undefined, // Completely disable storage
+    storage: undefined
+  },
+  global: {
+    headers: {
+      'Authorization': `Bearer ${supabaseServiceRoleKey}`
     }
   }
 })
