@@ -45,7 +45,7 @@ const Index = () => {
         // For returning users, optionally fetch some recent memory context
         try {
           const { data: recentMemories } = await supabase
-            .from('memories')
+            .from('user_memories')
             .select('content, created_at')
             .eq('user_id', user.id)
             .order('created_at', { ascending: false })

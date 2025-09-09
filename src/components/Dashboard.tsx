@@ -46,6 +46,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string>(''); // Current authenticated user ID
   const [isMemoryLoaded, setIsMemoryLoaded] = useState(false);
+  const [greetingAdded, setGreetingAdded] = useState(false);
   const [showJournaling, setShowJournaling] = useState(false);
   const [systemStatus, setSystemStatus] = useState<SystemStatus>({
     cacheHitRate: 0,
@@ -80,7 +81,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
           
         // Check for recent memories to personalize greeting
         const { data: recentMemories } = await supabase
-          .from('memories')
+          .from('user_memories')
           .select('content, created_at')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
@@ -109,6 +110,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
       };
       
       setMessages([greetingMessage]);
+      setGreetingAdded(true);
       console.log('[Dashboard] Added personalized greeting message');
       
     } catch (error) {
@@ -122,6 +124,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
         timestamp: new Date()
       };
       setMessages([fallbackGreeting]);
+      setGreetingAdded(true);
     }
   };
 
@@ -197,8 +200,8 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
           setIsMemoryLoaded(true);
           console.log('[Dashboard] User session initialized for user:', session.user.email);
           
-          // Add personalized greeting message if no messages exist
-          if (messages.length === 0) {
+          // Add personalized greeting message if no messages exist and not already added
+          if (messages.length === 0 && !greetingAdded) {
             await addPersonalizedGreeting(session.user);
           }
         }
@@ -207,14 +210,14 @@ const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout, onBackToHome
         setIsMemoryLoaded(true); // Allow chat to work without memory
         
         // Still add greeting even if session fails
-        if (messages.length === 0) {
+        if (messages.length === 0 && !greetingAdded) {
           await addPersonalizedGreeting(null);
         }
       }
     };
 
     initializeUserSession();
-  }, [messages.length, generateMessageId]);
+  }, []); // Run only once on mount
 
 
   // Detect mobile device and scroll page to top when component loads
