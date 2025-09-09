@@ -32,8 +32,11 @@ export default async function handler(req: Request) {
     );
   }
 
+  let message: string = '';
+
   try {
-    const { message, history = [], userId }: ChatRequest = await req.json();
+    const { message: requestMessage, history = [], userId }: ChatRequest = await req.json();
+    message = requestMessage;
 
     if (!message || typeof message !== 'string') {
       return new Response(

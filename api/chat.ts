@@ -23,22 +23,25 @@ export default async function handler(req: Request) {
     );
   }
 
-  try {
-    // Extract userId from authorization header if available
-    let userId: string | undefined;
-    const authorization = req.headers.get('authorization');
-    if (authorization) {
-      try {
-        // Attempt to extract user ID from Bearer token or other auth methods
-        const token = authorization.replace('Bearer ', '');
-        // For now, we'll use a simple approach - in production you'd decode JWT
-        console.log('[Chat API] Authenticated request detected');
-      } catch (error) {
-        console.warn('[Chat API] Could not extract user ID from authorization');
-      }
+  // Extract userId from authorization header if available
+  let userId: string | undefined;
+  const authorization = req.headers.get('authorization');
+  if (authorization) {
+    try {
+      // Attempt to extract user ID from Bearer token or other auth methods
+      const token = authorization.replace('Bearer ', '');
+      // For now, we'll use a simple approach - in production you'd decode JWT
+      console.log('[Chat API] Authenticated request detected');
+    } catch (error) {
+      console.warn('[Chat API] Could not extract user ID from authorization');
     }
+  }
 
-    const { message, history = [], userId: requestUserId }: ChatRequest = await req.json();
+  let message: string = '';
+
+  try {
+    const { message: requestMessage, history = [], userId: requestUserId }: ChatRequest = await req.json();
+    message = requestMessage;
 
     if (!message || typeof message !== 'string') {
       return new Response(
