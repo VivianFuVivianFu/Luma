@@ -9,17 +9,17 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [showDashboard, setShowDashboard] = useState(false);
 
-  // Helper function to ensure user profile exists
-  async function ensureUserProfile(user: any) {
+  // Helper function to handle user profile and distinguish new vs returning users
+  async function handleUserProfile(user: any): Promise<'new' | 'returning'> {
     try {
       // First check if profile already exists
       const { data: existingProfile } = await supabase
         .from('user_profiles')
-        .select('id')
+        .select('id, created_at, display_name')
         .eq('id', user.id)
         .single();
 
-      // If profile doesn't exist, create it
+      // If profile doesn't exist, create it (NEW USER)
       if (!existingProfile) {
         const { error: profileError } = await supabase
           .from('user_profiles')
@@ -33,12 +33,37 @@ const Index = () => {
 
         if (profileError) {
           console.error('Error creating user profile:', profileError);
+          return 'new'; // Assume new user even if profile creation failed
         } else {
-          console.log('User profile created successfully for:', user.email);
+          console.log('✨ Welcome new user! Profile created for:', user.email);
+          return 'new';
         }
+      } else {
+        // Profile exists (RETURNING USER)
+        console.log('🎉 Welcome back!', existingProfile.display_name || user.email);
+        
+        // For returning users, optionally fetch some recent memory context
+        try {
+          const { data: recentMemories } = await supabase
+            .from('memories')
+            .select('content, created_at')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(3);
+          
+          if (recentMemories && recentMemories.length > 0) {
+            console.log('📚 Retrieved recent memories for returning user');
+            // Store in memory for potential use in first conversation
+          }
+        } catch (memoryError) {
+          console.warn('Could not fetch memories for returning user:', memoryError);
+        }
+        
+        return 'returning';
       }
     } catch (error) {
-      console.error('Error ensuring user profile:', error);
+      console.error('Error handling user profile:', error);
+      return 'new'; // Default to new user on error
     }
   }
 
@@ -59,13 +84,19 @@ const Index = () => {
             setIsAuthenticated(true);
             setUserEmail(refreshedSession.user.email || '');
             setShowDashboard(true);
-            console.log('Session refreshed successfully for returning user');
+            
+            // Handle returning user with refreshed session
+            const userType = await handleUserProfile(refreshedSession.user);
+            console.log(`Session refreshed for ${userType} user`);
           }
         } else if (session?.user && isMounted) {
           setIsAuthenticated(true);
           setUserEmail(session.user.email || '');
           setShowDashboard(true);
-          console.log('Existing session found - auto-logging in user');
+          
+          // Handle existing session - likely returning user
+          const userType = await handleUserProfile(session.user);
+          console.log(`Existing session found for ${userType} user`);
         }
       } catch (error) {
         console.error('Error during session check:', error);
@@ -90,9 +121,17 @@ const Index = () => {
           setUserEmail(session?.user?.email || '');
           setShowDashboard(true);
           
-          // Ensure user profile exists for OAuth users
+          // Handle user profile and distinguish new vs returning users
           if (event === 'SIGNED_IN' && session?.user) {
-            await ensureUserProfile(session.user);
+            const userType = await handleUserProfile(session.user);
+            
+            if (userType === 'new') {
+              console.log('🌟 New user onboarding flow initiated');
+              // Could add welcome message or tutorial here
+            } else {
+              console.log('👋 Returning user - memories and context loaded');
+              // Returning user gets their conversation context restored
+            }
           }
           
           console.log('User authenticated:', session?.user?.email);

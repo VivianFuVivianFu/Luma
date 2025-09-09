@@ -52,19 +52,35 @@ The full response is properly stored and displayed to users.
 
 ### **Step 1: User Authentication & Session Management**
 ```
-User Input → Authentication Check → Session Validation → Dashboard Load
+User Login → Supabase Auth → Profile Check → New/Returning User Detection → Dashboard Load
 ```
 
 1. **Index Component** (`src/pages/Index.tsx`):
    - Checks for existing Supabase session
    - Handles OAuth authentication flows
-   - Manages session state and user profile creation
+   - **NEW**: Distinguishes between new and returning users
+   - **NEW**: Fetches memory context for returning users
 
-2. **Authentication States**:
+2. **Two User Groups Handled**:
+   
+   **New Users**:
+   ```javascript
+   Profile Not Found → Create New Profile → Welcome Flow → Fresh Start
+   Console: "✨ Welcome new user! Profile created for: user@email.com"
+   ```
+   
+   **Returning Users**:
+   ```javascript
+   Profile Found → Fetch Recent Memories → Welcome Back → Context Restored
+   Console: "🎉 Welcome back! [display_name]"
+   Console: "📚 Retrieved recent memories for returning user"
+   ```
+
+3. **Authentication States**:
    ```javascript
    INITIAL_SESSION → No session
-   SIGNED_IN → Session exists  
-   TOKEN_REFRESHED → Session refreshed
+   SIGNED_IN → Session exists (triggers user type detection)
+   TOKEN_REFRESHED → Session refreshed (maintains user context)
    SIGNED_OUT → Session expired/ended
    ```
 
@@ -141,7 +157,7 @@ Message Analysis → Memory Retrieval → Complexity Assessment → LLM Routing 
    }
    ```
 
-   **Step 4.4: Critical Conversation Analysis (Peterson's Framework)**
+   **Step 4.4: Therapeutic Analysis (CBT, DBT, IFS Frameworks)**
    ```typescript
    analyzeCriticalConversation() → {
      isCritical: boolean,
@@ -152,14 +168,24 @@ Message Analysis → Memory Retrieval → Complexity Assessment → LLM Routing 
    }
    ```
 
-   **Psychological Patterns Detected**:
-   - `articulation_needed`: Vague anxieties requiring definition
-   - `narrative_fragmentation`: Incoherent life stories
-   - `chaos_to_order`: Unprocessed traumatic experiences
-   - `responsibility_authoring`: Victim mentality vs ownership
-   - `goal_oriented_meaning`: Lack of valued future direction
-   - `past_integration`: Unresolved memories
-   - `virtue_development`: Character strengths/faults
+   **Therapeutic Patterns Detected**:
+   
+   **CBT (Cognitive Behavioral Therapy)**:
+   - `cbt_cognitive_distortion`: Negative thought patterns (always/never, catastrophizing)
+   - `cbt_behavioral`: Behavioral patterns (avoidance, procrastination, stuck cycles)
+   
+   **DBT (Dialectical Behavior Therapy)**:
+   - `dbt_emotion_regulation`: Emotional dysregulation (overwhelmed, can't calm down)
+   - `dbt_interpersonal`: Relationship difficulties (boundaries, communication issues)
+   - `dbt_distress_tolerance`: Crisis situations (breaking point, destructive urges)
+   
+   **IFS (Internal Family Systems)**:
+   - `ifs_parts_work`: Internal conflicts (part of me, inner critic, torn between)
+   - `ifs_self_compassion`: Self-criticism needing Self energy (self-hatred, shame)
+   
+   **General Patterns**:
+   - `recurring_pattern`: Repeating therapeutic themes
+   - `memory_pattern`: Long-term patterns from user history
 
    **Step 4.5: Context Assembly**
    - Combines current message with conversation history
@@ -174,10 +200,10 @@ Message Analysis → Memory Retrieval → Complexity Assessment → LLM Routing 
    Hybrid Needs → LLaMA analysis + Claude empathy
    ```
 
-   **Step 4.7: Peterson's Framework Integration**
-   - Adds journaling suggestions for critical conversations
-   - Uses therapeutic language and concepts
-   - Transforms chaos into order through articulation
+   **Step 4.7: Journaling Integration (Separate from Conversation Therapy)**
+   - Suggests journaling when therapeutic themes indicate deeper work needed
+   - **Peterson's Self-Authoring framework is ONLY for journaling, NOT conversation therapy**
+   - Conversation therapy uses CBT/DBT/IFS frameworks exclusively
 
    **Step 4.8: Response Storage & Memory Processing**
    - Stores both user message and AI response

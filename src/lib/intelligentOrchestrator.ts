@@ -128,11 +128,11 @@ export class IntelligentOrchestrator {
       metrics.llmProcessingTime = Date.now() - llmStartTime;
       metrics.complexityScore = complexityAnalysis.score;
 
-      // Step 6: Add narrative therapy suggestion if psychological principles indicate need
+      // Step 6: Add journaling suggestion if therapeutic themes indicate deeper work needed
       if (criticalAnalysis.suggestJournaling) {
-        const journalingPrompt = `\n\n📝 **Transform Chaos into Order**: ${criticalAnalysis.journalingReason} The Journal feature offers structured self-authoring exercises based on Dr. Peterson's proven framework—transform vague suffering into clear insight through the power of articulation.`;
+        const journalingPrompt = `\n\n📝 **Consider Journaling**: ${criticalAnalysis.journalingReason} The Journal feature offers guided self-authoring exercises for deeper self-exploration and reflection.`;
         response += journalingPrompt;
-        console.log(`[Orchestrator] Added narrative therapy suggestion for themes: ${criticalAnalysis.criticalThemes.join(', ')}`);
+        console.log(`[Orchestrator] Added journaling suggestion for themes: ${criticalAnalysis.criticalThemes.join(', ')}`);
       }
 
       // Step 7: Store response and trigger async memory extraction
@@ -262,8 +262,8 @@ export class IntelligentOrchestrator {
   }
 
   /**
-   * Analyze conversation for psychological patterns requiring narrative therapy and articulation
-   * Based on Peterson's principles: transforming chaos into order through responsible self-authoring
+   * Analyze conversation for therapeutic needs using CBT, DBT, and IFS frameworks
+   * Separates conversation therapy from journaling - Peterson's framework is journaling-only
    */
   private analyzeCriticalConversation(
     message: string, 
@@ -274,98 +274,98 @@ export class IntelligentOrchestrator {
     let criticalityScore = 0;
     const criticalThemes: string[] = [];
     
-    // VAGUE ANXIETIES & ARTICULATION NEEDS - The "Dragons" of undefined chaos
-    const vagueAnxieties = [
-      'i feel weird', 'something\'s wrong', 'i don\'t know what\'s bothering me',
-      'general anxiety', 'vague feeling', 'can\'t put my finger on it',
-      'uncomfortable', 'something off', 'uneasy', 'restless', 'unsettled'
+    // CBT: COGNITIVE DISTORTIONS - Negative thought patterns needing reframing
+    const cognitiveDistortions = [
+      'always', 'never', 'everyone', 'nobody', 'terrible', 'awful',
+      'can\'t handle', 'should have', 'must be', 'all or nothing',
+      'catastrophizing', 'worst case', 'i\'m stupid', 'i\'m worthless'
     ];
-    vagueAnxieties.forEach(anxiety => {
-      if (text.includes(anxiety)) {
-        criticalityScore += 0.4;
-        criticalThemes.push('articulation_needed');
-      }
-    });
-
-    // NARRATIVE FRAGMENTATION - Incoherent or incomplete life stories
-    const narrativeFragments = [
-      'my life doesn\'t make sense', 'nothing connects', 'feels meaningless',
-      'random things happening', 'no story', 'disconnected events',
-      'can\'t see the bigger picture', 'life feels scattered', 'no direction'
-    ];
-    narrativeFragments.forEach(fragment => {
-      if (text.includes(fragment)) {
-        criticalityScore += 0.35;
-        criticalThemes.push('narrative_fragmentation');
-      }
-    });
-
-    // CHAOS vs ORDER - Unprocessed experiences creating psychological distress
-    const chaosIndicators = [
-      'out of control', 'chaos', 'everything\'s falling apart', 'can\'t organize',
-      'mess', 'scattered', 'unraveling', 'spinning', 'hurricane', 'storm',
-      'drowning', 'overwhelmed by everything', 'can\'t make sense'
-    ];
-    chaosIndicators.forEach(chaos => {
-      if (text.includes(chaos)) {
-        criticalityScore += 0.4;
-        criticalThemes.push('chaos_to_order');
-      }
-    });
-
-    // RESPONSIBILITY AVOIDANCE - Victim mentality vs authorship
-    const responsibilityAvoidance = [
-      'not my fault', 'things happen to me', 'bad luck', 'victim',
-      'everyone else', 'they did this', 'circumstances', 'helpless',
-      'can\'t control anything', 'powerless', 'unfair'
-    ];
-    responsibilityAvoidance.forEach(avoidance => {
-      if (text.includes(avoidance)) {
+    cognitiveDistortions.forEach(distortion => {
+      if (text.includes(distortion)) {
         criticalityScore += 0.3;
-        criticalThemes.push('responsibility_authoring');
+        criticalThemes.push('cbt_cognitive_distortion');
       }
     });
 
-    // MEANINGLESSNESS & GOAL ABSENCE - Lack of valued future organizing perception
-    const meaninglessness = [
-      'what\'s the point', 'nothing matters', 'no purpose', 'meaningless',
-      'why bother', 'don\'t care', 'empty', 'void', 'no goals',
-      'no direction', 'drifting', 'aimless', 'lost'
+    // DBT: EMOTIONAL DYSREGULATION - Intense emotions needing regulation skills
+    const emotionalDysregulation = [
+      'out of control', 'can\'t stop crying', 'rage', 'fury', 'overwhelmed',
+      'emotional rollercoaster', 'up and down', 'intense feelings',
+      'can\'t calm down', 'spiraling', 'losing it', 'breaking down'
     ];
-    meaninglessness.forEach(meaning => {
-      if (text.includes(meaning)) {
+    emotionalDysregulation.forEach(emotion => {
+      if (text.includes(emotion)) {
+        criticalityScore += 0.4;
+        criticalThemes.push('dbt_emotion_regulation');
+      }
+    });
+
+    // DBT: INTERPERSONAL DIFFICULTIES - Relationship conflicts needing skills
+    const interpersonalIssues = [
+      'relationship problems', 'can\'t communicate', 'always fighting',
+      'toxic relationship', 'boundaries', 'people pleasing', 'conflict',
+      'misunderstood', 'can\'t say no', 'walking on eggshells'
+    ];
+    interpersonalIssues.forEach(issue => {
+      if (text.includes(issue)) {
         criticalityScore += 0.35;
-        criticalThemes.push('goal_oriented_meaning');
+        criticalThemes.push('dbt_interpersonal');
       }
     });
 
-    // UNINTEGRATED PAST EXPERIENCES - Traumatic or shameful memories needing processing
-    const unintegratedPast = [
-      'haunted by', 'can\'t get over', 'keeps coming back', 'traumatic',
-      'shameful', 'regret', 'guilt', 'painful memories', 'can\'t forget',
-      'stuck in the past', 'why did this happen', 'unresolved'
+    // DBT: DISTRESS TOLERANCE - Crisis situations needing coping skills
+    const distressTolerance = [
+      'crisis', 'emergency', 'can\'t cope', 'falling apart', 'breaking point',
+      'suicidal', 'self-harm', 'urges', 'impulsive', 'destructive behavior',
+      'addiction', 'relapse', 'can\'t resist'
     ];
-    unintegratedPast.forEach(past => {
-      if (text.includes(past)) {
+    distressTolerance.forEach(distress => {
+      if (text.includes(distress)) {
+        criticalityScore += 0.5;
+        criticalThemes.push('dbt_distress_tolerance');
+      }
+    });
+
+    // IFS: INTERNAL CONFLICTS - Parts work for internal healing
+    const internalConflicts = [
+      'part of me', 'inner critic', 'internal battle', 'conflicted',
+      'torn between', 'inner child', 'different sides', 'self-criticism',
+      'inner voice', 'sabotaging myself', 'inner conflict'
+    ];
+    internalConflicts.forEach(conflict => {
+      if (text.includes(conflict)) {
         criticalityScore += 0.35;
-        criticalThemes.push('past_integration');
+        criticalThemes.push('ifs_parts_work');
       }
     });
 
-    // CHARACTER DEVELOPMENT NEEDS - Virtues vs Faults requiring articulation
-    const characterStruggles = [
-      'bad person', 'character flaws', 'weakness', 'strength',
-      'who i really am', 'authentic self', 'values', 'principles',
-      'moral', 'ethical', 'integrity', 'courage', 'honesty'
+    // IFS: SELF-COMPASSION NEEDS - Harsh self-treatment requiring Self energy
+    const selfCompassionNeeds = [
+      'hate myself', 'i\'m terrible', 'can\'t forgive myself', 'self-hatred',
+      'hard on myself', 'perfectionist', 'never good enough', 'shame',
+      'guilt', 'self-blame', 'beating myself up'
     ];
-    characterStruggles.forEach(character => {
-      if (text.includes(character)) {
-        criticalityScore += 0.25;
-        criticalThemes.push('virtue_development');
+    selfCompassionNeeds.forEach(need => {
+      if (text.includes(need)) {
+        criticalityScore += 0.4;
+        criticalThemes.push('ifs_self_compassion');
       }
     });
 
-    // RECURRING PATTERNS - Narrative psychology: repeating themes indicate fragmented story
+    // CBT: BEHAVIORAL PATTERNS - Actions needing behavioral interventions
+    const behavioralPatterns = [
+      'avoidance', 'procrastination', 'can\'t get motivated', 'stuck',
+      'same pattern', 'bad habits', 'cycle', 'routine problems',
+      'can\'t break', 'keep doing', 'automatic'
+    ];
+    behavioralPatterns.forEach(pattern => {
+      if (text.includes(pattern)) {
+        criticalityScore += 0.3;
+        criticalThemes.push('cbt_behavioral');
+      }
+    });
+
+    // RECURRING THERAPEUTIC THEMES - Pattern recognition across sessions
     const recentMessages = conversationHistory.slice(-5).map(m => m.content.toLowerCase()).join(' ');
     const recurringThemes = [
       'again', 'same thing', 'pattern', 'cycle', 'repeat', 'always',
@@ -379,47 +379,41 @@ export class IntelligentOrchestrator {
     });
     if (hasRecurringTheme || criticalThemes.length >= 2) {
       criticalityScore += 0.2;
-      criticalThemes.push('recurring_narrative');
+      criticalThemes.push('recurring_pattern');
     }
 
-    // MEMORY INTEGRATION - Long-term patterns requiring coherent narrative
-    const criticalMemories = memoryResult.criticalInsights.filter(insight => 
-      insight.content.includes('unresolved') || 
-      insight.content.includes('recurring') ||
+    // MEMORY-BASED PATTERNS - Long-term therapeutic themes
+    const therapeuticMemories = memoryResult.criticalInsights.filter(insight => 
+      insight.content.includes('cognitive') || 
+      insight.content.includes('emotional') ||
+      insight.content.includes('behavioral') ||
       insight.content.includes('pattern') ||
-      insight.content.includes('chaos') ||
-      insight.content.includes('unclear')
+      insight.content.includes('trigger')
     );
-    if (criticalMemories.length > 0) {
+    if (therapeuticMemories.length > 0) {
       criticalityScore += 0.15;
-      criticalThemes.push('memory_integration');
+      criticalThemes.push('memory_pattern');
     }
 
     const isCritical = criticalityScore >= 0.5;
-    const suggestJournaling = criticalityScore >= 0.35; // Lower threshold for Peterson's framework
+    const suggestJournaling = criticalityScore >= 0.4; // Suggest journaling for deeper work
 
     let journalingReason = '';
     if (suggestJournaling) {
-      if (criticalThemes.includes('articulation_needed')) {
-        journalingReason = 'Those vague feelings are "dragons" of undefined chaos. Writing will transform them into specific, solvable problems you can actually address.';
-      } else if (criticalThemes.includes('narrative_fragmentation')) {
-        journalingReason = 'Your life story seems fragmented. Self-authoring exercises can help weave these pieces into a coherent, meaningful narrative.';
-      } else if (criticalThemes.includes('chaos_to_order')) {
-        journalingReason = 'Confronting this chaos through structured writing will help you extract meaning and create habitable order from the storm.';
-      } else if (criticalThemes.includes('responsibility_authoring')) {
-        journalingReason = 'Taking responsibility as the author of your own life story is where meaning begins. Journaling helps you claim that authorship.';
-      } else if (criticalThemes.includes('goal_oriented_meaning')) {
-        journalingReason = 'A clear, valued future goal provides powerful defense against suffering. Let\'s help you discover what could make your current struggles worthwhile.';
-      } else if (criticalThemes.includes('past_integration')) {
-        journalingReason = 'Unprocessed experiences create ongoing chaos. Writing helps transform these memories into wisdom and integrate them into your larger story.';
-      } else if (criticalThemes.includes('virtue_development')) {
-        journalingReason = 'Articulating your character—both strengths and faults—is essential for authentic self-development and meaningful action.';
+      if (criticalThemes.includes('cbt_cognitive_distortion')) {
+        journalingReason = 'I notice some thought patterns that might benefit from deeper exploration. Journaling can help identify and reframe these cognitive patterns through structured self-reflection.';
+      } else if (criticalThemes.includes('dbt_emotion_regulation')) {
+        journalingReason = 'These intense emotions suggest journaling could be helpful for processing and understanding your emotional experiences more deeply.';
+      } else if (criticalThemes.includes('ifs_parts_work')) {
+        journalingReason = 'There seems to be some internal conflict happening. Journaling with self-authoring exercises could help you understand and integrate these different parts of yourself.';
+      } else if (criticalThemes.includes('ifs_self_compassion')) {
+        journalingReason = 'I hear some self-criticism. Journaling can be a space to develop more self-compassion and understanding through structured reflection.';
       } else {
-        journalingReason = 'This moment calls for the transformative power of articulation—turning internal chaos into clear, actionable insight through responsible self-authoring.';
+        journalingReason = 'This seems like an important moment for deeper reflection. Journaling could help you process these experiences more thoroughly.';
       }
     }
 
-    console.log(`[Orchestrator] Narrative Analysis: ${criticalityScore.toFixed(2)} - Themes: ${criticalThemes.join(', ')}`);
+    console.log(`[Orchestrator] Therapeutic Analysis: ${criticalityScore.toFixed(2)} - Themes: ${criticalThemes.join(', ')}`);
 
     return {
       isCritical,
