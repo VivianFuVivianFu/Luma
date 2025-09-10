@@ -205,11 +205,24 @@ function analyzeMessageComplexity(message: string): ComplexityAnalysis {
     factors.push('multi-part');
   }
 
-  // Therapeutic content
-  const therapeuticKeywords = ['therapy', 'counselor', 'relationship', 'trauma', 'anxiety'];
+  // Therapeutic and workplace content
+  const therapeuticKeywords = ['therapy', 'counselor', 'relationship', 'trauma', 'anxiety', 'depression', 'stress', 'panic'];
+  const workplaceKeywords = ['work', 'workplace', 'job', 'boss', 'colleague', 'office', 'career', 'employment', 'manager'];
+  const emotionalKeywords = ['feel', 'feeling', 'hurt', 'sad', 'angry', 'frustrated', 'worried', 'scared', 'upset'];
+  
   if (therapeuticKeywords.some(keyword => text.includes(keyword))) {
-    score += 0.4;
+    score += 0.3;
     factors.push('therapeutic-content');
+  }
+  
+  if (workplaceKeywords.some(keyword => text.includes(keyword))) {
+    score += 0.2;
+    factors.push('workplace-context');
+  }
+  
+  if (emotionalKeywords.some(keyword => text.includes(keyword))) {
+    score += 0.2;
+    factors.push('emotional-content');
   }
 
   let type = 'simple';
@@ -231,6 +244,35 @@ function getContextWindowSize(complexityScore: number): number {
 }
 
 /**
+ * Extract key context from message and conversation history
+ */
+function extractMessageContext(message: string, contextMessages: Array<{role: string, content: string}>): string {
+  const text = message.toLowerCase();
+  let context = '';
+  
+  // Analyze what the user is trying to discuss
+  if (text.includes('workplace') || text.includes('work')) {
+    context += 'User wants to discuss workplace-related matters. ';
+  }
+  if (text.includes('happened') || text.includes('what happened')) {
+    context += 'User wants to share an experience or event. ';
+  }
+  if (text.includes('feel') || text.includes('feeling')) {
+    context += 'User is expressing emotional state. ';
+  }
+  
+  // Check conversation flow
+  if (contextMessages.length > 0) {
+    const lastMessage = contextMessages[contextMessages.length - 1];
+    if (lastMessage && lastMessage.role === 'assistant') {
+      context += `Last response was about: "${lastMessage.content.substring(0, 50)}...". `;
+    }
+  }
+  
+  return context;
+}
+
+/**
  * Assemble enhanced context with memories and dynamic prompting
  */
 function assembleEnhancedContext(
@@ -246,25 +288,31 @@ function assembleEnhancedContext(
 ${memories.map(m => `- ${m.content} (${m.type})`).join('\n')}`;
   }
 
-  // Build dynamic system prompt
-  const basePrompt = `You are Luma, an expert AI emotional companion with advanced conversation analysis capabilities.`;
+  // Build dynamic system prompt with enhanced context awareness
+  const basePrompt = `You are Luma, an expert AI emotional companion with advanced conversation analysis capabilities. You provide warm, empathetic, and contextually appropriate responses.`;
   
+  // Extract key context from current message and history
+  const messageContext = extractMessageContext(message, contextMessages);
   const contextAwareness = memories.length > 0 
-    ? `\n\nCONTEXT: You have ${memories.length} relevant insights from past conversations and ${contextMessages.length} recent messages. Reference specific details naturally.${memoryContext}`
-    : `\n\nCONTEXT: You have ${contextMessages.length} recent messages. This may be a new interaction.`;
+    ? `\n\nCONTEXT: You have ${memories.length} relevant insights from past conversations and ${contextMessages.length} recent messages. ${messageContext}${memoryContext}`
+    : `\n\nCONTEXT: You have ${contextMessages.length} recent messages. ${messageContext}`;
 
-  const complexityGuidance = complexity.score > 0.6
+  const responseGuidance = complexity.factors.includes('workplace-context')
+    ? `\n\nWORKPLACE RESPONSE: The user wants to discuss workplace matters. Listen empathetically to what happened, acknowledge their experience, and offer supportive guidance. Ask clarifying questions to understand their situation better.`
+    : complexity.factors.includes('emotional-content')
+    ? `\n\nEMOTIONAL RESPONSE: The user is expressing emotions. Validate their feelings, show empathy, and provide supportive guidance. Reference their specific emotional state.`
+    : complexity.score > 0.6
     ? `\n\nCOMPLEX QUERY (${complexity.type}): Provide structured analysis:
 1. Acknowledge complexity and what you understand
 2. Draw connections to past patterns when relevant
 3. Offer specific insights based on context
 4. Provide actionable guidance with reasoning
 5. Suggest follow-up exploration areas`
-    : `\n\nRESPONSE: Provide warm, empathetic support (2-4 sentences). Reference history naturally.`;
+    : `\n\nRESPONSE: Provide warm, empathetic support (2-4 sentences). Reference the conversation history naturally and respond to what the user is actually saying.`;
 
-  const memoryIntegration = `\n\nMEMORY USE: Reference past conversations when contextually appropriate. Build on previous insights and maintain consistency with established patterns.`;
+  const memoryIntegration = `\n\nIMPORTANT: Always respond to the user's current message in context of the conversation. Never give generic responses that ignore what they just said.`;
 
-  const systemPrompt = basePrompt + contextAwareness + complexityGuidance + memoryIntegration;
+  const systemPrompt = basePrompt + contextAwareness + responseGuidance + memoryIntegration;
 
   return {
     systemPrompt,
@@ -535,8 +583,14 @@ function getIntelligentFallback(userMessage: string): string {
     return "Loneliness can feel so heavy. Even when you're surrounded by people, sometimes you can still feel deeply alone. I want you to know that you're not truly alone - I'm here with you right now. What would connection look like for you?";
   }
   
-  // Goal and progress
-  if (message.includes('goal') || message.includes('want to') || message.includes('trying to')) {
+  // Workplace and work discussions (prioritize over generic goal responses)
+  if (message.includes('work') || message.includes('workplace') || message.includes('job') || message.includes('happened to me at')) {
+    return "I understand you want to discuss what happened at your workplace. That sounds really important and I'm here to listen with full attention. Workplace situations can be challenging and emotionally complex. Can you tell me more about what occurred?";
+  }
+  
+  // Goal and progress (but not when discussing workplace)
+  if ((message.includes('goal') || message.includes('want to') || message.includes('trying to')) && 
+      !message.includes('work') && !message.includes('workplace') && !message.includes('job')) {
     return "I love hearing about your aspirations and what you're working toward. Setting goals shows real strength and hope for your future. What step, even a small one, feels manageable for you right now?";
   }
   
