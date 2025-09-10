@@ -340,7 +340,21 @@ async function processWithClaude(contextData: { systemPrompt: string, messages: 
   });
   
   if (!apiKey) {
-    console.warn('[EnhancedChat] Claude API key not configured, using intelligent fallback');
+    console.error('[EnhancedChat] CRITICAL: Claude API key not configured!', {
+      envKeys: Object.keys(process.env).filter(k => k.includes('CLAUDE')),
+      hasClaudeKey: !!process.env.CLAUDE_API_KEY,
+      hasViteClaudeKey: !!process.env.VITE_CLAUDE_API_KEY
+    });
+    return getIntelligentFallback(contextData.messages[contextData.messages.length - 1]?.content || 'hello');
+  }
+  
+  // Validate API key format
+  if (!apiKey.startsWith('sk-ant-')) {
+    console.error('[EnhancedChat] CRITICAL: Claude API key invalid format!', {
+      keyPrefix: apiKey.substring(0, 10),
+      keyLength: apiKey.length,
+      expectedPrefix: 'sk-ant-'
+    });
     return getIntelligentFallback(contextData.messages[contextData.messages.length - 1]?.content || 'hello');
   }
 
@@ -423,8 +437,21 @@ async function processWithClaude(contextData: { systemPrompt: string, messages: 
     }
   }
 
-  // All retries failed - return intelligent fallback
-  console.error('[EnhancedChat] All Claude API attempts failed, using intelligent fallback');
+  // All retries failed - try LLaMA as backup before fallback
+  console.error('[EnhancedChat] All Claude API attempts failed, trying LLaMA as backup');
+  
+  // Try LLaMA as backup before falling to generic responses
+  if (process.env.VITE_TOGETHER_API_KEY) {
+    try {
+      console.log('[EnhancedChat] Attempting LLaMA backup for failed Claude request');
+      return await processWithLLaMA(contextData);
+    } catch (llamaError) {
+      console.error('[EnhancedChat] LLaMA backup also failed:', llamaError);
+    }
+  }
+  
+  // Only use fallback as absolute last resort
+  console.error('[EnhancedChat] FALLBACK: Using intelligent response as absolute last resort');
   return getIntelligentFallback(contextData.messages[contextData.messages.length - 1]?.content || 'hello');
 }
 
@@ -435,8 +462,8 @@ async function processWithLLaMA(contextData: { systemPrompt: string, messages: A
   const apiKey = process.env.VITE_TOGETHER_API_KEY;
   
   if (!apiKey) {
-    console.warn('[EnhancedChat] LLaMA API key not available, falling back to Claude');
-    return processWithClaude(contextData);
+    console.warn('[EnhancedChat] LLaMA API key not available');
+    throw new Error('LLaMA API key not configured');
   }
 
   try {
