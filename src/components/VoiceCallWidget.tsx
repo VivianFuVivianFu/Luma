@@ -1,3 +1,9 @@
+/*
+ * SECURITY NOTE: ElevenLabs API keys must be handled server-side only.
+ * The agentId should be validated server-side and signed tokens should be used.
+ * Never expose API keys in frontend code - use a proxy endpoint with proper authentication.
+ */
+
 import { useCallback, useMemo, useState } from 'react';
 import { useConversation } from '@11labs/react';
 import { Button } from '@/components/ui/button';
