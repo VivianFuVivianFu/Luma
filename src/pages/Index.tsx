@@ -1,208 +1,35 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
-import LandingPage from '../components/LandingPage';
-import Dashboard from '../components/Dashboard';
+import VideoSection from '@/components/VideoSection';
+import ChatSection from '@/components/ChatSectionFixed';
 
 const Index = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userEmail, setUserEmail] = useState<string>('');
-  const [loading, setLoading] = useState(true);
-  const [showDashboard, setShowDashboard] = useState(false);
+  return (
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-blue-900 via-purple-900 to-blue-800">
+      {/* Header Text */}
+      <div className="absolute top-4 sm:top-8 left-1/2 transform -translate-x-1/2 z-20 text-center px-4">
+        <h1 className="text-2xl sm:text-4xl font-bold text-white">You're Not Alone.</h1>
+      </div>
 
-  // Helper function to handle user profile and distinguish new vs returning users
-  async function handleUserProfile(user: any): Promise<'new' | 'returning'> {
-    try {
-      // First check if profile already exists
-      const { data: existingProfile } = await supabase
-        .from('user_profiles')
-        .select('id, created_at, display_name')
-        .eq('id', user.id)
-        .single();
+      {/* Main Content */}
+      <div className="relative z-10 min-h-screen flex items-start justify-center p-4 sm:p-8 lg:p-12 pt-20 sm:pt-32 lg:pt-48">
+        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8 w-full max-w-6xl">
+          {/* Video Section */}
+          <div className="flex-1 flex flex-col">
+            <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-white mb-3 sm:mb-4 text-center">Meet Luma</h3>
+            <div className="h-[300px] sm:h-[400px] lg:h-[500px]">
+              <VideoSection />
+            </div>
+          </div>
 
-      // If profile doesn't exist, create it (NEW USER)
-      if (!existingProfile) {
-        const { error: profileError } = await supabase
-          .from('user_profiles')
-          .insert({
-            id: user.id,
-            display_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
-            avatar_url: user.user_metadata?.avatar_url || null,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          });
-
-        if (profileError) {
-          console.error('Error creating user profile:', profileError);
-          return 'new'; // Assume new user even if profile creation failed
-        } else {
-          console.log('✨ Welcome new user! Profile created for:', user.email);
-          return 'new';
-        }
-      } else {
-        // Profile exists (RETURNING USER)
-        console.log('🎉 Welcome back!', existingProfile.display_name || user.email);
-        
-        // For returning users, optionally fetch some recent memory context
-        try {
-          const { data: recentMemories } = await supabase
-            .from('user_memories')
-            .select('content, created_at')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false })
-            .limit(3);
-          
-          if (recentMemories && recentMemories.length > 0) {
-            console.log('📚 Retrieved recent memories for returning user');
-            // Store in memory for potential use in first conversation
-          }
-        } catch (memoryError) {
-          console.warn('Could not fetch memories for returning user:', memoryError);
-        }
-        
-        return 'returning';
-      }
-    } catch (error) {
-      console.error('Error handling user profile:', error);
-      return 'new'; // Default to new user on error
-    }
-  }
-
-  useEffect(() => {
-    let isMounted = true;
-
-    // Check for existing session with improved error handling
-    const checkSession = async () => {
-      try {
-        // Get the current session from Supabase
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Error getting session:', error);
-          // If session retrieval fails, try to refresh
-          const { data: { session: refreshedSession } } = await supabase.auth.refreshSession();
-          if (refreshedSession?.user && isMounted) {
-            setIsAuthenticated(true);
-            setUserEmail(refreshedSession.user.email || '');
-            setShowDashboard(true);
-            
-            // Handle returning user with refreshed session
-            const userType = await handleUserProfile(refreshedSession.user);
-            console.log(`Session refreshed for ${userType} user`);
-          }
-        } else if (session?.user && isMounted) {
-          setIsAuthenticated(true);
-          setUserEmail(session.user.email || '');
-          setShowDashboard(true);
-          
-          // Handle existing session - likely returning user
-          const userType = await handleUserProfile(session.user);
-          console.log(`Existing session found for ${userType} user`);
-        }
-      } catch (error) {
-        console.error('Error during session check:', error);
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    checkSession();
-
-    // Listen for auth state changes with improved handling
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!isMounted) return;
-
-        console.log('Auth state changed:', event, session ? 'Session exists' : 'No session');
-
-        if (event === 'SIGNED_IN' || (event === 'TOKEN_REFRESHED' && session?.user)) {
-          setIsAuthenticated(true);
-          setUserEmail(session?.user?.email || '');
-          setShowDashboard(true);
-          
-          // Handle user profile and distinguish new vs returning users
-          if (event === 'SIGNED_IN' && session?.user) {
-            const userType = await handleUserProfile(session.user);
-            
-            if (userType === 'new') {
-              console.log('🌟 New user onboarding flow initiated');
-              // Could add welcome message or tutorial here
-            } else {
-              console.log('👋 Returning user - memories and context loaded');
-              // Returning user gets their conversation context restored
-            }
-          }
-          
-          console.log('User authenticated:', session?.user?.email);
-        } else if (event === 'SIGNED_OUT' || !session?.user) {
-          setIsAuthenticated(false);
-          setUserEmail('');
-          setShowDashboard(false);
-          console.log('User signed out or session expired');
-        }
-        
-        setLoading(false);
-      }
-    );
-
-    return () => {
-      isMounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  const handleAuthSuccess = () => {
-    setShowDashboard(true);
-  };
-
-  const handleLogout = async () => {
-    try {
-      // Sign out from Supabase
-      await supabase.auth.signOut();
-      
-      // Clear local state
-      setIsAuthenticated(false);
-      setUserEmail('');
-      setShowDashboard(false);
-      
-      console.log('User successfully logged out');
-    } catch (error) {
-      console.error('Error during logout:', error);
-      // Still clear local state even if Supabase logout fails
-      setIsAuthenticated(false);
-      setUserEmail('');
-      setShowDashboard(false);
-    }
-  };
-
-  const handleBackToHome = () => {
-    setShowDashboard(false);
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading Luma...</p>
+          {/* Chat Section */}
+          <div className="flex-1 flex flex-col">
+            <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-white mb-3 sm:mb-4 text-center">Talk to Luma</h3>
+            <div className="h-[400px] sm:h-[450px] lg:h-[500px]">
+              <ChatSection />
+            </div>
+          </div>
         </div>
       </div>
-    );
-  }
-
-  return (
-    <>
-      {!isAuthenticated || !showDashboard ? (
-        <LandingPage onAuthSuccess={handleAuthSuccess} />
-      ) : (
-        <Dashboard 
-          userEmail={userEmail} 
-          onLogout={handleLogout}
-          onBackToHome={handleBackToHome}
-        />
-      )}
-    </>
+    </div>
   );
 };
 

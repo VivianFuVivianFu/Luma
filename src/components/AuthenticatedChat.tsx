@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import VideoSection from '@/components/VideoSection'
-import ChatSection from '@/components/ChatSection'
+import ChatSection from '@/components/ChatSectionFixed'
 import { LogOut, User } from 'lucide-react'
 
 const AuthenticatedChat: React.FC = () => {
@@ -9,7 +9,6 @@ const AuthenticatedChat: React.FC = () => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Get current user email
     const getUser = async () => {
       try {
         const { data: { user }, error } = await supabase.auth.getUser()
@@ -37,7 +36,7 @@ const AuthenticatedChat: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-blue-300 via-purple-300 to-blue-200 flex items-center justify-center">
-        <div className="text-gray-700 text-lg">载入中...</div>
+        <div className="text-gray-700 text-lg">Loading…</div>
       </div>
     )
   }
@@ -54,10 +53,10 @@ const AuthenticatedChat: React.FC = () => {
           <button
             onClick={logout}
             className="flex items-center gap-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-3 py-1 rounded-full text-xs font-medium transition-all hover:scale-105"
-            title="退出登录"
+            title="Sign out"
           >
             <LogOut className="w-3 h-3" />
-            <span>退出</span>
+            <span>Sign Out</span>
           </button>
         </div>
       </div>
@@ -94,3 +93,4 @@ const AuthenticatedChat: React.FC = () => {
 }
 
 export default AuthenticatedChat
+
