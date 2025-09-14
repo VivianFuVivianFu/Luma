@@ -27,6 +27,7 @@ const ChatSection = () => {
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isVoiceConnected, setIsVoiceConnected] = useState(false);
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -76,6 +77,27 @@ const ChatSection = () => {
       return () => clearTimeout(timer);
     }
   }, [isKeyboardOpen, isMobile]);
+
+  // VisualViewport-based bottom inset for mobile keyboards (scoped to chat only)
+  useEffect(() => {
+    if (!isMobile) return;
+    const vv = window.visualViewport;
+    if (!vv) {
+      setKeyboardOffset(0);
+      return;
+    }
+    const updateOffset = () => {
+      const offset = Math.max(0, window.innerHeight - vv.height);
+      setKeyboardOffset(offset > 50 ? offset : 0);
+    };
+    updateOffset();
+    vv.addEventListener('resize', updateOffset);
+    vv.addEventListener('scroll', updateOffset);
+    return () => {
+      vv.removeEventListener('resize', updateOffset);
+      vv.removeEventListener('scroll', updateOffset);
+    };
+  }, [isMobile]);
 
   const addMessage = (content: string, sender: 'user' | 'luma') => {
     const newMessage: Message = {
@@ -163,7 +185,10 @@ const ChatSection = () => {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 overscroll-contain">
+      <div
+        className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 overscroll-contain"
+        style={isMobile ? { paddingBottom: Math.min(keyboardOffset, 200) } : undefined}
+      >
         {messages.map((message) => (
           <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[85%] sm:max-w-[80%] p-3 rounded-2xl break-words ${
@@ -218,4 +243,3 @@ const ChatSection = () => {
 };
 
 export default ChatSection;
-
