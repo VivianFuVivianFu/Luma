@@ -67,15 +67,11 @@ const ChatSection = () => {
     scrollToBottom();
   }, [messages, isMobile]);
 
-  // Handle mobile keyboard adjustments
+  // Handle mobile keyboard adjustments — strictly mobile
   useEffect(() => {
     if (isMobile && isKeyboardOpen && inputRef.current) {
-      // Small delay to ensure keyboard is fully open
       const timer = setTimeout(() => {
-        inputRef.current?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center'
-        });
+        inputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 300);
       return () => clearTimeout(timer);
     }
@@ -100,7 +96,6 @@ const ChatSection = () => {
     setIsLoading(true);
 
     try {
-      // Use LLaMA 3 70B via Together AI
       const lumaResponse = await lumaAI.sendMessage(userMessage);
       addMessage(lumaResponse, 'luma');
       setIsLoading(false);
@@ -115,23 +110,14 @@ const ChatSection = () => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
-
-      // On mobile, blur input to hide keyboard after sending
-      if (isMobile && inputRef.current) {
-        inputRef.current.blur();
-      }
+      if (isMobile && inputRef.current) inputRef.current.blur();
     }
   };
 
   const startVoiceConversation = async () => {
     try {
       setIsLoading(true);
-
-      // Start conversation with the agent ID
-      await conversation.startSession({
-        agentId: 'agent_6901k1fgqzszfq89cxndsfs69z7m',
-      });
-
+      await conversation.startSession({ agentId: 'agent_6901k1fgqzszfq89cxndsfs69z7m' });
     } catch (error) {
       console.error('Error starting voice conversation:', error);
       addMessage("Sorry, I couldn't start the voice conversation. Please try again later.", "luma");
@@ -144,7 +130,6 @@ const ChatSection = () => {
     conversation.endSession();
   };
 
-
   return (
     <div className={`flex flex-col h-full bg-card rounded-lg sm:rounded-2xl border border-border overflow-hidden ${
       isMobile && isKeyboardOpen ? 'keyboard-open' : ''
@@ -152,16 +137,10 @@ const ChatSection = () => {
       {/* Header */}
       <div className="flex items-center justify-between p-3 sm:p-4 border-b border-border bg-secondary/50">
         <div className="flex items-center gap-2 sm:gap-3">
-          <img
-            src={lumaAvatar}
-            alt="Luma Avatar"
-            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full"
-          />
+          <img src={lumaAvatar} alt="Luma Avatar" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full" />
           <div>
             <h3 className="font-semibold text-card-foreground text-sm sm:text-base">Luma</h3>
-            <p className="text-xs text-muted-foreground">
-              {isVoiceConnected ? 'Voice Active' : 'Your AI Companion'}
-            </p>
+            <p className="text-xs text-muted-foreground">{isVoiceConnected ? 'Voice Active' : 'Your AI Companion'}</p>
           </div>
         </div>
         <div className="flex items-center gap-1 sm:gap-2">
@@ -171,20 +150,13 @@ const ChatSection = () => {
             onClick={isVoiceConnected ? endVoiceConversation : startVoiceConversation}
             disabled={isLoading}
             className={`transition-colors p-2 min-w-[40px] min-h-[40px] sm:min-w-[36px] sm:min-h-[36px] ${
-              isVoiceConnected
-                ? 'text-red-500 hover:text-red-600 bg-red-50'
-                : 'text-luma-blue hover:text-luma-blue-dark'
+              isVoiceConnected ? 'text-red-500 hover:text-red-600 bg-red-50' : 'text-luma-blue hover:text-luma-blue-dark'
             }`}
             title={isVoiceConnected ? 'End Voice Chat' : 'Start Voice Chat'}
           >
             {isVoiceConnected ? <MicOff className="w-4 h-4 sm:w-5 sm:h-5" /> : <Mic className="w-4 h-4 sm:w-5 sm:h-5" />}
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-luma-blue hover:text-luma-blue-dark p-2 min-w-[40px] min-h-[40px] sm:min-w-[36px] sm:min-h-[36px]"
-            title="Voice Settings"
-          >
+          <Button variant="ghost" size="sm" className="text-luma-blue hover:text-luma-blue-dark p-2 min-w-[40px] min-h-[40px] sm:min-w-[36px] sm:min-h-[36px]" title="Voice Settings">
             <Volume2 className="w-4 h-4 sm:w-5 sm:h-5" />
           </Button>
         </div>
@@ -193,21 +165,12 @@ const ChatSection = () => {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 overscroll-contain">
         {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
-            <div
-              className={`max-w-[85%] sm:max-w-[80%] p-3 rounded-2xl break-words ${
-                message.sender === 'user'
-                  ? 'bg-luma-blue text-luma-blue-foreground ml-2 sm:ml-4'
-                  : 'bg-secondary text-secondary-foreground mr-2 sm:mr-4'
-              }`}
-            >
+          <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div className={`max-w-[85%] sm:max-w-[80%] p-3 rounded-2xl break-words ${
+              message.sender === 'user' ? 'bg-luma-blue text-luma-blue-foreground ml-2 sm:ml-4' : 'bg-secondary text-secondary-foreground mr-2 sm:mr-4'
+            }`}>
               <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
-              <p className="text-xs opacity-70 mt-1">
-                {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </p>
+              <p className="text-xs opacity-70 mt-1">{message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
             </div>
           </div>
         ))}
@@ -245,11 +208,7 @@ const ChatSection = () => {
               spellCheck="true"
             />
           </div>
-          <Button
-            onClick={sendMessage}
-            disabled={!inputValue.trim() || isLoading}
-            className="bg-luma-blue hover:bg-luma-blue-dark text-luma-blue-foreground min-w-[44px] min-h-[44px] p-3 shrink-0"
-          >
+          <Button onClick={sendMessage} disabled={!inputValue.trim() || isLoading} className="bg-luma-blue hover:bg-luma-blue-dark text-luma-blue-foreground min-w-[44px] min-h-[44px] p-3 shrink-0">
             <Send className="w-4 h-4" />
           </Button>
         </div>
